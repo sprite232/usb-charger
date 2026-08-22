@@ -1,0 +1,1941 @@
+
+╭──────────────────────────────────────────────╮
+│ >_ OpenAI Codex (v0.147.0)                   │
+│                                              │
+│ model:     gpt-5.5 medium   /model to change │
+│ directory: S:\code\promptpay-test            │
+╰──────────────────────────────────────────────╯
+
+  Tip: New For a limited time, Codex is included in your plan for free – let’s build together.
+
+⚠ Heads up, you have less than 25% of your monthly limit left. Run /status for a breakdown.
+
+
+› สวัสดีว่าไงบ้างถึงไหนเเล้วโปรเจค ออกเเบบเว็บมาเลยเเล้วให้ esp32 ส่งข้อมูลขึ้น fire base เเละดึงไปเเสดงผลเว็บไซต์เอา เเทน
+  สร้างหน้าของผู้รับเงินมาเลยเเบบสรุปรายจ่ายเเต่ละ อย่าง เเละมีการใช้อะไรไปเเล้วบ้าง
+
+
+• ผมจะไล่ดูโครงโปรเจคก่อนว่าเป็นเว็บแบบไหนอยู่แล้ว จากนั้นจะปรับให้เป็นหน้าผู้รับเงินที่ดึง/แสดงข้อมูลจาก Firebase และเตรียมจุดรับข้อมูลสำหรับ ESP32
+  ตามโครงเดิมของโปรเจคครับ
+
+• Running rg --files
+
+• Ran git status --short
+  └ fatal: not a git repository (or any of the parent directories): .git
+
+• Ran Get-ChildItem -Force
+  └
+
+    … +14 lines (ctrl + t to view transcript)
+
+
+
+• Ran rg --files
+  └ WIRING.md
+    server.js
+    … +1061 lines (ctrl + t to view transcript)
+    node_modules\get-proto\test\index.js
+    node_modules\function-bind\test\index.js
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• เจอโครงเป็น Node/Express แบบหน้าเดียว มี server.js, public/index.html และตัวอย่าง esp32-demo.ino อยู่แล้ว
+  ผมจะอ่านไฟล์หลักก่อนเพื่อปรับตามของเดิมโดยไม่รื้อเกินจำเป็นครับ
+
+• Running Get-Content package.json
+
+• Running Get-Content server.js
+
+• Running Get-Content public\index.html
+
+• Running Get-Content esp32-demo\esp32-demo.ino
+
+• Ran Get-Content package.json
+  └ {
+      "name": "promptpay-test",
+    … +15 lines (ctrl + t to view transcript)
+      }
+    }
+
+• Ran Get-Content server.js
+  └ const express = require("express");
+    const generatePayload = require("promptpay-qr");
+    … +219 lines (ctrl + t to view transcript)
+      console.log(`Smart charger demo running at http://localhost:${PORT}`);
+    });
+
+• Ran Get-Content public\index.html
+  └ <!doctype html>
+    <html lang="th">
+    </html>
+
+• Ran Get-Content WIRING.md
+  └ # Smart Charger ESP32 Wiring
+
+    … +65 lines (ctrl + t to view transcript)
+    Website -> Server: /api/state à¹à¸ªà¸”à¸‡à¸ªà¸–à¸²à¸™à¸°à¸•à¸¹à¹‰
+    ```
+
+• Ran Get-Content esp32-demo\esp32-demo.ino
+  └ /*
+      ESP32 demo idea for this project.
+    … +108 lines (ctrl + t to view transcript)
+      return raw < 80;
+    }
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• ไฟล์เดิมมีข้อความไทยเพี้ยนจาก encoding และระบบยังเก็บ state ใน memory ของ server เป็นหลัก ผมจะเปลี่ยนเป็น dashboard ฝั่งผู้รับเงิน พร้อม
+  backend ที่รองรับ Firebase Realtime Database ผ่าน REST โดยใช้ env FIREBASE_DATABASE_URL ถ้าไม่มี config จะยังรัน demo/local
+  ได้ครับ
+
+• Running Get-Content index.js
+
+• Ran node -v
+  └ v24.14.1
+
+• Ran Get-Content index.js
+  └ const generatePayload = require("promptpay-qr");
+    const QRCode = require("qrcode");
+    … +16 lines (ctrl + t to view transcript)
+        console.log("à¸ªà¸£à¹‰à¸²à¸‡ QR à¸ªà¸³à¹€à¸£à¹‡à¸ˆ");
+    });
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• ผมจะลงมือแก้ 3 จุดหลัก: server.js ให้มีชั้นข้อมูลที่ sync กับ Firebase, public/index.html ให้เป็น dashboard ผู้รับเงินภาษาไทยปกติ, และ
+  esp32-demo.ino ให้ตัวอย่างส่งรายงานขึ้น endpoint/Firebase bridge ได้ชัดเจนครับ
+
+• Deleted server.js (+0 -223)
+      1 -const express = require("express");
+      2 -const generatePayload = require("promptpay-qr");
+      3 -const QRCode = require("qrcode");
+      4 -const path = require("path");
+      5 -
+      6 -const app = express();
+      7 -const PORT = process.env.PORT || 3000;
+      8 -const PROMPTPAY_PHONE = process.env.PROMPTPAY_PHONE || "0969679951";
+      9 -const RATE_MINUTES_PER_BAHT = 3;
+     10 -
+     11 -app.use(express.json());
+     12 -app.use(express.static(path.join(__dirname, "public")));
+     13 -
+     14 -const state = {
+     15 -  chargerId: "charger01",
+     16 -  status: "available",
+     17 -  paymentMethod: null,
+     18 -  amount: 0,
+     19 -  chargeMinutes: 0,
+     20 -  remainingMinutes: 0,
+     21 -  relayOn: false,
+     22 -  pendingQr: null,
+     23 -  lastCommand: null,
+     24 -  transactions: [],
+     25 -};
+     26 -
+     27 -function createTransaction(method, amount, extra = {}) {
+     28 -  const chargeMinutes = amount * RATE_MINUTES_PER_BAHT;
+     29 -  const tx = {
+     30 -    id: `txn_${Date.now()}`,
+     31 -    method,
+     32 -    amount,
+     33 -    chargeMinutes,
+     34 -    remainingMinutes: chargeMinutes,
+     35 -    status: "paid",
+     36 -    createdAt: new Date().toISOString(),
+     37 -    ...extra,
+     38 -  };
+     39 -
+     40 -  state.transactions.unshift(tx);
+     41 -  state.status = "in-use";
+     42 -  state.paymentMethod = method;
+     43 -  state.amount = amount;
+     44 -  state.chargeMinutes = chargeMinutes;
+     45 -  state.remainingMinutes = chargeMinutes;
+     46 -  state.relayOn = true;
+     47 -  state.pendingQr = null;
+     48 -  state.lastCommand = {
+     49 -    type: "START_CHARGE",
+     50 -    transactionId: tx.id,
+     51 -    method,
+     52 -    amount,
+     53 -    chargeMinutes,
+     54 -  };
+     55 -
+     56 -  return tx;
+     57 -}
+     58 -
+     59 -function finishCharge(reason) {
+     60 -  if (state.status !== "in-use") return null;
+     61 -
+     62 -  const usedMinutes = state.chargeMinutes - state.remainingMinutes;
+     63 -  const creditBaht =
+     64 -    reason === "battery_full" && state.paymentMethod === "qr"
+     65 -      ? Math.floor(state.remainingMinutes / RATE_MINUTES_PER_BAHT)
+     66 -      : 0;
+     67 -
+     68 -  const tx = state.transactions.find((item) => item.status === "paid");
+     69 -  if (tx) {
+     70 -    tx.status = "finished";
+     71 -    tx.endedAt = new Date().toISOString();
+     72 -    tx.endedReason = reason;
+     73 -    tx.usedMinutes = usedMinutes;
+     74 -    tx.creditBaht = creditBaht;
+     75 -  }
+     76 -
+     77 -  state.status = "available";
+     78 -  state.paymentMethod = null;
+     79 -  state.amount = 0;
+     80 -  state.chargeMinutes = 0;
+     81 -  state.remainingMinutes = 0;
+     82 -  state.relayOn = false;
+     83 -  state.lastCommand = { type: "STOP_CHARGE", reason, creditBaht };
+     84 -
+     85 -  return tx;
+     86 -}
+     87 -
+     88 -app.get("/api/state", (req, res) => {
+     89 -  res.json({
+     90 -    ...state,
+     91 -    rateMinutesPerBaht: RATE_MINUTES_PER_BAHT,
+     92 -    promptpayPhone: PROMPTPAY_PHONE,
+     93 -  });
+     94 -});
+     95 -
+     96 -app.post("/api/qr/create", async (req, res) => {
+     97 -  const amount = Number(req.body.amount);
+     98 -
+     99 -  if (!Number.isFinite(amount) || amount <= 0) {
+    100 -    return res.status(400).json({ error: "จำนวนเงินไม่ถูกต้อง" });
+    101 -  }
+    102 -
+    103 -  if (state.status !== "available") {
+    104 -    return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    105 -  }
+    106 -
+    107 -  try {
+    108 -    const payload = generatePayload(PROMPTPAY_PHONE, { amount });
+    109 -    const qr = await QRCode.toDataURL(payload, {
+    110 -      width: 360,
+    111 -      margin: 2,
+    112 -      color: { dark: "#111827", light: "#ffffff" },
+    113 -    });
+    114 -
+    115 -    state.pendingQr = {
+    116 -      id: `qr_${Date.now()}`,
+    117 -      amount,
+    118 -      chargeMinutes: amount * RATE_MINUTES_PER_BAHT,
+    119 -      payload,
+    120 -      qr,
+    121 -      createdAt: new Date().toISOString(),
+    122 -    };
+    123 -
+    124 -    res.json({ success: true, pendingQr: state.pendingQr });
+    125 -  } catch (err) {
+    126 -    res.status(500).json({ error: `สร้าง QR ไม่สำเร็จ: ${err.message}` });
+    127 -  }
+    128 -});
+    129 -
+    130 -app.post("/api/qr/confirm", (req, res) => {
+    131 -  if (!state.pendingQr) {
+    132 -    return res.status(400).json({ error: "ยังไม่มี QR ที่รอยืนยัน" });
+    133 -  }
+    134 -
+    135 -  if (state.status !== "available") {
+    136 -    return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    137 -  }
+    138 -
+    139 -  // โหมดจำลอง: ผู้ใช้กดยืนยันเองหลังโอนเงิน
+    140 -  // ระบบจริงควรเปลี่ยนเป็น webhook จาก payment gateway หรือ API ธนาคาร
+    141 -  const tx = createTransaction("qr", state.pendingQr.amount, {
+    142 -    qrId: state.pendingQr.id,
+    143 -  });
+    144 -
+    145 -  res.json({ success: true, transaction: tx, state });
+    146 -});
+    147 -
+    148 -app.post("/api/cash", (req, res) => {
+    149 -  const method = req.body.method;
+    150 -  const amount = Number(req.body.amount);
+    151 -  const cashValues = {
+    152 -    coin: [5, 10],
+    153 -    bill: [20, 50, 100],
+    154 -  };
+    155 -
+    156 -  if (!cashValues[method] || !cashValues[method].includes(amount)) {
+    157 -    return res.status(400).json({ error: "ชนิดเงินสดไม่รองรับ" });
+    158 -  }
+    159 -
+    160 -  if (state.status !== "available") {
+    161 -    return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    162 -  }
+    163 -
+    164 -  const tx = createTransaction(method, amount);
+    165 -  res.json({ success: true, transaction: tx, state });
+    166 -});
+    167 -
+    168 -app.post("/api/tick", (req, res) => {
+    169 -  if (state.status !== "in-use") {
+    170 -    return res.json({ success: true, state });
+    171 -  }
+    172 -
+    173 -  state.remainingMinutes = Math.max(0, state.remainingMinutes - 1);
+    174 -  if (state.remainingMinutes === 0) {
+    175 -    finishCharge("time_up");
+    176 -  }
+    177 -
+    178 -  res.json({ success: true, state });
+    179 -});
+    180 -
+    181 -app.post("/api/battery-full", (req, res) => {
+    182 -  const tx = finishCharge("battery_full");
+    183 -  res.json({ success: true, transaction: tx, state });
+    184 -});
+    185 -
+    186 -app.post("/api/reset", (req, res) => {
+    187 -  state.status = "available";
+    188 -  state.paymentMethod = null;
+    189 -  state.amount = 0;
+    190 -  state.chargeMinutes = 0;
+    191 -  state.remainingMinutes = 0;
+    192 -  state.relayOn = false;
+    193 -  state.pendingQr = null;
+    194 -  state.lastCommand = { type: "RESET" };
+    195 -  res.json({ success: true, state });
+    196 -});
+    197 -
+    198 -app.get("/api/esp32/command", (req, res) => {
+    199 -  res.json({
+    200 -    status: state.status,
+    201 -    relayOn: state.relayOn,
+    202 -    remainingMinutes: state.remainingMinutes,
+    203 -    command: state.lastCommand,
+    204 -  });
+    205 -});
+    206 -
+    207 -app.post("/api/esp32/report", (req, res) => {
+    208 -  const { remainingMinutes, batteryFull } = req.body;
+    209 -
+    214 -  if (batteryFull === true) {
+    215 -    finishCharge("battery_full");
+    216 -  }
+    217 -
+    218 -  res.json({ success: true, state });
+    219 -});
+    220 -
+    221 -app.listen(PORT, () => {
+    222 -  console.log(`Smart charger demo running at http://localhost:${PORT}`);
+    223 -});
+
+✘ Failed to apply patch
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• การลบแล้วสร้างไฟล์ใหม่ผ่าน patch ไม่ผ่านใน sandbox นี้ ผมจะใช้วิธีอัปเดตเนื้อหาไฟล์แทน โดยยังคงอยู่ใน workspace
+  เดิมและไม่แตะไฟล์นอกโปรเจคครับ
+
+• Edited server.js (+0 -0)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• ผมจะเปลี่ยนไฟล์หลักทั้งก้อน เพราะโครง state เดิมผูกกับหน้าจำลองตู้มากเกินไปสำหรับ dashboard ผู้รับเงิน และต้องมี helper กลางสำหรับอ่าน/เขียน
+  Firebase ครับ
+
+• Added server.js (+394 -0)
+      1 +const express = require("express");
+      2 +const generatePayload = require("promptpay-qr");
+      3 +const QRCode = require("qrcode");
+      4 +const path = require("path");
+      5 +
+      6 +const app = express();
+      7 +const PORT = process.env.PORT || 3000;
+      8 +const PROMPTPAY_PHONE = process.env.PROMPTPAY_PHONE || "0969679951";
+      9 +const RATE_MINUTES_PER_BAHT = Number(process.env.RATE_MINUTES_PER_BAHT || 3);
+     10 +const FIREBASE_DATABASE_URL = (process.env.FIREBASE_DATABASE_URL || "").replace(/\/$/, "");
+     11 +const FIREBASE_AUTH = process.env.FIREBASE_AUTH || "";
+     12 +
+     13 +app.use(express.json({ limit: "1mb" }));
+     14 +app.use(express.static(path.join(__dirname, "public")));
+     15 +
+     16 +const defaultExpenseRates = {
+     17 +  electricity: 0.18,
+     18 +  maintenance: 0.08,
+     19 +  internet: 0.03,
+     20 +  rent: 0.05,
+     21 +};
+     22 +
+     23 +const localState = {
+     24 +  chargerId: "charger01",
+     25 +  status: "available",
+     26 +  relayOn: false,
+     27 +  paymentMethod: null,
+     28 +  amount: 0,
+     29 +  chargeMinutes: 0,
+     30 +  remainingMinutes: 0,
+     31 +  pendingQr: null,
+     32 +  lastCommand: null,
+     33 +  transactions: [],
+     34 +  deviceReports: [],
+     35 +  expenses: [],
+     36 +  updatedAt: new Date().toISOString(),
+     37 +};
+     38 +
+     39 +function nowIso() {
+     40 +  return new Date().toISOString();
+     41 +}
+     42 +
+     43 +function firebasePath(resource) {
+     44 +  const auth = FIREBASE_AUTH ? `?auth=${encodeURIComponent(FIREBASE_AUTH)}` : "";
+     45 +  return `${FIREBASE_DATABASE_URL}/${resource}.json${auth}`;
+     46 +}
+     47 +
+     48 +async function firebaseRequest(method, resource, body) {
+     49 +  if (!FIREBASE_DATABASE_URL) return null;
+     50 +
+     51 +  const response = await fetch(firebasePath(resource), {
+     52 +    method,
+     53 +    headers: { "Content-Type": "application/json" },
+     54 +    body: body === undefined ? undefined : JSON.stringify(body),
+     55 +  });
+     56 +
+     57 +  if (!response.ok) {
+     58 +    const text = await response.text();
+     59 +    throw new Error(`Firebase ${method} ${resource} failed: ${response.status} ${text}`);
+     60 +  }
+     61 +
+     62 +  return response.json();
+     63 +}
+     64 +
+     65 +async function readState() {
+     66 +  if (!FIREBASE_DATABASE_URL) return localState;
+     67 +
+     68 +  const remote = await firebaseRequest("GET", "dashboard");
+     69 +  if (!remote) return localState;
+     70 +
+     71 +  Object.assign(localState, {
+     72 +    ...localState,
+     73 +    ...remote,
+     74 +    transactions: Array.isArray(remote.transactions) ? remote.transactions : [],
+     75 +    deviceReports: Array.isArray(remote.deviceReports) ? remote.deviceReports : [],
+     76 +    expenses: Array.isArray(remote.expenses) ? remote.expenses : [],
+     77 +  });
+     78 +
+     79 +  return localState;
+     80 +}
+     81 +
+     82 +async function saveState() {
+     83 +  localState.updatedAt = nowIso();
+     84 +  if (FIREBASE_DATABASE_URL) {
+     85 +    await firebaseRequest("PUT", "dashboard", localState);
+     86 +  }
+     87 +  return localState;
+     88 +}
+     89 +
+     90 +function normalizeAmount(value) {
+     91 +  const amount = Number(value);
+     92 +  return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 100) / 100 : null;
+     93 +}
+     94 +
+     95 +function createTransaction(method, amount, extra = {}) {
+     96 +  const chargeMinutes = Math.round(amount * RATE_MINUTES_PER_BAHT);
+     97 +  const tx = {
+     98 +    id: `txn_${Date.now()}`,
+     99 +    method,
+    100 +    amount,
+    101 +    chargeMinutes,
+    102 +    remainingMinutes: chargeMinutes,
+    103 +    status: "paid",
+    104 +    createdAt: nowIso(),
+    105 +    ...extra,
+    106 +  };
+    107 +
+    108 +  localState.transactions.unshift(tx);
+    109 +  localState.transactions = localState.transactions.slice(0, 100);
+    110 +  localState.status = "in-use";
+    111 +  localState.paymentMethod = method;
+    112 +  localState.amount = amount;
+    113 +  localState.chargeMinutes = chargeMinutes;
+    114 +  localState.remainingMinutes = chargeMinutes;
+    115 +  localState.relayOn = true;
+    116 +  localState.pendingQr = null;
+    117 +  localState.lastCommand = {
+    118 +    type: "START_CHARGE",
+    119 +    transactionId: tx.id,
+    120 +    method,
+    121 +    amount,
+    122 +    chargeMinutes,
+    123 +    createdAt: nowIso(),
+    124 +  };
+    125 +
+    126 +  return tx;
+    127 +}
+    128 +
+    129 +function addExpense(category, amount, note, source = "system") {
+    130 +  const expense = {
+    131 +    id: `exp_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    132 +    category,
+    133 +    amount: Math.round(Number(amount) * 100) / 100,
+    134 +    note: note || "",
+    135 +    source,
+    136 +    createdAt: nowIso(),
+    137 +  };
+    138 +
+    139 +  localState.expenses.unshift(expense);
+    140 +  localState.expenses = localState.expenses.slice(0, 200);
+    141 +  return expense;
+    142 +}
+    143 +
+    144 +function addAutomaticExpenses(tx) {
+    145 +  Object.entries(defaultExpenseRates).forEach(([category, rate]) => {
+    146 +    addExpense(category, tx.amount * rate, `คำนวณจากรายการ ${tx.id}`, "auto");
+    147 +  });
+    148 +}
+    149 +
+    150 +function finishCharge(reason) {
+    151 +  if (localState.status !== "in-use") return null;
+    152 +
+    153 +  const usedMinutes = Math.max(0, localState.chargeMinutes - localState.remainingMinutes);
+    154 +  const creditBaht =
+    155 +    reason === "battery_full" && localState.paymentMethod === "qr"
+    156 +      ? Math.floor(localState.remainingMinutes / RATE_MINUTES_PER_BAHT)
+    157 +      : 0;
+    158 +
+    159 +  const tx = localState.transactions.find((item) => item.status === "paid");
+    160 +  if (tx) {
+    161 +    tx.status = "finished";
+    162 +    tx.endedAt = nowIso();
+    163 +    tx.endedReason = reason;
+    164 +    tx.usedMinutes = usedMinutes;
+    165 +    tx.creditBaht = creditBaht;
+    166 +  }
+    167 +
+    168 +  localState.status = "available";
+    169 +  localState.paymentMethod = null;
+    170 +  localState.amount = 0;
+    171 +  localState.chargeMinutes = 0;
+    172 +  localState.remainingMinutes = 0;
+    173 +  localState.relayOn = false;
+    174 +  localState.lastCommand = { type: "STOP_CHARGE", reason, creditBaht, createdAt: nowIso() };
+    175 +
+    176 +  return tx;
+    177 +}
+    178 +
+    179 +function dashboardSummary(state) {
+    180 +  const transactions = state.transactions || [];
+    181 +  const expenses = state.expenses || [];
+    182 +  const revenue = transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    183 +  const totalExpenses = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    184 +  const finished = transactions.filter((tx) => tx.status === "finished");
+    185 +  const active = transactions.filter((tx) => tx.status === "paid");
+    186 +  const usedMinutes = transactions.reduce((sum, tx) => sum + Number(tx.usedMinutes || 0), 0);
+    187 +
+    188 +  const byMethod = transactions.reduce((acc, tx) => {
+    189 +    const key = tx.method || "unknown";
+    190 +    acc[key] = (acc[key] || 0) + Number(tx.amount || 0);
+    191 +    return acc;
+    192 +  }, {});
+    193 +
+    194 +  const byExpenseCategory = expenses.reduce((acc, expense) => {
+    195 +    const key = expense.category || "other";
+    196 +    acc[key] = (acc[key] || 0) + Number(expense.amount || 0);
+    197 +    return acc;
+    198 +  }, {});
+    199 +
+    200 +  return {
+    201 +    revenue: Math.round(revenue * 100) / 100,
+    202 +    totalExpenses: Math.round(totalExpenses * 100) / 100,
+    203 +    net: Math.round((revenue - totalExpenses) * 100) / 100,
+    204 +    transactionCount: transactions.length,
+    205 +    finishedCount: finished.length,
+    206 +    activeCount: active.length,
+    207 +    usedMinutes,
+    208 +    byMethod,
+    209 +    byExpenseCategory,
+    210 +  };
+    211 +}
+    212 +
+    213 +app.get("/api/state", async (req, res) => {
+    214 +  try {
+    215 +    const state = await readState();
+    216 +    res.json({
+    217 +      ...state,
+    218 +      rateMinutesPerBaht: RATE_MINUTES_PER_BAHT,
+    219 +      promptpayPhone: PROMPTPAY_PHONE,
+    220 +      firebaseEnabled: Boolean(FIREBASE_DATABASE_URL),
+    221 +      summary: dashboardSummary(state),
+    222 +    });
+    223 +  } catch (err) {
+    224 +    res.status(502).json({ error: err.message });
+    225 +  }
+    226 +});
+    227 +
+    228 +app.get("/api/dashboard", async (req, res) => {
+    229 +  try {
+    230 +    const state = await readState();
+    231 +    res.json({
+    232 +      state,
+    233 +      summary: dashboardSummary(state),
+    234 +      firebaseEnabled: Boolean(FIREBASE_DATABASE_URL),
+    235 +    });
+    236 +  } catch (err) {
+    237 +    res.status(502).json({ error: err.message });
+    238 +  }
+    239 +});
+    240 +
+    241 +app.post("/api/qr/create", async (req, res) => {
+    242 +  const amount = normalizeAmount(req.body.amount);
+    243 +
+    244 +  if (!amount) return res.status(400).json({ error: "จำนวนเงินไม่ถูกต้อง" });
+    245 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    246 +
+    247 +  try {
+    248 +    const payload = generatePayload(PROMPTPAY_PHONE, { amount });
+    249 +    const qr = await QRCode.toDataURL(payload, {
+    250 +      width: 360,
+    251 +      margin: 2,
+    252 +      color: { dark: "#111827", light: "#ffffff" },
+    253 +    });
+    254 +
+    255 +    localState.pendingQr = {
+    256 +      id: `qr_${Date.now()}`,
+    257 +      amount,
+    258 +      chargeMinutes: Math.round(amount * RATE_MINUTES_PER_BAHT),
+    259 +      payload,
+    260 +      qr,
+    261 +      createdAt: nowIso(),
+    262 +    };
+    263 +
+    264 +    await saveState();
+    265 +    res.json({ success: true, pendingQr: localState.pendingQr });
+    266 +  } catch (err) {
+    267 +    res.status(500).json({ error: `สร้าง QR ไม่สำเร็จ: ${err.message}` });
+    268 +  }
+    269 +});
+    270 +
+    271 +app.post("/api/qr/confirm", async (req, res) => {
+    272 +  if (!localState.pendingQr) return res.status(400).json({ error: "ยังไม่มี QR ที่รอยืนยัน" });
+    273 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    274 +
+    275 +  const tx = createTransaction("qr", localState.pendingQr.amount, { qrId: localState.pendingQr.id });
+    276 +  addAutomaticExpenses(tx);
+    277 +  await saveState();
+    278 +  res.json({ success: true, transaction: tx, state: localState });
+    279 +});
+    280 +
+    281 +app.post("/api/cash", async (req, res) => {
+    282 +  const method = req.body.method;
+    283 +  const amount = normalizeAmount(req.body.amount);
+    284 +  const cashValues = {
+    285 +    coin: [5, 10],
+    286 +    bill: [20, 50, 100],
+    287 +  };
+    288 +
+    289 +  if (!cashValues[method] || !cashValues[method].includes(amount)) {
+    290 +    return res.status(400).json({ error: "ชนิดเงินสดไม่รองรับ" });
+    291 +  }
+    292 +
+    293 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    294 +
+    295 +  const tx = createTransaction(method, amount);
+    296 +  addAutomaticExpenses(tx);
+    297 +  await saveState();
+    298 +  res.json({ success: true, transaction: tx, state: localState });
+    299 +});
+    300 +
+    301 +app.post("/api/expense", async (req, res) => {
+    302 +  const amount = normalizeAmount(req.body.amount);
+    303 +  const category = String(req.body.category || "other").trim();
+    304 +
+    305 +  if (!amount) return res.status(400).json({ error: "จำนวนรายจ่ายไม่ถูกต้อง" });
+    306 +  if (!category) return res.status(400).json({ error: "กรุณาระบุหมวดรายจ่าย" });
+    307 +
+    308 +  const expense = addExpense(category, amount, req.body.note, "manual");
+    309 +  await saveState();
+    310 +  res.json({ success: true, expense, state: localState });
+    311 +});
+    312 +
+    313 +app.post("/api/tick", async (req, res) => {
+    314 +  if (localState.status === "in-use") {
+    315 +    localState.remainingMinutes = Math.max(0, localState.remainingMinutes - 1);
+    316 +    if (localState.remainingMinutes === 0) finishCharge("time_up");
+    317 +    await saveState();
+    318 +  }
+    319 +
+    320 +  res.json({ success: true, state: localState });
+    321 +});
+    322 +
+    323 +app.post("/api/battery-full", async (req, res) => {
+    324 +  const tx = finishCharge("battery_full");
+    325 +  await saveState();
+    326 +  res.json({ success: true, transaction: tx, state: localState });
+    327 +});
+    328 +
+    329 +app.post("/api/reset", async (req, res) => {
+    330 +  localState.status = "available";
+    331 +  localState.paymentMethod = null;
+    332 +  localState.amount = 0;
+    333 +  localState.chargeMinutes = 0;
+    334 +  localState.remainingMinutes = 0;
+    335 +  localState.relayOn = false;
+    336 +  localState.pendingQr = null;
+    337 +  localState.lastCommand = { type: "RESET", createdAt: nowIso() };
+    338 +  await saveState();
+    339 +  res.json({ success: true, state: localState });
+    340 +});
+    341 +
+    342 +app.get("/api/esp32/command", async (req, res) => {
+    343 +  try {
+    344 +    const state = await readState();
+    345 +    res.json({
+    346 +      status: state.status,
+    347 +      relayOn: state.relayOn,
+    348 +      remainingMinutes: state.remainingMinutes,
+    349 +      command: state.lastCommand,
+    350 +    });
+    351 +  } catch (err) {
+    352 +    res.status(502).json({ error: err.message });
+    353 +  }
+    354 +});
+    355 +
+    356 +app.post("/api/esp32/report", async (req, res) => {
+    357 +  const report = {
+    358 +    id: `report_${Date.now()}`,
+    359 +    chargerId: req.body.chargerId || localState.chargerId,
+    360 +    relayOn: Boolean(req.body.relayOn),
+    361 +    remainingMinutes: Number.isFinite(Number(req.body.remainingMinutes))
+    362 +      ? Math.max(0, Number(req.body.remainingMinutes))
+    363 +      : localState.remainingMinutes,
+    364 +    currentMa: Number(req.body.currentMa || 0),
+    365 +    voltageMv: Number(req.body.voltageMv || 0),
+    366 +    energyWh: Number(req.body.energyWh || 0),
+    367 +    batteryFull: req.body.batteryFull === true,
+    368 +    note: req.body.note || "",
+    369 +    createdAt: req.body.createdAt || nowIso(),
+    370 +  };
+    371 +
+    372 +  localState.deviceReports.unshift(report);
+    373 +  localState.deviceReports = localState.deviceReports.slice(0, 100);
+    374 +  localState.relayOn = report.relayOn;
+    375 +  localState.remainingMinutes = report.remainingMinutes;
+    376 +
+    377 +  if (report.batteryFull) finishCharge("battery_full");
+    378 +
+    379 +  if (Array.isArray(req.body.expenses)) {
+    380 +    req.body.expenses.forEach((item) => {
+    381 +      const amount = normalizeAmount(item.amount);
+    382 +      const category = String(item.category || "other").trim();
+    383 +      if (amount && category) addExpense(category, amount, item.note, "esp32");
+    384 +    });
+    385 +  }
+    386 +
+    387 +  await saveState();
+    388 +  res.json({ success: true, report, state: localState });
+    389 +});
+    390 +
+    391 +app.listen(PORT, () => {
+    392 +  console.log(`PromptPay receiver dashboard running at http://localhost:${PORT}`);
+    393 +  console.log(FIREBASE_DATABASE_URL ? "Firebase sync enabled" : "Firebase sync disabled; using local memory");
+    394 +});
+
+✘ Failed to apply patch
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• ตัว patch แบบลบไฟล์ถูกปฏิเสธ แต่ยังแก้ไฟล์ได้ ผมจะทำแบบปลอดภัยกว่า: เพิ่มไฟล์ backend ใหม่ แล้วให้ server.js โหลด backend ใหม่นั้น
+  โดยโค้ดเดิมจะถูกปิดไว้เป็นคอมเมนต์แทนครับ
+
+• Added dashboard-server.js (+394 -0)
+      1 +const express = require("express");
+      2 +const generatePayload = require("promptpay-qr");
+      3 +const QRCode = require("qrcode");
+      4 +const path = require("path");
+      5 +
+      6 +const app = express();
+      7 +const PORT = process.env.PORT || 3000;
+      8 +const PROMPTPAY_PHONE = process.env.PROMPTPAY_PHONE || "0969679951";
+      9 +const RATE_MINUTES_PER_BAHT = Number(process.env.RATE_MINUTES_PER_BAHT || 3);
+     10 +const FIREBASE_DATABASE_URL = (process.env.FIREBASE_DATABASE_URL || "").replace(/\/$/, "");
+     11 +const FIREBASE_AUTH = process.env.FIREBASE_AUTH || "";
+     12 +
+     13 +app.use(express.json({ limit: "1mb" }));
+     14 +app.use(express.static(path.join(__dirname, "public")));
+     15 +
+     16 +const defaultExpenseRates = {
+     17 +  electricity: 0.18,
+     18 +  maintenance: 0.08,
+     19 +  internet: 0.03,
+     20 +  rent: 0.05,
+     21 +};
+     22 +
+     23 +const localState = {
+     24 +  chargerId: "charger01",
+     25 +  status: "available",
+     26 +  relayOn: false,
+     27 +  paymentMethod: null,
+     28 +  amount: 0,
+     29 +  chargeMinutes: 0,
+     30 +  remainingMinutes: 0,
+     31 +  pendingQr: null,
+     32 +  lastCommand: null,
+     33 +  transactions: [],
+     34 +  deviceReports: [],
+     35 +  expenses: [],
+     36 +  updatedAt: new Date().toISOString(),
+     37 +};
+     38 +
+     39 +function nowIso() {
+     40 +  return new Date().toISOString();
+     41 +}
+     42 +
+     43 +function firebasePath(resource) {
+     44 +  const auth = FIREBASE_AUTH ? `?auth=${encodeURIComponent(FIREBASE_AUTH)}` : "";
+     45 +  return `${FIREBASE_DATABASE_URL}/${resource}.json${auth}`;
+     46 +}
+     47 +
+     48 +async function firebaseRequest(method, resource, body) {
+     49 +  if (!FIREBASE_DATABASE_URL) return null;
+     50 +
+     51 +  const response = await fetch(firebasePath(resource), {
+     52 +    method,
+     53 +    headers: { "Content-Type": "application/json" },
+     54 +    body: body === undefined ? undefined : JSON.stringify(body),
+     55 +  });
+     56 +
+     57 +  if (!response.ok) {
+     58 +    const text = await response.text();
+     59 +    throw new Error(`Firebase ${method} ${resource} failed: ${response.status} ${text}`);
+     60 +  }
+     61 +
+     62 +  return response.json();
+     63 +}
+     64 +
+     65 +async function readState() {
+     66 +  if (!FIREBASE_DATABASE_URL) return localState;
+     67 +
+     68 +  const remote = await firebaseRequest("GET", "dashboard");
+     69 +  if (!remote) return localState;
+     70 +
+     71 +  Object.assign(localState, {
+     72 +    ...localState,
+     73 +    ...remote,
+     74 +    transactions: Array.isArray(remote.transactions) ? remote.transactions : [],
+     75 +    deviceReports: Array.isArray(remote.deviceReports) ? remote.deviceReports : [],
+     76 +    expenses: Array.isArray(remote.expenses) ? remote.expenses : [],
+     77 +  });
+     78 +
+     79 +  return localState;
+     80 +}
+     81 +
+     82 +async function saveState() {
+     83 +  localState.updatedAt = nowIso();
+     84 +  if (FIREBASE_DATABASE_URL) {
+     85 +    await firebaseRequest("PUT", "dashboard", localState);
+     86 +  }
+     87 +  return localState;
+     88 +}
+     89 +
+     90 +function normalizeAmount(value) {
+     91 +  const amount = Number(value);
+     92 +  return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 100) / 100 : null;
+     93 +}
+     94 +
+     95 +function createTransaction(method, amount, extra = {}) {
+     96 +  const chargeMinutes = Math.round(amount * RATE_MINUTES_PER_BAHT);
+     97 +  const tx = {
+     98 +    id: `txn_${Date.now()}`,
+     99 +    method,
+    100 +    amount,
+    101 +    chargeMinutes,
+    102 +    remainingMinutes: chargeMinutes,
+    103 +    status: "paid",
+    104 +    createdAt: nowIso(),
+    105 +    ...extra,
+    106 +  };
+    107 +
+    108 +  localState.transactions.unshift(tx);
+    109 +  localState.transactions = localState.transactions.slice(0, 100);
+    110 +  localState.status = "in-use";
+    111 +  localState.paymentMethod = method;
+    112 +  localState.amount = amount;
+    113 +  localState.chargeMinutes = chargeMinutes;
+    114 +  localState.remainingMinutes = chargeMinutes;
+    115 +  localState.relayOn = true;
+    116 +  localState.pendingQr = null;
+    117 +  localState.lastCommand = {
+    118 +    type: "START_CHARGE",
+    119 +    transactionId: tx.id,
+    120 +    method,
+    121 +    amount,
+    122 +    chargeMinutes,
+    123 +    createdAt: nowIso(),
+    124 +  };
+    125 +
+    126 +  return tx;
+    127 +}
+    128 +
+    129 +function addExpense(category, amount, note, source = "system") {
+    130 +  const expense = {
+    131 +    id: `exp_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    132 +    category,
+    133 +    amount: Math.round(Number(amount) * 100) / 100,
+    134 +    note: note || "",
+    135 +    source,
+    136 +    createdAt: nowIso(),
+    137 +  };
+    138 +
+    139 +  localState.expenses.unshift(expense);
+    140 +  localState.expenses = localState.expenses.slice(0, 200);
+    141 +  return expense;
+    142 +}
+    143 +
+    144 +function addAutomaticExpenses(tx) {
+    145 +  Object.entries(defaultExpenseRates).forEach(([category, rate]) => {
+    146 +    addExpense(category, tx.amount * rate, `คำนวณจากรายการ ${tx.id}`, "auto");
+    147 +  });
+    148 +}
+    149 +
+    150 +function finishCharge(reason) {
+    151 +  if (localState.status !== "in-use") return null;
+    152 +
+    153 +  const usedMinutes = Math.max(0, localState.chargeMinutes - localState.remainingMinutes);
+    154 +  const creditBaht =
+    155 +    reason === "battery_full" && localState.paymentMethod === "qr"
+    156 +      ? Math.floor(localState.remainingMinutes / RATE_MINUTES_PER_BAHT)
+    157 +      : 0;
+    158 +
+    159 +  const tx = localState.transactions.find((item) => item.status === "paid");
+    160 +  if (tx) {
+    161 +    tx.status = "finished";
+    162 +    tx.endedAt = nowIso();
+    163 +    tx.endedReason = reason;
+    164 +    tx.usedMinutes = usedMinutes;
+    165 +    tx.creditBaht = creditBaht;
+    166 +  }
+    167 +
+    168 +  localState.status = "available";
+    169 +  localState.paymentMethod = null;
+    170 +  localState.amount = 0;
+    171 +  localState.chargeMinutes = 0;
+    172 +  localState.remainingMinutes = 0;
+    173 +  localState.relayOn = false;
+    174 +  localState.lastCommand = { type: "STOP_CHARGE", reason, creditBaht, createdAt: nowIso() };
+    175 +
+    176 +  return tx;
+    177 +}
+    178 +
+    179 +function dashboardSummary(state) {
+    180 +  const transactions = state.transactions || [];
+    181 +  const expenses = state.expenses || [];
+    182 +  const revenue = transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+    183 +  const totalExpenses = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    184 +  const finished = transactions.filter((tx) => tx.status === "finished");
+    185 +  const active = transactions.filter((tx) => tx.status === "paid");
+    186 +  const usedMinutes = transactions.reduce((sum, tx) => sum + Number(tx.usedMinutes || 0), 0);
+    187 +
+    188 +  const byMethod = transactions.reduce((acc, tx) => {
+    189 +    const key = tx.method || "unknown";
+    190 +    acc[key] = (acc[key] || 0) + Number(tx.amount || 0);
+    191 +    return acc;
+    192 +  }, {});
+    193 +
+    194 +  const byExpenseCategory = expenses.reduce((acc, expense) => {
+    195 +    const key = expense.category || "other";
+    196 +    acc[key] = (acc[key] || 0) + Number(expense.amount || 0);
+    197 +    return acc;
+    198 +  }, {});
+    199 +
+    200 +  return {
+    201 +    revenue: Math.round(revenue * 100) / 100,
+    202 +    totalExpenses: Math.round(totalExpenses * 100) / 100,
+    203 +    net: Math.round((revenue - totalExpenses) * 100) / 100,
+    204 +    transactionCount: transactions.length,
+    205 +    finishedCount: finished.length,
+    206 +    activeCount: active.length,
+    207 +    usedMinutes,
+    208 +    byMethod,
+    209 +    byExpenseCategory,
+    210 +  };
+    211 +}
+    212 +
+    213 +app.get("/api/state", async (req, res) => {
+    214 +  try {
+    215 +    const state = await readState();
+    216 +    res.json({
+    217 +      ...state,
+    218 +      rateMinutesPerBaht: RATE_MINUTES_PER_BAHT,
+    219 +      promptpayPhone: PROMPTPAY_PHONE,
+    220 +      firebaseEnabled: Boolean(FIREBASE_DATABASE_URL),
+    221 +      summary: dashboardSummary(state),
+    222 +    });
+    223 +  } catch (err) {
+    224 +    res.status(502).json({ error: err.message });
+    225 +  }
+    226 +});
+    227 +
+    228 +app.get("/api/dashboard", async (req, res) => {
+    229 +  try {
+    230 +    const state = await readState();
+    231 +    res.json({
+    232 +      state,
+    233 +      summary: dashboardSummary(state),
+    234 +      firebaseEnabled: Boolean(FIREBASE_DATABASE_URL),
+    235 +    });
+    236 +  } catch (err) {
+    237 +    res.status(502).json({ error: err.message });
+    238 +  }
+    239 +});
+    240 +
+    241 +app.post("/api/qr/create", async (req, res) => {
+    242 +  const amount = normalizeAmount(req.body.amount);
+    243 +
+    244 +  if (!amount) return res.status(400).json({ error: "จำนวนเงินไม่ถูกต้อง" });
+    245 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    246 +
+    247 +  try {
+    248 +    const payload = generatePayload(PROMPTPAY_PHONE, { amount });
+    249 +    const qr = await QRCode.toDataURL(payload, {
+    250 +      width: 360,
+    251 +      margin: 2,
+    252 +      color: { dark: "#111827", light: "#ffffff" },
+    253 +    });
+    254 +
+    255 +    localState.pendingQr = {
+    256 +      id: `qr_${Date.now()}`,
+    257 +      amount,
+    258 +      chargeMinutes: Math.round(amount * RATE_MINUTES_PER_BAHT),
+    259 +      payload,
+    260 +      qr,
+    261 +      createdAt: nowIso(),
+    262 +    };
+    263 +
+    264 +    await saveState();
+    265 +    res.json({ success: true, pendingQr: localState.pendingQr });
+    266 +  } catch (err) {
+    267 +    res.status(500).json({ error: `สร้าง QR ไม่สำเร็จ: ${err.message}` });
+    268 +  }
+    269 +});
+    270 +
+    271 +app.post("/api/qr/confirm", async (req, res) => {
+    272 +  if (!localState.pendingQr) return res.status(400).json({ error: "ยังไม่มี QR ที่รอยืนยัน" });
+    273 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    274 +
+    275 +  const tx = createTransaction("qr", localState.pendingQr.amount, { qrId: localState.pendingQr.id });
+    276 +  addAutomaticExpenses(tx);
+    277 +  await saveState();
+    278 +  res.json({ success: true, transaction: tx, state: localState });
+    279 +});
+    280 +
+    281 +app.post("/api/cash", async (req, res) => {
+    282 +  const method = req.body.method;
+    283 +  const amount = normalizeAmount(req.body.amount);
+    284 +  const cashValues = {
+    285 +    coin: [5, 10],
+    286 +    bill: [20, 50, 100],
+    287 +  };
+    288 +
+    289 +  if (!cashValues[method] || !cashValues[method].includes(amount)) {
+    290 +    return res.status(400).json({ error: "ชนิดเงินสดไม่รองรับ" });
+    291 +  }
+    292 +
+    293 +  if (localState.status !== "available") return res.status(409).json({ error: "ตู้กำลังถูกใช้งานอยู่" });
+    294 +
+    295 +  const tx = createTransaction(method, amount);
+    296 +  addAutomaticExpenses(tx);
+    297 +  await saveState();
+    298 +  res.json({ success: true, transaction: tx, state: localState });
+    299 +});
+    300 +
+    301 +app.post("/api/expense", async (req, res) => {
+    302 +  const amount = normalizeAmount(req.body.amount);
+    303 +  const category = String(req.body.category || "other").trim();
+    304 +
+    305 +  if (!amount) return res.status(400).json({ error: "จำนวนรายจ่ายไม่ถูกต้อง" });
+    306 +  if (!category) return res.status(400).json({ error: "กรุณาระบุหมวดรายจ่าย" });
+    307 +
+    308 +  const expense = addExpense(category, amount, req.body.note, "manual");
+    309 +  await saveState();
+    310 +  res.json({ success: true, expense, state: localState });
+    311 +});
+    312 +
+    313 +app.post("/api/tick", async (req, res) => {
+    314 +  if (localState.status === "in-use") {
+    315 +    localState.remainingMinutes = Math.max(0, localState.remainingMinutes - 1);
+    316 +    if (localState.remainingMinutes === 0) finishCharge("time_up");
+    317 +    await saveState();
+    318 +  }
+    319 +
+    320 +  res.json({ success: true, state: localState });
+    321 +});
+    322 +
+    323 +app.post("/api/battery-full", async (req, res) => {
+    324 +  const tx = finishCharge("battery_full");
+    325 +  await saveState();
+    326 +  res.json({ success: true, transaction: tx, state: localState });
+    327 +});
+    328 +
+    329 +app.post("/api/reset", async (req, res) => {
+    330 +  localState.status = "available";
+    331 +  localState.paymentMethod = null;
+    332 +  localState.amount = 0;
+    333 +  localState.chargeMinutes = 0;
+    334 +  localState.remainingMinutes = 0;
+    335 +  localState.relayOn = false;
+    336 +  localState.pendingQr = null;
+    337 +  localState.lastCommand = { type: "RESET", createdAt: nowIso() };
+    338 +  await saveState();
+    339 +  res.json({ success: true, state: localState });
+    340 +});
+    341 +
+    342 +app.get("/api/esp32/command", async (req, res) => {
+    343 +  try {
+    344 +    const state = await readState();
+    345 +    res.json({
+    346 +      status: state.status,
+    347 +      relayOn: state.relayOn,
+    348 +      remainingMinutes: state.remainingMinutes,
+    349 +      command: state.lastCommand,
+    350 +    });
+    351 +  } catch (err) {
+    352 +    res.status(502).json({ error: err.message });
+    353 +  }
+    354 +});
+    355 +
+    356 +app.post("/api/esp32/report", async (req, res) => {
+    357 +  const report = {
+    358 +    id: `report_${Date.now()}`,
+    359 +    chargerId: req.body.chargerId || localState.chargerId,
+    360 +    relayOn: Boolean(req.body.relayOn),
+    361 +    remainingMinutes: Number.isFinite(Number(req.body.remainingMinutes))
+    362 +      ? Math.max(0, Number(req.body.remainingMinutes))
+    363 +      : localState.remainingMinutes,
+    364 +    currentMa: Number(req.body.currentMa || 0),
+    365 +    voltageMv: Number(req.body.voltageMv || 0),
+    366 +    energyWh: Number(req.body.energyWh || 0),
+    367 +    batteryFull: req.body.batteryFull === true,
+    368 +    note: req.body.note || "",
+    369 +    createdAt: req.body.createdAt || nowIso(),
+    370 +  };
+    371 +
+    372 +  localState.deviceReports.unshift(report);
+    373 +  localState.deviceReports = localState.deviceReports.slice(0, 100);
+    374 +  localState.relayOn = report.relayOn;
+    375 +  localState.remainingMinutes = report.remainingMinutes;
+    376 +
+    377 +  if (report.batteryFull) finishCharge("battery_full");
+    378 +
+    379 +  if (Array.isArray(req.body.expenses)) {
+    380 +    req.body.expenses.forEach((item) => {
+    381 +      const amount = normalizeAmount(item.amount);
+    386 +
+    387 +  await saveState();
+    388 +  res.json({ success: true, report, state: localState });
+    391 +app.listen(PORT, () => {
+    392 +  console.log(`PromptPay receiver dashboard running at http://localhost:${PORT}`);
+    393 +  console.log(FIREBASE_DATABASE_URL ? "Firebase sync enabled" : "Firebase sync disabled; using local memory");
+    394 +});
+
+⚠ Heads up, you have less than 10% of your monthly limit left. Run /status for a breakdown.
+
+• Edited server.js (+3 -0)
+      1 +require("./dashboard-server");
+      2 +/*
+      3  const express = require("express");
+        ⋮
+    225  });
+    226 +*/
+
+⚠ Heads up, you have less than 5% of your monthly limit left. Run /status for a breakdown.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+• backend ใหม่พร้อมแล้ว ตอนนี้จะเขียนหน้าเว็บใหม่ให้เป็น dashboard ผู้รับเงิน: สรุปรายรับ, รายจ่ายแยกหมวด, รายการใช้งานล่าสุด, สถานะ ESP32
+  และปุ่มจำลองข้อมูลสำหรับทดสอบครับ
+
+• Added public\index.html (+636 -0)
+      1 +<!doctype html>
+      2 +<html lang="th">
+      3 +  <head>
+      4 +    <meta charset="UTF-8">
+      5 +    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      6 +    <title>แดชบอร์ดผู้รับเงิน PromptPay</title>
+      7 +    <style>
+      8 +      * { box-sizing: border-box; }
+      9 +      :root {
+     10 +        --ink: #192126;
+     11 +        --muted: #64727b;
+     12 +        --line: #dce4e8;
+     13 +        --paper: #ffffff;
+     14 +        --soft: #f5f7f8;
+     15 +        --green: #16724a;
+     16 +        --blue: #1e5f99;
+     17 +        --red: #b33a3a;
+     18 +        --amber: #a96300;
+     19 +      }
+     20 +      body {
+     21 +        margin: 0;
+     22 +        font-family: Tahoma, Arial, sans-serif;
+     23 +        color: var(--ink);
+     24 +        background: #eef3f4;
+     25 +      }
+     26 +      .page {
+     27 +        width: min(1220px, calc(100% - 32px));
+     28 +        margin: 0 auto;
+     29 +        padding: 24px 0 36px;
+     30 +      }
+     31 +      .topbar {
+     32 +        display: flex;
+     33 +        align-items: flex-start;
+     34 +        justify-content: space-between;
+     35 +        gap: 18px;
+     36 +        margin-bottom: 18px;
+     37 +      }
+     38 +      h1, h2, h3, p { margin-top: 0; }
+     39 +      h1 {
+     40 +        margin-bottom: 4px;
+     41 +        font-size: 28px;
+     42 +        line-height: 1.25;
+     43 +      }
+     44 +      h2 { font-size: 18px; margin-bottom: 14px; }
+     45 +      h3 { font-size: 15px; margin-bottom: 10px; }
+     46 +      .sub { margin: 0; color: var(--muted); }
+     47 +      .status-pill {
+     48 +        min-width: 156px;
+     49 +        padding: 10px 14px;
+     50 +        border: 1px solid #b7d9c5;
+     51 +        border-radius: 999px;
+     52 +        color: var(--green);
+     53 +        background: #e8f6ed;
+     54 +        font-weight: 700;
+     55 +        text-align: center;
+     56 +      }
+     57 +      .status-pill.busy {
+     58 +        color: var(--red);
+     59 +        border-color: #efc0c0;
+     60 +        background: #fff0f0;
+     61 +      }
+     62 +      .layout {
+     63 +        display: grid;
+     64 +        grid-template-columns: 1.25fr 0.75fr;
+     65 +        gap: 16px;
+     66 +      }
+     67 +      .summary-grid {
+     68 +        display: grid;
+     69 +        grid-template-columns: repeat(4, minmax(0, 1fr));
+     70 +        gap: 12px;
+     71 +        margin-bottom: 16px;
+     72 +      }
+     73 +      .card, .panel {
+     74 +        background: var(--paper);
+     75 +        border: 1px solid var(--line);
+     76 +        border-radius: 8px;
+     77 +      }
+     78 +      .card { padding: 16px; }
+     79 +      .metric-label {
+     80 +        color: var(--muted);
+     81 +        font-size: 13px;
+     82 +        margin-bottom: 8px;
+     83 +      }
+     84 +      .metric-value {
+     85 +        font-size: 28px;
+     86 +        font-weight: 800;
+     87 +        line-height: 1.1;
+     88 +      }
+     89 +      .metric-note {
+     90 +        margin-top: 8px;
+     91 +        color: var(--muted);
+     92 +        font-size: 12px;
+     93 +      }
+     94 +      .panel {
+     95 +        padding: 16px;
+     96 +        margin-bottom: 16px;
+     97 +      }
+     98 +      .two-col {
+     99 +        display: grid;
+    100 +        grid-template-columns: 1fr 1fr;
+    101 +        gap: 16px;
+    102 +      }
+    103 +      .bars { display: grid; gap: 10px; }
+    104 +      .bar-row {
+    105 +        display: grid;
+    106 +        grid-template-columns: 92px 1fr 74px;
+    107 +        align-items: center;
+    108 +        gap: 10px;
+    109 +        min-height: 28px;
+    110 +        font-size: 13px;
+    111 +      }
+    112 +      .track {
+    113 +        height: 10px;
+    114 +        overflow: hidden;
+    115 +        border-radius: 999px;
+    116 +        background: #edf1f3;
+    117 +      }
+    118 +      .fill {
+    119 +        height: 100%;
+    120 +        width: 0;
+    121 +        border-radius: inherit;
+    122 +        background: var(--blue);
+    123 +      }
+    124 +      .fill.expense { background: var(--amber); }
+    125 +      .table-wrap { overflow: auto; }
+    126 +      table {
+    127 +        width: 100%;
+    128 +        border-collapse: collapse;
+    129 +        min-width: 620px;
+    130 +      }
+    131 +      th, td {
+    132 +        padding: 10px 8px;
+    133 +        border-bottom: 1px solid #edf1f3;
+    134 +        text-align: left;
+    135 +        vertical-align: top;
+    136 +        font-size: 13px;
+    137 +      }
+    138 +      th {
+    139 +        color: var(--muted);
+    140 +        font-weight: 700;
+    141 +        background: #f8fafb;
+    142 +      }
+    143 +      .right { text-align: right; }
+    144 +      .tag {
+    145 +        display: inline-block;
+    146 +        padding: 4px 8px;
+    147 +        border-radius: 999px;
+    148 +        background: #edf3f8;
+    149 +        color: #28587a;
+    150 +        font-size: 12px;
+    151 +        font-weight: 700;
+    152 +      }
+    153 +      .tag.good { background: #e8f6ed; color: var(--green); }
+    154 +      .tag.warn { background: #fff4df; color: var(--amber); }
+    155 +      .toolbar, .form-grid {
+    156 +        display: flex;
+    157 +        flex-wrap: wrap;
+    158 +        gap: 8px;
+    159 +        align-items: center;
+    160 +      }
+    161 +      button, input, select {
+    162 +        min-height: 40px;
+    163 +        border: 1px solid #bcc8ce;
+    164 +        border-radius: 6px;
+    165 +        background: #fff;
+    166 +        color: var(--ink);
+    167 +        font: inherit;
+    168 +      }
+    169 +      button {
+    170 +        padding: 8px 12px;
+    171 +        cursor: pointer;
+    172 +        font-weight: 700;
+    173 +      }
+    174 +      input, select { padding: 8px 10px; }
+    175 +      button.primary {
+    176 +        color: #fff;
+    177 +        border-color: var(--blue);
+    178 +        background: var(--blue);
+    179 +      }
+    180 +      button.danger {
+    181 +        color: #fff;
+    182 +        border-color: var(--red);
+    183 +        background: var(--red);
+    184 +      }
+    185 +      button:disabled {
+    186 +        opacity: 0.55;
+    187 +        cursor: not-allowed;
+    188 +      }
+    189 +      .device-list, .logs {
+    190 +        display: grid;
+    191 +        gap: 10px;
+    192 +      }
+    193 +      .device {
+    194 +        padding: 12px;
+    195 +        border: 1px solid #edf1f3;
+    196 +        border-radius: 8px;
+    197 +        background: #fbfcfd;
+    198 +      }
+    199 +      .device-head {
+    200 +        display: flex;
+    201 +        justify-content: space-between;
+    202 +        gap: 10px;
+    203 +        margin-bottom: 8px;
+    204 +        font-weight: 700;
+    205 +      }
+    206 +      .device-meta {
+    207 +        display: grid;
+    208 +        grid-template-columns: repeat(2, minmax(0, 1fr));
+    209 +        gap: 8px;
+    210 +        color: var(--muted);
+    211 +        font-size: 12px;
+    212 +      }
+    213 +      .qr-box {
+    214 +        display: grid;
+    215 +        justify-items: center;
+    216 +        gap: 10px;
+    217 +        padding: 14px;
+    218 +        border: 1px dashed #c7d2d8;
+    219 +        border-radius: 8px;
+    220 +        background: #f9fbfc;
+    221 +      }
+    222 +      .qr-box img {
+    223 +        width: 180px;
+    224 +        height: 180px;
+    225 +        padding: 8px;
+    226 +        background: #fff;
+    227 +        border: 1px solid var(--line);
+    228 +      }
+    229 +      .hidden { display: none; }
+    230 +      .empty {
+    231 +        margin: 0;
+    232 +        color: var(--muted);
+    233 +        font-size: 13px;
+    234 +      }
+    235 +      .toast {
+    236 +        position: fixed;
+    237 +        right: 16px;
+    238 +        bottom: 16px;
+    239 +        max-width: min(360px, calc(100% - 32px));
+    240 +        padding: 12px 14px;
+    241 +        border-radius: 8px;
+    242 +        color: #fff;
+    243 +        background: #263238;
+    244 +        box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    245 +      }
+    246 +      @media (max-width: 940px) {
+    247 +        .layout, .two-col { grid-template-columns: 1fr; }
+    248 +        .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    249 +      }
+    250 +      @media (max-width: 560px) {
+    251 +        .page { width: min(100% - 20px, 1220px); padding-top: 16px; }
+    252 +        .topbar { display: block; }
+    253 +        .status-pill { margin-top: 12px; }
+    254 +        .summary-grid { grid-template-columns: 1fr; }
+    255 +        .metric-value { font-size: 24px; }
+    256 +        .bar-row { grid-template-columns: 82px 1fr 64px; }
+    257 +      }
+    258 +    </style>
+    259 +  </head>
+    260 +  <body>
+    261 +    <main class="page">
+    262 +      <section class="topbar">
+    263 +        <div>
+    264 +          <h1>แดชบอร์ดผู้รับเงิน</h1>
+    265 +          <p class="sub">สรุปรายรับ รายจ่าย และข้อมูลการใช้งานจาก ESP32 ผ่าน Firebase</p>
+    266 +        </div>
+    267 +        <div id="statusBadge" class="status-pill">กำลังโหลด</div>
+    268 +      </section>
+    269 +
+    270 +      <section class="summary-grid">
+    271 +        <article class="card">
+    272 +          <div class="metric-label">รายรับทั้งหมด</div>
+    273 +          <div class="metric-value"><span id="revenueText">0</span> บาท</div>
+    274 +          <div class="metric-note">จาก PromptPay และเงินสด</div>
+    275 +        </article>
+    276 +        <article class="card">
+    277 +          <div class="metric-label">รายจ่ายทั้งหมด</div>
+    278 +          <div class="metric-value"><span id="expenseText">0</span> บาท</div>
+    279 +          <div class="metric-note">ค่าไฟ ซ่อมบำรุง อินเทอร์เน็ต และอื่น ๆ</div>
+    280 +        </article>
+    281 +        <article class="card">
+    282 +          <div class="metric-label">คงเหลือสุทธิ</div>
+    283 +          <div class="metric-value"><span id="netText">0</span> บาท</div>
+    284 +          <div class="metric-note">รายรับลบรายจ่าย</div>
+    285 +        </article>
+    286 +        <article class="card">
+    287 +          <div class="metric-label">ใช้งานไปแล้ว</div>
+    288 +          <div class="metric-value"><span id="usedText">0</span> นาที</div>
+    289 +          <div class="metric-note"><span id="txnCountText">0</span> รายการชำระเงิน</div>
+    290 +        </article>
+    291 +      </section>
+    292 +
+    293 +      <section class="layout">
+    294 +        <div>
+    295 +          <section class="panel">
+    296 +            <div class="two-col">
+    297 +              <div>
+    298 +                <h2>รายรับแยกช่องทาง</h2>
+    299 +                <div id="methodBars" class="bars"></div>
+    300 +              </div>
+    301 +              <div>
+    302 +                <h2>รายจ่ายแยกหมวด</h2>
+    303 +                <div id="expenseBars" class="bars"></div>
+    304 +              </div>
+    305 +            </div>
+    306 +          </section>
+    307 +
+    308 +          <section class="panel">
+    309 +            <h2>รายการรับเงินล่าสุด</h2>
+    310 +            <div class="table-wrap">
+    311 +              <table>
+    312 +                <thead>
+    313 +                  <tr>
+    314 +                    <th>เวลา</th>
+    315 +                    <th>ช่องทาง</th>
+    316 +                    <th class="right">จำนวน</th>
+    317 +                    <th class="right">เวลาชาร์จ</th>
+    318 +                    <th>สถานะ</th>
+    319 +                  </tr>
+    320 +                </thead>
+    321 +                <tbody id="transactionRows"></tbody>
+    322 +              </table>
+    323 +            </div>
+    324 +          </section>
+    325 +
+    326 +          <section class="panel">
+    327 +            <h2>รายจ่ายล่าสุด</h2>
+    328 +            <div class="table-wrap">
+    329 +              <table>
+    330 +                <thead>
+    331 +                  <tr>
+    332 +                    <th>เวลา</th>
+    333 +                    <th>หมวด</th>
+    334 +                    <th>รายละเอียด</th>
+    335 +                    <th class="right">จำนวน</th>
+    336 +                    <th>ที่มา</th>
+    337 +                  </tr>
+    338 +                </thead>
+    339 +                <tbody id="expenseRows"></tbody>
+    340 +              </table>
+    341 +            </div>
+    342 +          </section>
+    343 +        </div>
+    344 +
+    345 +        <aside>
+    346 +          <section class="panel">
+    347 +            <h2>สถานะตู้และ ESP32</h2>
+    348 +            <div class="device-list">
+    349 +              <div class="device">
+    350 +                <div class="device-head">
+    351 +                  <span id="chargerIdText">charger01</span>
+    352 +                  <span id="relayTag" class="tag">Relay OFF</span>
+    353 +                </div>
+    354 +                <div class="device-meta">
+    355 +                  <span>สถานะ: <b id="statusText">-</b></span>
+    356 +                  <span>เวลาคงเหลือ: <b id="remainingText">0</b> นาที</span>
+    357 +                  <span>ยอดล่าสุด: <b id="amountText">0</b> บาท</span>
+    358 +                  <span>Firebase: <b id="firebaseText">local</b></span>
+    359 +                </div>
+    360 +              </div>
+    361 +              <div id="reportList" class="logs"></div>
+    362 +            </div>
+    363 +          </section>
+    364 +
+    365 +          <section class="panel">
+    366 +            <h2>รับเงิน / จำลองตู้</h2>
+    367 +            <div class="toolbar">
+    368 +              <button onclick="payCash('coin', 5)">เหรียญ 5</button>
+    369 +              <button onclick="payCash('coin', 10)">เหรียญ 10</button>
+    370 +              <button onclick="payCash('bill', 20)">ธนบัตร 20</button>
+    371 +              <button onclick="payCash('bill', 50)">ธนบัตร 50</button>
+    372 +              <button onclick="payCash('bill', 100)">ธนบัตร 100</button>
+    373 +            </div>
+    374 +            <hr>
+    375 +            <div class="form-grid">
+    376 +              <select id="qrAmount">
+    377 +                <option value="5">QR 5 บาท</option>
+    378 +                <option value="10">QR 10 บาท</option>
+    379 +                <option value="20">QR 20 บาท</option>
+    380 +                <option value="50">QR 50 บาท</option>
+    381 +                <option value="100">QR 100 บาท</option>
+    382 +              </select>
+    383 +              <button class="primary" onclick="createQr()">สร้าง QR</button>
+    384 +              <button id="confirmQrBtn" onclick="confirmQr()" disabled>ยืนยันโอน</button>
+    385 +            </div>
+    386 +            <div id="qrBox" class="qr-box hidden">
+    387 +              <img id="qrImage" alt="PromptPay QR">
+    388 +              <span id="qrCaption"></span>
+    389 +            </div>
+    390 +            <hr>
+    391 +            <div class="toolbar">
+    392 +              <button onclick="tick()">ผ่านไป 1 นาที</button>
+    393 +              <button onclick="sendEsp32Report()">ส่งรายงาน ESP32</button>
+    394 +              <button class="danger" onclick="batteryFull()">แบตเต็ม</button>
+    395 +              <button onclick="resetSystem()">รีเซ็ต</button>
+    396 +            </div>
+    397 +          </section>
+    398 +
+    399 +          <section class="panel">
+    400 +            <h2>เพิ่มรายจ่ายเอง</h2>
+    401 +            <div class="form-grid">
+    402 +              <select id="expenseCategory">
+    403 +                <option value="electricity">ค่าไฟ</option>
+    404 +                <option value="maintenance">ซ่อมบำรุง</option>
+    405 +                <option value="internet">อินเทอร์เน็ต</option>
+    406 +                <option value="rent">ค่าเช่าพื้นที่</option>
+    407 +                <option value="other">อื่น ๆ</option>
+    408 +              </select>
+    409 +              <input id="expenseAmount" type="number" min="1" step="1" placeholder="จำนวนบาท">
+    410 +              <input id="expenseNote" type="text" placeholder="รายละเอียด">
+    411 +              <button class="primary" onclick="addExpense()">บันทึก</button>
+    412 +            </div>
+    413 +          </section>
+    414 +        </aside>
+    415 +      </section>
+    416 +    </main>
+    417 +
+    418 +    <div id="toast" class="toast hidden"></div>
+    419 +
+    420 +    <script>
+    421 +      const methodLabels = { coin: "เหรียญ", bill: "ธนบัตร", qr: "PromptPay QR", unknown: "ไม่ระบุ" };
+    422 +      const expenseLabels = {
+    423 +        electricity: "ค่าไฟ",
+    424 +        maintenance: "ซ่อมบำรุง",
+    425 +        internet: "อินเทอร์เน็ต",
+    426 +        rent: "ค่าเช่าพื้นที่",
+    427 +        other: "อื่น ๆ",
+    428 +      };
+    429 +
+    430 +      async function api(path, options = {}) {
+    431 +        const res = await fetch(path, {
+    432 +          headers: { "Content-Type": "application/json" },
+    433 +          ...options,
+    434 +        });
+    435 +        const data = await res.json();
+    436 +        if (!res.ok) throw new Error(data.error || "request failed");
+    437 +        return data;
+    438 +      }
+    439 +
+    440 +      async function refresh() {
+    441 +        try {
+    442 +          const data = await api("/api/dashboard");
+    443 +          render(data.state, data.summary, data.firebaseEnabled);
+    444 +        } catch (err) {
+    445 +          showToast(err.message);
+    446 +        }
+    447 +      }
+    448 +
+    449 +      function render(state, summary, firebaseEnabled) {
+    450 +        const busy = state.status === "in-use";
+    451 +        setText("statusBadge", busy ? "กำลังใช้งาน" : "พร้อมรับเงิน");
+    452 +        document.getElementById("statusBadge").classList.toggle("busy", busy);
+    453 +        setText("revenueText", money(summary.revenue));
+    454 +        setText("expenseText", money(summary.totalExpenses));
+    455 +        setText("netText", money(summary.net));
+    456 +        setText("usedText", summary.usedMinutes || 0);
+    457 +        setText("txnCountText", summary.transactionCount || 0);
+    458 +        setText("chargerIdText", state.chargerId || "charger01");
+    459 +        setText("statusText", state.status || "-");
+    460 +        setText("remainingText", state.remainingMinutes || 0);
+    461 +        setText("amountText", money(state.amount || 0));
+    462 +        setText("firebaseText", firebaseEnabled ? "online" : "local");
+    463 +        setText("relayTag", state.relayOn ? "Relay ON" : "Relay OFF");
+    464 +        document.getElementById("relayTag").className = `tag ${state.relayOn ? "good" : ""}`;
+    465 +
+    466 +        renderBars("methodBars", summary.byMethod, methodLabels, "fill");
+    467 +        renderBars("expenseBars", summary.byExpenseCategory, expenseLabels, "fill expense");
+    468 +        renderTransactions(state.transactions || []);
+    469 +        renderExpenses(state.expenses || []);
+    470 +        renderReports(state.deviceReports || []);
+    471 +      }
+    472 +
+    473 +      function renderBars(id, values, labels, fillClass) {
+    474 +        const box = document.getElementById(id);
+    475 +        const entries = Object.entries(values || {});
+    476 +        const max = Math.max(1, ...entries.map(([, value]) => Number(value || 0)));
+    477 +
+    478 +        if (!entries.length) {
+    479 +          box.innerHTML = `<p class="empty">ยังไม่มีข้อมูล</p>`;
+    480 +          return;
+    481 +        }
+    482 +
+    483 +        box.innerHTML = entries.map(([key, value]) => {
+    484 +          const width = Math.max(4, (Number(value || 0) / max) * 100);
+    485 +          return `
+    486 +            <div class="bar-row">
+    487 +              <span>${labels[key] || key}</span>
+    488 +              <div class="track"><div class="${fillClass}" style="width:${width}%"></div></div>
+    489 +              <b class="right">${money(value)}</b>
+    490 +            </div>
+    491 +          `;
+    492 +        }).join("");
+    493 +      }
+    494 +
+    495 +      function renderTransactions(items) {
+    496 +        const rows = document.getElementById("transactionRows");
+    497 +        rows.innerHTML = items.slice(0, 12).map((tx) => `
+    498 +          <tr>
+    499 +            <td>${dateTime(tx.createdAt)}</td>
+    500 +            <td>${methodLabels[tx.method] || tx.method || "-"}</td>
+    501 +            <td class="right">${money(tx.amount)} บาท</td>
+    502 +            <td class="right">${tx.chargeMinutes || 0} นาที</td>
+    503 +            <td><span class="tag ${tx.status === "finished" ? "good" : "warn"}">${tx.status || "-"}</span></td>
+    504 +          </tr>
+    505 +        `).join("") || `<tr><td colspan="5">ยังไม่มีรายการรับเงิน</td></tr>`;
+    506 +      }
+    507 +
+    508 +      function renderExpenses(items) {
+    509 +        const rows = document.getElementById("expenseRows");
+    510 +        rows.innerHTML = items.slice(0, 12).map((item) => `
+    511 +          <tr>
+    512 +            <td>${dateTime(item.createdAt)}</td>
+    513 +            <td>${expenseLabels[item.category] || item.category || "-"}</td>
+    514 +            <td>${item.note || "-"}</td>
+    515 +            <td class="right">${money(item.amount)} บาท</td>
+    516 +            <td>${item.source || "-"}</td>
+    517 +          </tr>
+    518 +        `).join("") || `<tr><td colspan="5">ยังไม่มีรายจ่าย</td></tr>`;
+    519 +      }
+    520 +
+    521 +      function renderReports(items) {
+    522 +        const box = document.getElementById("reportList");
+    523 +        box.innerHTML = items.slice(0, 4).map((report) => `
+    524 +          <div class="device">
+    525 +            <div class="device-head">
+    526 +              <span>${dateTime(report.createdAt)}</span>
+    527 +              <span class="tag ${report.batteryFull ? "good" : ""}">${report.batteryFull ? "แบตเต็ม" : "รายงานปก
+         ติ"}</span>
+    528 +            </div>
+    529 +            <div class="device-meta">
+    530 +              <span>กระแส: <b>${report.currentMa || 0}</b> mA</span>
+    531 +              <span>พลังงาน: <b>${report.energyWh || 0}</b> Wh</span>
+    532 +              <span>Relay: <b>${report.relayOn ? "ON" : "OFF"}</b></span>
+    533 +              <span>เหลือ: <b>${report.remainingMinutes || 0}</b> นาที</span>
+    534 +            </div>
+    535 +          </div>
+    536 +        `).join("") || `<p class="empty">ยังไม่มีรายงานจาก ESP32</p>`;
+    537 +      }
+    538 +
+    539 +      async function payCash(method, amount) {
+    540 +        await action("/api/cash", { method, amount }, `รับเงิน ${amount} บาทแล้ว`);
+    541 +      }
+    542 +
+    543 +      async function createQr() {
+    544 +        try {
+    545 +          const amount = Number(document.getElementById("qrAmount").value);
+    546 +          const data = await api("/api/qr/create", {
+    547 +            method: "POST",
+    548 +            body: JSON.stringify({ amount }),
+    549 +          });
+    550 +          document.getElementById("qrImage").src = data.pendingQr.qr;
+    551 +          setText("qrCaption", `${amount} บาท ได้เวลา ${data.pendingQr.chargeMinutes} นาที`);
+    552 +          document.getElementById("qrBox").classList.remove("hidden");
+    553 +          document.getElementById("confirmQrBtn").disabled = false;
+    554 +          showToast("สร้าง QR แล้ว");
+    555 +          await refresh();
+    556 +        } catch (err) {
+    557 +          showToast(err.message);
+    558 +        }
+    559 +      }
+    560 +
+    561 +      async function confirmQr() {
+    562 +        await action("/api/qr/confirm", {}, "ยืนยัน PromptPay แล้ว");
+    563 +        document.getElementById("qrBox").classList.add("hidden");
+    564 +        document.getElementById("confirmQrBtn").disabled = true;
+    565 +      }
+    566 +
+    567 +      async function addExpense() {
+    568 +        const category = document.getElementById("expenseCategory").value;
+    569 +        const amount = Number(document.getElementById("expenseAmount").value);
+    570 +        const note = document.getElementById("expenseNote").value;
+    571 +        await action("/api/expense", { category, amount, note }, "บันทึกรายจ่ายแล้ว");
+    572 +        document.getElementById("expenseAmount").value = "";
+    573 +        document.getElementById("expenseNote").value = "";
+    574 +      }
+    575 +
+    576 +      async function tick() {
+    577 +        await action("/api/tick", {}, "ลดเวลาคงเหลือ 1 นาที");
+    578 +      }
+    579 +
+    580 +      async function batteryFull() {
+    581 +        await action("/api/battery-full", {}, "บันทึกว่าแบตเต็มแล้ว");
+    582 +      }
+    583 +
+    584 +      async function resetSystem() {
+    585 +        await action("/api/reset", {}, "รีเซ็ตตู้แล้ว");
+    586 +      }
+    587 +
+    588 +      async function sendEsp32Report() {
+    589 +        const report = {
+    590 +          chargerId: "charger01",
+    591 +          relayOn: true,
+    592 +          remainingMinutes: Math.max(0, Number(document.getElementById("remainingText").textContent || 0)),
+    593 +          currentMa: 820,
+    594 +          voltageMv: 5100,
+    595 +          energyWh: 4.2,
+    596 +          expenses: [{ category: "electricity", amount: 1.25, note: "ค่าไฟจากรายงาน ESP32" }],
+    597 +        };
+    598 +        await action("/api/esp32/report", report, "รับรายงาน ESP32 แล้ว");
+    599 +      }
+    600 +
+    601 +      async function action(path, body, message) {
+    602 +        try {
+    603 +          await api(path, { method: "POST", body: JSON.stringify(body) });
+    604 +          showToast(message);
+    605 +          await refresh();
+    606 +        } catch (err) {
+    607 +          showToast(err.message);
+    608 +        }
+    609 +      }
+    610 +
+    611 +      function setText(id, value) {
+    612 +        document.getElementById(id).textContent = value;
+    613 +      }
+    614 +
+    615 +      function money(value) {
+    616 +        return Number(value || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+    617 +      }
+    619 +      function dateTime(value) {
+    620 +        if (!value) return "-";
+    621 +        return new Date(value).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" });
+    622 +      }
+    623 +
+    624 +      function showToast(message) {
+    625 +        const toast = document.getElementById("toast");
+    626 +        toast.textContent = message;
+    627 +        toast.classList.remove("hidden");
+    628 +        clearTimeout(window.toastTimer);
+    629 +        window.toastTimer = setTimeout(() => toast.classList.add("hidden"), 2800);
+    630 +      }
+    631 +
+    632 +      refresh();
+    633 +      setInterval(refresh, 2500);
+    634 +    </script>
+    635 +  </body>
+    636 +</html>
+
+✘ Failed to apply patch
+
+■ You've hit your usage limit. To continue using Codex and get access to GPT-5.3-Codex, start a free trial of Plus today
+(https://chatgpt.com/explore/plus), or try again at Sep 12th, 2026 9:08 AM.
+
+
+› ก็คือฉันต้องการให้ผู้ใช้งานกรอก เบอร์ตัวเองเพื่อรอรับ sms เพราะ ระบบของฉันมันไม่อยากมีพวก โซเชียวมีเดียมาเกี่ยวข้องไงเข้าใจเหตุผลเลยครับ
+  การใช้เบอร์โทรศัพท์อย่างเดียวช่วยให้ระบบสะอาด ปลอดภัย และคัดกรองผู้ใช้งานจริงได้ดีที่สุดโดยไม่ต้องพึ่งพา Facebook หรือ
+  Googleเพื่อให้ระบบนี้ทำงานได้จริง คุณต้องใช้ 2 หน้าจอร่วมกัน คือ หน้าแรกให้ผู้ใช้กรอกเบอร์โทรศัพท์เพื่อกดส่งรหัส และหน้าสองคือฟอร์มกรอกรหัส OTP
+  (แบบที่ให้ไปก่อนหน้านี้)นี่คือโค้ดตัวอย่างหน้าแรกสำหรับกรอกเบอร์โทรศัพท์ที่มีระบบตรวจเช็กเบอร์มือถือไทย (10 หลัก) อย่างถูกต้องครับ:html<!DOCTYPE
+  html>
+  <html lang="th">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>เข้าสู่ระบบด้วยเบอร์โทรศัพท์</title>
+      <style>
+          body {
+              font-family: 'Helvetica Neue', Arial, sans-serif;
+              background-color: #f4f7f6;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+          }
+          .login-container {
+              background: #ffffff;
+              padding: 30px;
+              border-radius: 12px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              max-width: 400px;
+              width: 100%;
+          }
+          h2 { margin-bottom: 10px; color: #333; text-align: center; }
+          p { color: #666; font-size: 14px; margin-bottom: 25px; text-align: center; }
+          .input-group {
+              margin-bottom: 20px;
+          }
+          label {
+              display: block;
+              margin-bottom: 8px;
+              color: #333;
+              font-size: 14px;
+              font-weight: bold;
+          }
+          input[type="tel"] {
+              width: 100%;
+              padding: 12px;
+              border: 2px solid #ccc;
+              border-radius: 8px;
+              font-size: 16px;
+              box-sizing: border-box;
+              outline: none;
+              transition: border-color 0.2s;
+          }
+          input[type="tel"]:focus {
+              border-color: #007bff;
+          }
+          .btn-send {
+              background-color: #007bff;
+              color: white;
+              border: none;
+              padding: 14px;
+              width: 100%;
+              border-radius: 8px;
+              font-size: 16px;
+              cursor: pointer;
+              font-weight: bold;
+          }
+          .btn-send:hover {
+              background-color: #0056b3;
+          }
+          .error-msg {
+              color: red;
+              font-size: 12px;
+              margin-top: 5px;
+              display: none;
+          }
+      </style>
+  </head>
+  <body>
+
+  <div class="login-container">
+      <h2>เข้าสู่ระบบ / สมัครสมาชิก</h2>
+      <p>กรุณากรอกเบอร์โทรศัพท์ของคุณเพื่อรับรหัสยืนยันตัวตน (OTP)</p>
+
+      <div class="input-group">
+          <label for="phone">เบอร์โทรศัพท์มือถือ</label>
+          <!-- จำกัดให้พิมพ์ได้เฉพาะตัวเลข และไม่เกิน 10 หลัก -->
+          <input type="tel" id="phone" placeholder="เช่น 0812345678" maxlength="10" oninput="validatePhone(this)">
+          <div id="error" class="error-msg">กรุณากรอกเบอร์มือถือให้ถูกต้อง (10 หลัก และขึ้นต้นด้วย 0)</div>
+      </div>
+
+      <button class="btn-send" onclick="requestOTP()">รับรหัส OTP ทาง SMS</button>
+  </div>
+
+  <script>
+      // กรองให้พิมพ์ได้เฉพาะตัวเลขเท่านั้น
+      function validatePhone(input) {
+          input.value = input.value.replace(/[^0-9]/g, '');
+      }
+
+      function requestOTP() {
+          const phoneInput = document.getElementById('phone').value;
+          const errorDiv = document.getElementById('error');
+
+          // ตรวจสอบเงื่อนไข: ต้องยาว 10 หลัก และขึ้นต้นด้วยเลข 0
+          const phonePattern = /^0[0-9]{9}$/;
+
+          if (!phonePattern.test(phoneInput)) {
+              errorDiv.style.display = 'block';
+              return;
+          }
+
+          errorDiv.style.display = 'none';
+          alert("ระบบกำลังส่ง SMS OTP ไปยังเบอร์: " + phoneInput);
+
+          // ตรงนี้คือจุดที่จะส่งเบอร์โทรศัพท์ไปยังระบบหลังบ้าน (Backend) เพื่อสั่งยิง SMS จริง
+          // window.location.href = "หน้ากรอกรหัส_otp.html"; // ย้ายหน้าไปหน้ากรอกรหัสเมื่อส่งสำเร็จ
+      }
+  </script>
+
+  </body>
+  </html>
+  ใช้โค้ดอย่างระมัดระวังการทำงานของโค้ดนี้เพื่อระบบของคุณคัดกรองเบอร์ปลอม: ล็อกให้กรอกได้เฉพาะตัวเลข 0-9 เท่านั้น
+  ป้องกันผู้ใช้พิมพ์ตัวอักษรปนมาเช็กโครงสร้างเบอร์ไทย: มีระบบตรวจสอบอัตโนมัติว่าต้องขึ้นต้นด้วยเลข 0 และมีครบ 10 หลัก เท่านั้น ปุ่มถึงจะยอมทำงาน
+  ช่วยประหยัดค่าส่ง SMS ไม่ให้เสียเงินไปกับเบอร์ที่กรอกมั่วเพื่อให้ระบบสมบูรณ์และส่ง SMS ได้จริง คุณต้องการให้ผมช่วยแนะนำภาษาหลังบ้าน (Backend)
+  ส่วน ดังนี้ครับ:โครงสร้างการทำงาน (3 ส่วนหลัก)[ 1. หน้าเว็บหน้าบ้าน (Frontend) ]
+         │  (ผู้ใช้กรอกเบอร์โทรศัพท์)
+         ▼
+  [ 2. ระบบหลังบ้าน (Backend Server) ]
+         │  (สร้างรหัสสุ่ม 6 หลัก และส่งคำสั่ง)
+         ▼
+  [ 3. ผู้ให้บริการ SMS (SMS Gateway API) ] ──> [ มือถือของผู้ใช้ ]
+  หน้าเว็บหน้าบ้าน (Frontend - HTML/CSS): คือหน้าจอที่ผู้ใช้เห็น มีหน้าที่รับเบอร์โทรศัพท์ และส่งเบอร์นั้นต่อไปให้ระบบหลังบ้านระบบหลังบ้าน (Backend
+  Server เช่น PHP, Node.js, Python): มีหน้าที่เป็นสมองกล คอยสุ่มรหัสเลข 6 หลักขึ้นมา (เช่น 482915) แล้วบันทึกเก็บไว้ในฐานข้อมูลชั่วคราว
+  จากนั้นจะทำหน้าที่สั่งยิงข้อมูลไปที่เครือข่ายผู้ให้บริการ SMS Gateway (ตัวกลางยิง SMS): เป็นบริษัทที่มีเสาสัญญาณ คอยรับรหัส 6 หลักจากหลังบ้านของเรา
+  แล้วแปลงเป็นข้อความ SMS ส่งเข้ามือถือลูกค้าจริงๆ (เช่นค่าย ThaiBulkSMS, SMS2PRO)ขั้นตอนการทำงานจริง (เมื่อกดปุ่ม)ผู้ใช้กรอกเบอร์ 081-234-
+  5678 บนหน้าเว็บของคุณ แล้วกดปุ่ม "รับรหัส OTP"หน้าเว็บส่งเบอร์นี้ไปให้ ระบบหลังบ้าน ของคุณหลังบ้านของคุณสุ่มเลขขึ้นมา เช่น 555999
+  แล้วส่งคำสั่งผ่านอินเทอร์เน็ตไปหา SMS Gateway ว่า "ช่วยส่งเลข 555999 ไปที่เบอร์ 0812345678 หน่อย"SMS Gateway ส่ง SMS
+  เข้ามือถือผู้ใช้ผู้ใช้นำเลข 555999 มากรอกบนหน้าเว็บของคุณหน้าเว็บส่งเลขที่ผู้ใช้กรอก ไปถาม ระบบหลังบ้าน อีกครั้งว่า "เลขที่กรอกมา
+  ตรงกับเลขที่เราสุ่มไว้ตอนแรกไหม?"ถ้าตรงกัน = ยืนยันตัวตนสำเร็จ / ให้เข้าสู่ระบบได้เลยสิ่งที่คุณต้องทำเพื่อให้ระบบเปิดใช้งานได้หากคุณมีหน้าเว็บ
+  (Frontend) แล้ว สิ่งที่คุณต้องทำต่อคือ:สมัครบริการ SMS Gateway: ไปสมัครสมาชิกกับเว็บผู้ให้บริการส่ง SMS (เช่น ThaiBulkSMS หรือ SMS2PRO)
+  เพื่อขอสิ่งที่เรียกว่า API Key (เปรียบเสมือนรหัสผ่านที่ยอมให้ระบบหลังบ้านของคุณสั่งส่ง SMS ผ่านค่ายเขาได้)เขียนโค้ดหลังบ้าน (Backend):
+  สร้างไฟล์หลังบ้านขึ้นมารับค่า และเชื่อมต่อกับ API ของค่าย SMS นั้นๆคุณมี ระบบหลังบ้าน (Server) หรือเขียนภาษาหลังบ้านตัวไหนเป็นหลักอยู่แล้วไหมครับ?
+  (เช่น PHP บนโฮสติ้งทั่วไป, Node.js, หรือใช้ระบบสำเร็จรูปอย่าง WordPress)
+  ผมจะได้แนะนำวิธีเชื่อมต่อที่ตรงกับระบบของคุณที่สุดครับนี่คือสิ่งที่ฉันต้องการเมื่อผู้ใช้งานชาจร์แบตเต็มก่อนเเล้วยังเหลือเวลาอยู่คืออยากให้มีการกรอกรหัส sms
+  รึรหัสโค้ดหลังบ้านที่ gen มาให้ โดยจะเจนก็ต่อเมื่อระบบตรวจจับว่าไฟไม่กินเเล้วเเละยังเหลือเวลาอยู่ก็ให้กรอกผ่าหน้าเว็บโดยการให้มี qr code
+  สำหรับเเสกนเข้าเว็บไซต์

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — ตู้ชาร์จ USB</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#273347;--border:#334155;--green:#22c55e;--yellow:#eab308;--red:#ef4444;--blue:#3b82f6;--purple:#6366f1;--text:#f1f5f9;--muted:#94a3b8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+
+/* ─ Login Screen */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:1.25rem;padding:2rem;width:100%;max-width:360px;text-align:center}
+.login-box h1{font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+.login-box p{color:var(--muted);font-size:.85rem;margin-bottom:1.5rem}
+.pin-dots{display:flex;justify-content:center;gap:.6rem;margin-bottom:1.5rem}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--purple);border-color:var(--purple)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;max-width:240px;margin:0 auto 1.2rem}
+.pin-key{background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:.9rem;border-radius:.75rem;font-size:1.1rem;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.pin-key:hover{border-color:var(--purple);background:rgba(99,102,241,.15)}
+.pin-key.del{color:var(--red)}
+.login-err{color:var(--red);font-size:.82rem;min-height:1.2em}
+
+/* ─ App Layout */
+#appScreen{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:.75rem 1.25rem;display:flex;align-items:center;gap:.75rem}
+.topbar h1{font-size:1rem;font-weight:700;flex:1}
+.topbar .chip{background:rgba(34,197,94,.15);color:var(--green);border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600}
+.topbar .chip.warn{background:rgba(234,179,8,.15);color:var(--yellow)}
+.btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.3rem .8rem;border-radius:.6rem;cursor:pointer;font-size:.8rem}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ─ Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto}
+.tab{padding:.75rem 1.25rem;font-size:.88rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* ─ Content */
+.content{padding:1.25rem;max-width:900px;margin:0 auto}
+
+/* ─ Stats */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:.875rem;padding:1rem;text-align:center}
+.stat-card .val{font-size:1.6rem;font-weight:800;margin-bottom:.15rem}
+.stat-card .lbl{font-size:.72rem;color:var(--muted)}
+.stat-card.green .val{color:var(--green)}
+.stat-card.blue  .val{color:var(--blue)}
+.stat-card.purple .val{color:var(--purple)}
+
+/* ─ Port Grid */
+.port-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.5rem}
+.port-card-admin{background:var(--card);border:2px solid var(--border);border-radius:.875rem;padding:1rem;position:relative}
+.port-card-admin.available{border-color:rgba(34,197,94,.4)}
+.port-card-admin.pending_payment{border-color:rgba(234,179,8,.5)}
+.port-card-admin.in-use{border-color:rgba(59,130,246,.5)}
+.port-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
+.port-head .name{font-weight:700}
+.port-badge{border-radius:999px;padding:.2rem .65rem;font-size:.72rem;font-weight:600}
+.pb-available{background:rgba(34,197,94,.15);color:var(--green)}
+.pb-pending{background:rgba(234,179,8,.15);color:var(--yellow)}
+.pb-inuse{background:rgba(59,130,246,.15);color:var(--blue)}
+.port-timer-big{font-size:1.6rem;font-weight:800;color:var(--blue);letter-spacing:1px}
+.port-method{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.port-actions{display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap}
+.btn-sm{padding:.35rem .75rem;font-size:.75rem;border-radius:.5rem;cursor:pointer;border:none;font-weight:600;transition:all .15s}
+.btn-red{background:rgba(239,68,68,.2);color:#fca5a5}.btn-red:hover{background:rgba(239,68,68,.35)}
+.btn-yellow{background:rgba(234,179,8,.2);color:#fde68a}.btn-yellow:hover{background:rgba(234,179,8,.35)}
+.btn-gray{background:var(--card2);color:var(--muted);border:1px solid var(--border)}.btn-gray:hover{color:var(--text)}
+
+/* ─ Section */
+.section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.section-hdr h2{font-size:.95rem;font-weight:700}
+
+/* ─ Table */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:.875rem;overflow:hidden;margin-bottom:1.5rem;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:560px}
+th{color:var(--muted);font-weight:500;text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border);font-size:.75rem}
+td{padding:.6rem .75rem;border-bottom:1px solid rgba(255,255,255,.04)}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:.15rem .55rem;border-radius:999px;font-size:.7rem;font-weight:600}
+.b-active{background:rgba(59,130,246,.2);color:#93c5fd}
+.b-finished{background:rgba(34,197,94,.15);color:#86efac}
+.b-qr{background:rgba(99,102,241,.2);color:#a5b4fc}
+.b-transfer{background:rgba(234,179,8,.15);color:#fde68a}
+.b-cash{background:rgba(34,197,94,.15);color:#86efac}
+.b-dev{background:rgba(234,179,8,.15);color:#fde68a}
+.b-ok{background:rgba(34,197,94,.15);color:var(--green)}
+.b-fail{background:rgba(239,68,68,.15);color:#fca5a5}
+td .small{font-size:.7rem;color:var(--muted)}
+
+/* ─ Settings */
+.settings-grid{display:grid;gap:.75rem}
+.setting-row{background:var(--card);border:1px solid var(--border);border-radius:.875rem;padding:.9rem 1.1rem;display:flex;justify-content:space-between;align-items:center}
+.setting-row .k{font-size:.82rem;color:var(--muted)}
+.setting-row .v{font-size:.9rem;font-weight:600}
+.setting-row .v.warn{color:var(--yellow)}
+.alert-box{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:.75rem;padding:.85rem 1rem;font-size:.82rem;color:#fde68a;margin-bottom:1rem;line-height:1.5}
+
+/* ─ Buttons */
+.btn{padding:.8rem 1.2rem;border-radius:.75rem;border:none;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-danger{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.35)}
+
+/* ─ Empty */
+.empty{text-align:center;padding:2rem;color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">🔐</div>
+    <h1>Admin Panel</h1>
+    <p>ตู้ชาร์จ USB อัจฉริยะ</p>
+    <div class="pin-dots" id="pinDots">
+      <!-- rendered by JS based on ADMIN_PIN length hint (max 12) -->
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey(7)">7</button>
+      <button class="pin-key" onclick="pinKey(8)">8</button>
+      <button class="pin-key" onclick="pinKey(9)">9</button>
+      <button class="pin-key" onclick="pinKey(4)">4</button>
+      <button class="pin-key" onclick="pinKey(5)">5</button>
+      <button class="pin-key" onclick="pinKey(6)">6</button>
+      <button class="pin-key" onclick="pinKey(1)">1</button>
+      <button class="pin-key" onclick="pinKey(2)">2</button>
+      <button class="pin-key" onclick="pinKey(3)">3</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+      <button class="pin-key" onclick="pinKey(0)">0</button>
+      <button class="pin-key" onclick="pinSubmit()">✓</button>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <br>
+    <a href="/" style="color:var(--muted);font-size:.8rem;text-decoration:none">← กลับหน้าผู้ใช้</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ APP -->
+<div id="appScreen">
+  <div class="topbar">
+    <div>🔧</div>
+    <h1>Admin — ตู้ชาร์จ USB</h1>
+    <span class="chip" id="easyslipChip">EasySlip: …</span>
+    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    <div class="tab" onclick="switchTab('transactions')">📋 Transactions</div>
+    <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+  </div>
+
+  <!-- ─ TAB: Dashboard -->
+  <div id="tab-dashboard" class="content">
+    <div class="stats-row">
+      <div class="stat-card green"><div class="val" id="stRevenue">฿—</div><div class="lbl">รายได้รวม</div></div>
+      <div class="stat-card blue"><div class="val" id="stCount">—</div><div class="lbl">transactions</div></div>
+      <div class="stat-card purple"><div class="val" id="stActive">—</div><div class="lbl">กำลังชาร์จ</div></div>
+    </div>
+
+    <div class="section-hdr">
+      <h2>สถานะพอร์ต</h2>
+      <button class="btn btn-danger btn-sm" onclick="adminReset()">🔄 Reset ทั้งหมด</button>
+    </div>
+    <div class="port-grid" id="adminPortGrid"></div>
+
+    <div class="section-hdr"><h2>รายการล่าสุด</h2></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ID</th><th>พอร์ต</th><th>฿</th><th>วิธี</th><th>สถานะ</th><th>Slip</th><th>เวลา</th></tr></thead>
+      <tbody id="txTable5"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ─ TAB: Transactions -->
+  <div id="tab-transactions" class="content" style="display:none">
+    <div class="section-hdr"><h2>ประวัติ Transaction ทั้งหมด</h2></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>ID</th><th>พอร์ต</th><th>฿</th><th>วิธี</th><th>สถานะ</th><th>Slip / ผล</th><th>ผู้โอน</th><th>เวลา</th><th></th></tr></thead>
+      <tbody id="txTableAll"></tbody>
+    </table></div>
+  </div>
+
+  <!-- ─ TAB: Settings -->
+  <div id="tab-settings" class="content" style="display:none">
+    <div class="alert-box">⚠️ ค่าตั้งต่างๆ แก้ไขในไฟล์ <strong>.env</strong> แล้ว restart server<br>
+    สิ่งที่แสดงด้านล่างคือค่าปัจจุบันที่ server ใช้อยู่</div>
+    <div class="settings-grid" id="settingsGrid"></div>
+    <br>
+    <div style="text-align:center">
+      <a href="/" style="color:var(--muted);font-size:.82rem;text-decoration:none">← กลับหน้าผู้ใช้</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════ Auth
+let token = sessionStorage.getItem('adminToken') || '';
+let pinBuf = '';
+let dashData = null;
+const MAX_PIN = 12; // รองรับ PIN สูงสุด 12 หลัก
+
+// Build PIN dots (hint: 8 dots by default)
+function buildDots(n) {
+  const d = document.getElementById('pinDots');
+  d.innerHTML = Array.from({length: n}, (_,i) => `<div class="pin-dot" id="d${i}"></div>`).join('');
+}
+buildDots(8); // default hint 8 หลัก (ตรงกับ ADMIN_PIN ใน .env)
+
+// Auto-check token on load
+if (token) tryLoadDashboard();
+
+function pinKey(n) {
+  if (pinBuf.length >= MAX_PIN) return;
+  pinBuf += String(n);
+  updateDots();
+  // Auto-submit หากเกิน 8 หลักและไม่กด confirm ก็รอ
+}
+function pinDel() { if (pinBuf.length) { pinBuf = pinBuf.slice(0,-1); updateDots(); } }
+function updateDots() {
+  const dots = document.querySelectorAll('#pinDots .pin-dot');
+  // ขยาย dots ถ้า PIN ยาวกว่า
+  if (pinBuf.length > dots.length) buildDots(pinBuf.length);
+  document.querySelectorAll('#pinDots .pin-dot').forEach((el,i) => {
+    el.className = 'pin-dot' + (i < pinBuf.length ? ' filled' : '');
+  });
+}
+async function pinSubmit() {
+  if (!pinBuf) return;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const res = await (await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pinBuf})})).json();
+    if (res.token) {
+      token = res.token;
+      sessionStorage.setItem('adminToken', token);
+      tryLoadDashboard();
+    } else {
+      document.getElementById('loginErr').textContent = res.error || 'PIN ไม่ถูกต้อง';
+      pinBuf=''; updateDots();
+    }
+  } catch(e) {
+    document.getElementById('loginErr').textContent = 'เชื่อมต่อไม่ได้';
+    pinBuf=''; updateDots();
+  }
+}
+function logout() {
+  token=''; sessionStorage.removeItem('adminToken');
+  pinBuf=''; updateDots();
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+}
+
+// ══════════════════════════════════════════ API
+const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
+async function adminApi(method, path, body) {
+  const opt = { method, headers: authHdr() };
+  if (body) opt.body = JSON.stringify(body);
+  const res = await fetch(path, opt);
+  if (res.status === 401) { logout(); return {}; }
+  return res.json();
+}
+
+// ══════════════════════════════════════════ Load Dashboard
+async function tryLoadDashboard() {
+  const data = await adminApi('GET', '/api/admin/dashboard');
+  if (!data.ports) { token=''; sessionStorage.removeItem('adminToken'); return; }
+  dashData = data;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='flex';
+  renderAll(data);
+  setInterval(autoRefresh, 5000);
+}
+async function autoRefresh() {
+  if (!token) return;
+  const data = await adminApi('GET', '/api/admin/dashboard');
+  if (data.ports) { dashData = data; renderAll(data); }
+}
+
+// ══════════════════════════════════════════ Render
+function renderAll(d) {
+  // EasySlip chip
+  const chip = document.getElementById('easyslipChip');
+  chip.textContent = d.config.easyslipEnabled ? 'EasySlip: ✅' : 'EasySlip: ⚠️ DEV';
+  chip.className = `chip ${d.config.easyslipEnabled ? '' : 'warn'}`;
+
+  // Stats
+  const s = d.summary;
+  document.getElementById('stRevenue').textContent = `฿${s.revenue.toFixed(2)}`;
+  document.getElementById('stCount').textContent   = s.transactionCount;
+  document.getElementById('stActive').textContent  = s.activeCount;
+
+  renderPortGrid(d.ports);
+  renderTxTable5(d.transactions);
+  renderTxTableAll(d.transactions);
+  renderSettings(d.config);
+}
+
+const fmtSecs = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtDate = s => { try { return new Date(s).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}); } catch{return s;} };
+
+function renderPortGrid(ports) {
+  const g = document.getElementById('adminPortGrid');
+  g.innerHTML = '';
+  ports.forEach(p => {
+    const d = document.createElement('div');
+    const st = p.status;
+    d.className = `port-card-admin ${st}`;
+    const badge = st === 'available' ? `<span class="port-badge pb-available">ว่าง</span>`
+      : st === 'pending_payment'     ? `<span class="port-badge pb-pending">รอชำระ</span>`
+      :                                `<span class="port-badge pb-inuse">ชาร์จอยู่</span>`;
+    const timerHtml = st === 'in-use' ? `<div class="port-timer-big">${fmtSecs(p.remainingSeconds)}</div>` : '';
+    const methodHtml = p.paymentSession ? `<div class="port-method">วิธี: ${p.paymentSession.method || '—'}</div>` : '';
+
+    let actions = '';
+    if (st === 'in-use') {
+      actions = `<button class="btn-sm btn-red" onclick="stopPort('${p.id}')">⏹ หยุดพอร์ต</button>`;
+    } else if (st === 'pending_payment') {
+      actions = `<button class="btn-sm btn-yellow" onclick="clearPortSession('${p.id}')">🗑 ล้าง Session</button>`;
+    }
+
+    d.innerHTML = `<div class="port-head"><div class="name">${p.label}</div>${badge}</div>
+      <div style="font-size:.75rem;color:var(--muted)">GPIO ${p.relayGpio} · ${p.type}</div>
+      ${timerHtml}${methodHtml}
+      ${actions ? `<div class="port-actions">${actions}</div>` : ''}`;
+    g.appendChild(d);
+  });
+}
+
+function renderTxTable5(txs) {
+  const tb = document.getElementById('txTable5');
+  tb.innerHTML = '';
+  const rows = txs.slice(0, 5);
+  if (!rows.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มี transaction</td></tr>`; return; }
+  rows.forEach(t => tb.appendChild(makeTxRow(t, false)));
+}
+function renderTxTableAll(txs) {
+  const tb = document.getElementById('txTableAll');
+  tb.innerHTML = '';
+  if (!txs.length) { tb.innerHTML = `<tr><td colspan="9" class="empty">ยังไม่มี transaction</td></tr>`; return; }
+  txs.forEach(t => tb.appendChild(makeTxRow(t, true)));
+}
+
+function makeTxRow(t, extended) {
+  const tr = document.createElement('tr');
+  const statusBadge = t.status === 'active' ? `<span class="badge b-active">กำลังใช้</span>` : `<span class="badge b-finished">เสร็จ</span>`;
+  const methodBadge = `<span class="badge b-${t.method}">${{qr:'QR',transfer:'โอน',cash:'สด'}[t.method]||t.method}</span>`;
+  
+  const v = t.verification || {};
+  let slipBadge = '—';
+  if (t.method !== 'cash') {
+    if (v.isDev)      slipBadge = `<span class="badge b-dev">Dev</span>`;
+    else if (v.transRef) slipBadge = `<span class="badge b-ok">✅</span><div class="small">${v.transRef?.slice(-8)}</div>`;
+  } else if (v.scores) {
+    slipBadge = `<span class="badge b-ok">UV:${v.scores.uv} C:${v.scores.color} M:${v.scores.magnetic}</span>`;
+  }
+
+  if (extended) {
+    tr.innerHTML = `
+      <td class="small">${t.id.slice(-8)}</td>
+      <td>${t.portId}</td>
+      <td>฿${t.amount}</td>
+      <td>${methodBadge}</td>
+      <td>${statusBadge}</td>
+      <td>${slipBadge}</td>
+      <td class="small">${v.sender || '—'}</td>
+      <td class="small">${fmtDate(t.createdAt)}</td>
+      <td>${t.status==='active'?`<button class="btn-sm btn-red" onclick="stopPort('${t.portId}')">หยุด</button>`:''}`;
+  } else {
+    tr.innerHTML = `
+      <td class="small">${t.id.slice(-8)}</td>
+      <td>${t.portId}</td>
+      <td>฿${t.amount}</td>
+      <td>${methodBadge}</td>
+      <td>${statusBadge}</td>
+      <td>${slipBadge}</td>
+      <td class="small">${fmtDate(t.createdAt)}</td>`;
+  }
+  return tr;
+}
+
+function renderSettings(cfg) {
+  const g = document.getElementById('settingsGrid');
+  const rows = [
+    ['PromptPay Phone',   cfg.promptpayPhone],
+    ['ธนาคาร',           cfg.bankName],
+    ['เลขบัญชี',         cfg.bankAccount || '(ไม่ได้ตั้งค่า)'],
+    ['ชื่อบัญชี',        cfg.bankAccountName || '(ไม่ได้ตั้งค่า)'],
+    ['อัตรา',            `1 บาท = ${cfg.secondsPerBaht/60} นาที`],
+    ['EasySlip API',     cfg.easyslipEnabled ? '✅ เปิดใช้งาน' : '⚠️ ไม่ได้ตั้งค่า (Dev Mode)'],
+  ];
+  g.innerHTML = rows.map(([k,v]) =>
+    `<div class="setting-row"><div class="k">${k}</div><div class="v ${v?.startsWith?.('⚠')?' warn':''}">${v||'—'}</div></div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════ Actions
+async function stopPort(portId) {
+  if (!confirm(`หยุดพอร์ต ${portId}? (เวลาจะหมดทันที)`)) return;
+  await adminApi('POST', `/api/admin/port/${portId}/stop`);
+  autoRefresh();
+}
+async function clearPortSession(portId) {
+  if (!confirm(`ล้าง session รอชำระของพอร์ต ${portId}?`)) return;
+  await adminApi('POST', `/api/admin/port/${portId}/clear`);
+  autoRefresh();
+}
+async function adminReset() {
+  if (!confirm('⚠️ Reset ทุกพอร์ต? ผู้ใช้ที่กำลังชาร์จอยู่จะหยุดทันที!')) return;
+  await adminApi('POST', '/api/admin/reset');
+  autoRefresh();
+}
+
+// ══════════════════════════════════════════ Tabs
+function switchTab(name) {
+  ['dashboard','transactions','settings'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.className = 'tab' + (['dashboard','transactions','settings'][i] === name ? ' active' : '');
+  });
+}
+</script>
+</body>
+</html>
