@@ -112,26 +112,22 @@ body{
   text-shadow:0 1px 5px rgba(0,0,0,.6);
 }
 
-/* ── USB icon in port card (SVG with currentColor) */
+/* ── USB icons (PNG รูปจริง) */
 .pc-usb-icon{
   display:block;margin-bottom:.625rem;
-  /* size per type set inline */
+  object-fit:contain;
 }
-.pc-usb-icon.type-a{
-  width:64px;height:auto;
-  color:rgba(255,255,255,.55);
-}
-.pc-usb-icon.type-c{
-  width:44px;height:auto;
-  color:rgba(255,255,255,.55);
-}
-/* Color when available */
-.port-card.available .type-a{color:rgba(0,200,83,.65)}
-.port-card.available .type-c{color:rgba(77,166,255,.65)}
+.pc-usb-icon.type-a{width:56px;height:auto;opacity:.5}
+.pc-usb-icon.type-c{width:44px;height:auto;opacity:.5}
+/* highlight when available */
+.port-card.available .pc-usb-icon{opacity:.85}
 /* in-use bar header icon */
-.bar-type-icon{display:inline-block;vertical-align:middle;margin-right:.5rem}
-.bar-type-icon.type-a{width:36px;color:rgba(255,255,255,.6)}
-.bar-type-icon.type-c{width:26px;color:rgba(255,255,255,.6)}
+.bar-type-icon{
+  display:inline-block;vertical-align:middle;
+  margin-right:.45rem;object-fit:contain;opacity:.7;
+}
+.bar-type-icon.type-a{width:30px;height:auto}
+.bar-type-icon.type-c{width:24px;height:auto}
 
 
 /* ── BOTTOM SHEET */
@@ -368,11 +364,11 @@ body{
     <div class="page active" id="pg-amount">
       <div class="denom-grid" id="denomGrid">
         <div class="dc coin" onclick="pickDenom(5,this)">
-          <img src="assets/coin-5.jpg" alt="5฿"/>
+          <img src="assets/coin-5.png" alt="5฿"/>
           <div class="dc-foot"><div class="dc-amt">฿5</div><div class="dc-min" data-for="5">15 นาที</div></div>
         </div>
         <div class="dc coin" onclick="pickDenom(10,this)">
-          <img src="assets/coin-10.jpg" alt="10฿"/>
+          <img src="assets/coin-10.png" alt="10฿"/>
           <div class="dc-foot"><div class="dc-amt">฿10</div><div class="dc-min" data-for="10">30 นาที</div></div>
         </div>
         <div class="dc" onclick="pickDenom(20,this)">
@@ -422,14 +418,17 @@ body{
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">฿<span id="mAmt">—</span> · <span id="mTime">—</span></p>
       <div class="method-list">
         <button class="method-item" onclick="createSession('qr')">
+          <img src="assets/promptpay-logo.png" alt="PromptPay" style="width:36px;height:36px;object-fit:contain;border-radius:.4rem;flex-shrink:0">
           <div><div class="ml">PromptPay QR Code</div><div class="ms">สแกนด้วยแอปธนาคาร แล้วอัปโหลดสลิป</div></div>
           <span class="method-badge">ทุกธนาคาร</span>
         </button>
         <button class="method-item" onclick="createSession('transfer')">
+          <img src="assets/bank.png" alt="โอนธนาคาร" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0;filter:invert(1)">
           <div><div class="ml">โอนธนาคาร</div><div class="ms">โอนเข้าบัญชีที่แสดง แล้วอัปโหลดสลิป</div></div>
           <span class="method-badge">ตรวจสลิป</span>
         </button>
         <button class="method-item" onclick="createSession('cash')">
+          <img src="assets/banknote.png" alt="เงินสด" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0;filter:invert(1)">
           <div><div class="ml">เงินสด</div><div class="ms">ใส่ธนบัตรหรือเหรียญในช่องตู้</div></div>
           <span class="method-badge">ตรวจ UV</span>
         </button>
@@ -498,8 +497,8 @@ body{
         <h3>รอรับเงินสด</h3>
         <p>ใส่ธนบัตรหรือเหรียญที่ช่องรับเงิน<br>ระบบตรวจสอบ UV · สี · แม่เหล็กอัตโนมัติ</p>
         <div class="cash-denoms">
-          <img src="assets/coin-5.jpg" class="coin" alt="5฿">
-          <img src="assets/coin-10.jpg" class="coin" alt="10฿">
+          <img src="assets/coin-5.png" class="coin" alt="5฿">
+          <img src="assets/coin-10.png" class="coin" alt="10฿">
           <img src="assets/note-20.jpg" alt="20฿">
           <img src="assets/note-50.jpg" alt="50฿">
           <img src="assets/note-100.jpg" alt="100฿">
@@ -569,7 +568,7 @@ const fmtTime=s=>{
   if(m)    return `${m} นาที`;
   return `${sc} วิ`;
 };
-const denomImg=a=>({5:'assets/coin-5.jpg',10:'assets/coin-10.jpg',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||'assets/note-100.jpg');
+const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||'assets/note-100.jpg');
 
 // ── Refresh
 async function refreshPorts(){
@@ -595,7 +594,7 @@ function renderPorts(ports){
     el.className=`port-card ${p.status}`;
 
     const isC = p.type==='USB-C';
-    const svgSrc = isC ? 'assets/usb-c-icon.svg' : 'assets/usb-a-icon.svg';
+    const svgSrc = isC ? 'assets/usb-c-icon.png' : 'assets/usb-a-icon.png';
     const typeClass = isC ? 'type-c' : 'type-a';
 
     if(isU){
