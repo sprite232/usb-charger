@@ -119,6 +119,9 @@ td .small{font-size:.7rem;color:var(--muted)}
     <div class="pin-dots" id="pinDots">
       <!-- rendered by JS based on ADMIN_PIN length hint (max 12) -->
     </div>
+    <p style="font-size:.72rem;color:var(--muted2);margin-bottom:.75rem">
+      ⌨️ พิมพ์ PIN จากแป้นพิมพ์ได้โดยตรง (รองรับตัวอักษร)
+    </p>
     <div class="pin-pad">
       <button class="pin-key" onclick="pinKey(7)">7</button>
       <button class="pin-key" onclick="pinKey(8)">8</button>
@@ -202,31 +205,41 @@ let pinBuf = '';
 let dashData = null;
 const MAX_PIN = 12; // รองรับ PIN สูงสุด 12 หลัก
 
-// Build PIN dots (hint: 8 dots by default)
+// Build PIN dots dynamically
 function buildDots(n) {
   const d = document.getElementById('pinDots');
   d.innerHTML = Array.from({length: n}, (_,i) => `<div class="pin-dot" id="d${i}"></div>`).join('');
 }
-buildDots(8); // default hint 8 หลัก (ตรงกับ ADMIN_PIN ใน .env)
+buildDots(10); // hint 10 จุด (PIN ยาวได้สูงสุด MAX_PIN)
 
 // Auto-check token on load
 if (token) tryLoadDashboard();
 
-function pinKey(n) {
+function pinKey(ch) {
   if (pinBuf.length >= MAX_PIN) return;
-  pinBuf += String(n);
+  pinBuf += String(ch);
   updateDots();
-  // Auto-submit หากเกิน 8 หลักและไม่กด confirm ก็รอ
 }
 function pinDel() { if (pinBuf.length) { pinBuf = pinBuf.slice(0,-1); updateDots(); } }
 function updateDots() {
   const dots = document.querySelectorAll('#pinDots .pin-dot');
-  // ขยาย dots ถ้า PIN ยาวกว่า
   if (pinBuf.length > dots.length) buildDots(pinBuf.length);
   document.querySelectorAll('#pinDots .pin-dot').forEach((el,i) => {
     el.className = 'pin-dot' + (i < pinBuf.length ? ' filled' : '');
   });
 }
+
+// ── Keyboard support (รองรับตัวอักษร + ตัวเลข ทุกตัว)
+document.addEventListener('keydown', e => {
+  const onLogin = document.getElementById('loginScreen').style.display !== 'none'
+                  || !document.getElementById('appScreen').style.display
+                  || document.getElementById('appScreen').style.display === 'none';
+  if (!onLogin) return;
+  if (e.key === 'Backspace')    { e.preventDefault(); pinDel(); }
+  else if (e.key === 'Enter')   { e.preventDefault(); pinSubmit(); }
+  else if (e.key.length === 1)  { pinKey(e.key); }
+});
+
 async function pinSubmit() {
   if (!pinBuf) return;
   document.getElementById('loginErr').textContent = '';
