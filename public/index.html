@@ -112,12 +112,27 @@ body{
   text-shadow:0 1px 5px rgba(0,0,0,.6);
 }
 
-/* ── USB icon in port card */
+/* ── USB icon in port card (SVG with currentColor) */
 .pc-usb-icon{
-  height:28px;width:auto;object-fit:contain;
-  opacity:.5;
-  margin-bottom:.5rem;display:block;
+  display:block;margin-bottom:.625rem;
+  /* size per type set inline */
 }
+.pc-usb-icon.type-a{
+  width:64px;height:auto;
+  color:rgba(255,255,255,.55);
+}
+.pc-usb-icon.type-c{
+  width:44px;height:auto;
+  color:rgba(255,255,255,.55);
+}
+/* Color when available */
+.port-card.available .type-a{color:rgba(0,200,83,.65)}
+.port-card.available .type-c{color:rgba(77,166,255,.65)}
+/* in-use bar header icon */
+.bar-type-icon{display:inline-block;vertical-align:middle;margin-right:.5rem}
+.bar-type-icon.type-a{width:36px;color:rgba(255,255,255,.6)}
+.bar-type-icon.type-c{width:26px;color:rgba(255,255,255,.6)}
+
 
 /* ── BOTTOM SHEET */
 .overlay{
@@ -579,7 +594,9 @@ function renderPorts(ports){
     const isA=p.status==='available',isP=p.status==='pending_payment',isU=p.status==='in-use';
     el.className=`port-card ${p.status}`;
 
-    const usbSrc=p.type==='USB-C'?'assets/usb-c.png':'assets/usb-a.png';
+    const isC = p.type==='USB-C';
+    const svgSrc = isC ? 'assets/usb-c-icon.svg' : 'assets/usb-a-icon.svg';
+    const typeClass = isC ? 'type-c' : 'type-a';
 
     if(isU){
       const total=p.currentTx?.chargeSeconds||1;
@@ -594,7 +611,10 @@ function renderPorts(ports){
 
       el.innerHTML=`
         <div class="bar-header">
-          <div class="bar-user">ผู้ใช้งานที่ ${i+1}</div>
+          <div class="bar-user">
+            <img src="${svgSrc}" class="bar-type-icon ${typeClass}" alt="${p.type}">
+            ${p.label}
+          </div>
           <div class="bar-meta">
             จ่ายมา ฿${p.currentTx?.amount||'—'}
             <span class="bar-timer" id="t-${p.id}">${fmtSecs(rem)}</span>
@@ -611,17 +631,28 @@ function renderPorts(ports){
       const dotColor=isA?'color-green':isP?'color-amber':'color-blue';
       const statusTxt=isA?'ว่าง':isP?'รอชำระ':'กำลังใช้งาน';
       el.innerHTML=`
-        <img class="pc-usb-icon" src="${usbSrc}" alt="${p.type}">
+        <img src="${svgSrc}" class="pc-usb-icon ${typeClass}" alt="${p.type}">
         <div class="pc-row">
-          <div><div class="pc-name">${p.label}</div><div class="pc-type-tag">${p.type}</div></div>
-          <div class="status"><span class="dot ${dot}"></span><span class="${dotColor}">${statusTxt}</span></div>
+          <div>
+            <div class="pc-name">${p.label}</div>
+            <div class="pc-type-tag">${p.type}</div>
+          </div>
+          <div class="status">
+            <span class="dot ${dot}"></span>
+            <span class="${dotColor}">${statusTxt}</span>
+          </div>
         </div>
-        ${isA?`<div class="pc-hint">กดเพื่อใช้งาน</div>`:isP?`<div class="pc-pending">รอชำระเงิน (${p.sessionMethod||'—'})</div>`:''}`;
+        ${isA
+          ?`<div class="pc-hint">กดเพื่อใช้งาน</div>`
+          :isP
+          ?`<div class="pc-pending">รอชำระเงิน (${p.sessionMethod||'—'})</div>`
+          :''}`;
       if(isA) el.addEventListener('click',()=>openSheet(p.id,p.label));
     }
     g.appendChild(el);
   });
 }
+
 
 // ── Live timer (local)
 setInterval(()=>{

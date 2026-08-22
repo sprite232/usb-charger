@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" fill="none">
+  <!-- USB-A port front view: wide rectangle housing -->
+  <rect x="1.5" y="1.5" width="61" height="37" rx="3.5" stroke="currentColor" stroke-width="2.5"/>
+  <!-- Inner tongue (the black divider bar inside USB-A port) -->
+  <rect x="9" y="9" width="46" height="16" rx="2" fill="currentColor" opacity="0.18"/>
+  <rect x="9" y="9" width="46" height="16" rx="2" stroke="currentColor" stroke-width="2" opacity="0.85"/>
+  <!-- Side screws/mounting notches -->
+  <rect x="1.5" y="13" width="4" height="14" rx="1" fill="currentColor" opacity="0.3"/>
+  <rect x="58.5" y="13" width="4" height="14" rx="1" fill="currentColor" opacity="0.3"/>
+</svg>
