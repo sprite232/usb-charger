@@ -164,6 +164,24 @@ body{
 .stat-card.purple .val{color:var(--purple)}
 .stat-card.cyan .val{color:var(--cyan)}
 
+/* ─── Day-over-day Comparison Badge ──────────── */
+.comp-flex {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .68rem;
+  margin-top: .35rem;
+}
+.comp-flex svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.comp-green { color: var(--green); }
+.comp-red { color: var(--red); }
+.comp-muted { color: var(--muted); }
+.comp-flex strong { font-weight: 700; }
+
 /* ─── Chart Containers ────────────────────────── */
 .chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:.85rem;margin-bottom:1.25rem}
 @media(max-width:768px){.chart-grid{grid-template-columns:1fr}}
@@ -399,12 +417,36 @@ tr:last-child td{border-bottom:none}
   <!-- ─── TAB: Dashboard ──────────────────────── -->
   <div id="tab-dashboard" class="content">
     <div class="stats-grid">
-      <div class="stat-card green"><div class="lbl">รายได้รวมทั้งหมด</div><div class="val" id="stRevenue">฿0.00</div></div>
-      <div class="stat-card yellow"><div class="lbl">รายได้วันนี้</div><div class="val" id="stToday">฿0.00</div></div>
-      <div class="stat-card cyan"><div class="lbl">ผู้เข้าชมวันนี้</div><div class="val" id="stTodayVisits">0 ครั้ง</div></div>
-      <div class="stat-card purple"><div class="lbl">ผู้เข้าชมทั้งหมด</div><div class="val" id="stTotalVisits">0 ครั้ง</div></div>
-      <div class="stat-card blue"><div class="lbl">กำลังชาร์จอยู่</div><div class="val" id="stActive">0 ช่อง</div></div>
-      <div class="stat-card purple"><div class="lbl">รายการทั้งหมด</div><div class="val" id="stCount">0</div></div>
+      <div class="stat-card green">
+        <div class="lbl">รายได้รวมทั้งหมด</div>
+        <div class="val" id="stRevenue">฿0.00</div>
+        <div class="comp-flex comp-muted"><span>สะสมตลอดอายุการใช้งาน</span></div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="lbl">รายได้วันนี้</div>
+        <div class="val" id="stToday">฿0.00</div>
+        <div id="stTodayComp"><div class="comp-flex comp-muted"><span>— เทียบกับเมื่อวาน</span></div></div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="lbl">ผู้เข้าชมวันนี้</div>
+        <div class="val" id="stTodayVisits">0 ครั้ง</div>
+        <div id="stTodayVisitsComp"><div class="comp-flex comp-muted"><span>— เทียบกับเมื่อวาน</span></div></div>
+      </div>
+      <div class="stat-card purple">
+        <div class="lbl">ผู้เข้าชมทั้งหมด</div>
+        <div class="val" id="stTotalVisits">0 ครั้ง</div>
+        <div class="comp-flex comp-muted"><span>สถิติเข้าชมสะสม</span></div>
+      </div>
+      <div class="stat-card blue">
+        <div class="lbl">กำลังชาร์จอยู่</div>
+        <div class="val" id="stActive">0 ช่อง</div>
+        <div class="comp-flex comp-muted"><span>สถานะรีเลย์จ่ายไฟ</span></div>
+      </div>
+      <div class="stat-card purple">
+        <div class="lbl">รายการทั้งหมด</div>
+        <div class="val" id="stCount">0</div>
+        <div class="comp-flex comp-muted"><span>รายการชำระสำเร็จ</span></div>
+      </div>
     </div>
 
     <!-- Quick Overview Charts -->
@@ -922,12 +964,54 @@ function renderAll(d) {
   const todayVisits = visits.filter(v => new Date(v.timestamp).toDateString() === todayStr).length;
   const activeCount = d.ports.filter(p => p.status === 'in-use').length;
 
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yestStr = yesterday.toDateString();
+
+  const yestRev = txs
+    .filter(t => new Date(t.createdAt).toDateString() === yestStr)
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+  const yestVisits = visits
+    .filter(v => new Date(v.timestamp).toDateString() === yestStr).length;
+
+  function getCompHtml(todayVal, yestVal, label = 'เมื่อวาน') {
+    if (yestVal === 0 && todayVal === 0) {
+      return `<div class="comp-flex comp-muted"><span>— เทียบกับ${label}</span></div>`;
+    }
+    if (yestVal === 0 && todayVal > 0) {
+      return `<div class="comp-flex comp-green">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        <span><strong>+100%</strong> ยอดใหม่วันนี้</span>
+      </div>`;
+    }
+    const diffPct = Math.round(((todayVal - yestVal) / yestVal) * 100);
+    if (diffPct >= 0) {
+      return `<div class="comp-flex comp-green">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        <span><strong>+${diffPct}%</strong> เทียบกับ${label}</span>
+      </div>`;
+    } else {
+      return `<div class="comp-flex comp-red">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+        <span><strong>${diffPct}%</strong> เทียบกับ${label}</span>
+      </div>`;
+    }
+  }
+
   document.getElementById('stRevenue').textContent = `฿${totalRev.toFixed(2)}`;
   document.getElementById('stToday').textContent   = `฿${todayRev.toFixed(2)}`;
   document.getElementById('stTodayVisits').textContent = `${todayVisits} ครั้ง`;
   document.getElementById('stTotalVisits').textContent = `${visits.length} ครั้ง`;
   document.getElementById('stCount').textContent   = txs.length;
   document.getElementById('stActive').textContent  = `${activeCount} ช่อง`;
+
+  if (document.getElementById('stTodayComp')) {
+    document.getElementById('stTodayComp').innerHTML = getCompHtml(todayRev, yestRev);
+  }
+  if (document.getElementById('stTodayVisitsComp')) {
+    document.getElementById('stTodayVisitsComp').innerHTML = getCompHtml(todayVisits, yestVisits);
+  }
 
   // Analytics Stats
   const avg = txs.length > 0 ? (totalRev / txs.length) : 0;

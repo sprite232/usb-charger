@@ -440,31 +440,90 @@ body{
 .cash-denoms img{height:34px;border-radius:.35rem;object-fit:cover;border:1px solid var(--line)}
 .cash-denoms .coin{width:34px;height:34px;border-radius:50%;object-fit:cover}
 
-/* Processing */
-.proc-box{text-align:center;padding:2.5rem 0}
-.spinner{
-  width:40px;height:40px;margin:0 auto .875rem;
-  border:2.5px solid var(--line);border-top-color:var(--blue);
-  border-radius:50%;animation:spin 1s linear infinite;
+/* ─── ALERT COMPONENTS ────────────────────────── */
+.alert-error {
+  border: 1px solid #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: .5rem;
+  padding: .75rem 1rem;
+  margin: .65rem 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-@keyframes spin{to{transform:rotate(360deg)}}
-.proc-box p{font-size:.82rem;color:var(--muted)}
+.alert-success {
+  border: 1px solid #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: .5rem;
+  padding: .75rem 1rem;
+  margin: .65rem 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.alert-warning {
+  border: 1px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border-radius: .5rem;
+  padding: .65rem .85rem;
+  margin: .5rem 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-align: left;
+}
+.alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  text-align: left;
+}
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.alert-error .alert-icon { color: #ef4444; }
+.alert-success .alert-icon { color: #10b981; }
+.alert-warning .alert-icon { color: #f59e0b; }
+.alert-text { flex: 1; }
+.alert-title {
+  display: block;
+  font-size: .8rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.alert-error .alert-title { color: #f87171; }
+.alert-success .alert-title { color: #34d399; }
+.alert-warning .alert-title { color: #fbbf24; }
+.alert-desc {
+  font-size: .72rem;
+  margin-top: 2px;
+  line-height: 1.45;
+  color: var(--text);
+  opacity: .9;
+}
 
-/* Result */
-.result-box{text-align:center;padding:.5rem 0}
-.result-box h2{font-size:1.05rem;font-weight:800;margin-bottom:.2rem}
-.result-box p{font-size:.8rem;color:var(--muted)}
-.result-ok{
-  background:var(--green-bg);border:1px solid var(--green);
-  border-radius:.625rem;padding:.875rem;margin:.75rem 0;
+/* ─── Ring Spinner ────────────────────────────── */
+.ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 4.5px solid rgba(16, 185, 129, 0.18);
+  border-top-color: #10b981;
+  animation: spin 0.85s linear infinite;
+  margin: 0 auto;
 }
-.result-time{font-size:1.85rem;font-weight:800;color:var(--green);margin-bottom:.2rem}
-.result-sender{font-size:.72rem;color:var(--muted)}
-.err-box{
-  background:var(--red-bg);border:1px solid var(--red);
-  border-radius:.625rem;padding:.75rem .875rem;
-  font-size:.8rem;color:var(--red);line-height:1.6;margin:.75rem 0;
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── FAQ Accordion ───────────────────────────── */
+.faq-section { max-width: 480px; margin: 2rem auto 1rem; padding: 0 .75rem; }
+.faq-title { font-size: .84rem; font-weight: 700; color: var(--muted); margin-bottom: .75rem; text-align: center; }
+.acc { width: 100%; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: .5rem; background: var(--card); }
+.acc-head {
+  width: 100%; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
+  background: var(--card); color: var(--text); border: none; cursor: pointer; font-size: .82rem; font-weight: 600; text-align: left;
 }
+.acc-head span { color: #10b981; font-size: 1.1rem; transition: transform .2s ease; font-weight: 700; }
+.acc.open .acc-head span { transform: rotate(45deg); }
+.acc-body { max-height: 0; overflow: hidden; transition: max-height .25s ease; background: var(--card2); }
+.acc.open .acc-body { max-height: 180px; }
+.acc-body p { margin: 0; padding: 12px 14px; color: var(--muted); font-size: .76rem; line-height: 1.6; }
 
 /* ─── BUTTONS ─────────────────────────────────── */
 .btn{
@@ -483,7 +542,7 @@ body{
 
 /* Footer info */
 .footer{
-  text-align:center;padding:2rem 1rem 1.5rem;
+  text-align:center;padding:1.5rem 1rem;
   font-size:.68rem;color:var(--muted2);
   user-select:none;-webkit-user-select:none;
 }
@@ -506,7 +565,7 @@ body{
     <!-- Theme Toggle (Day / Night) -->
     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="เปลี่ยนธีม กลางวัน/กลางคืน" aria-label="Toggle theme">
       <!-- Sun Icon (shown in dark mode) -->
-      <svg id="sunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
+      <svg id="sunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zm5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
       <!-- Moon Icon (shown in light mode) -->
       <svg id="moonIcon" style="display:none" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-.19 20 10.04 10.04 0 0 0 9.95-8.51 1 1 0 0 0-1.21-1.12A8 8 0 0 1 10.63 3.4a1 1 0 0 0-1.12-1.21A10.2 10.2 0 0 0 12.3 2z"/></svg>
     </button>
@@ -518,6 +577,25 @@ body{
   <p class="section-label">เลือกพอร์ตที่ต้องการชาร์จ</p>
   <div class="port-grid" id="portGrid"></div>
 </main>
+
+<section class="faq-section">
+  <div class="faq-title">ข้อสงสัยที่พบบ่อย (FAQ)</div>
+  
+  <div class="acc">
+    <button class="acc-head" onclick="toggleAcc(this)">อัตราค่าบริการคิดอย่างไร? <span>+</span></button>
+    <div class="acc-body"><p>อัตราค่าบริการมาตรฐาน 1 บาท = 3 นาที (โอน 5฿ ได้ 15 นาที, โอน 10฿ ได้ 30 นาที, โอน 20฿ ได้ 60 นาที) ระบบจ่ายไฟเสถียรและตัดไฟอัตโนมัติเมื่อครบกำหนด</p></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head" onclick="toggleAcc(this)">โอนเงินแล้วระบบทำงานอย่างไร? <span>+</span></button>
+    <div class="acc-body"><p>เมื่อลูกค้าโอนเงินและแนบรูปสลิป ระบบจะตรวจสอบความถูกต้องกับธนาคารโดยอัตโนมัติภายใน 2-3 วินาที และเปิดจ่ายไฟที่ช่องชาร์จที่เลือกทันที</p></div>
+  </div>
+
+  <div class="acc">
+    <button class="acc-head" onclick="toggleAcc(this)">ใกล้หมดเวลาชาร์จจะมีแจ้งเตือนไหม? <span>+</span></button>
+    <div class="acc-body"><p>ระบบจะมีแถบเตือนสีส้มแจ้งล่วงหน้าใน 1 นาทีสุดท้าย เพื่อให้คุณเตรียมถอดสายชาร์จหรือกดสแกนต่อเวลาได้สะดวก</p></div>
+  </div>
+</section>
 
 <footer class="footer" id="footerSecretTrigger">
   ตู้ชาร์จ USB
@@ -589,38 +667,42 @@ body{
         <div class="tbl-row"><span class="tbl-k">อัตรา</span><span class="tbl-v" id="cRate" style="color:var(--muted);font-size:.76rem">—</span></div>
       </div>
       <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:.65rem">
-        💡 สามารถหยอดเหรียญ 5/10 หรือใส่แบงค์ 20/50/100 รวมกันให้ครบยอดได้
+        กรุณาตรวจสอบจำนวนเงินและเวลาก่อนเลือกวิธีชำระ
       </div>
-      <div class="warn-box">เมื่อชำระเงินแล้ว ไม่สามารถขอคืนได้ทุกกรณี</div>
-      <button class="btn btn-amber" onclick="goMethod()">ยืนยัน — เลือกวิธีชำระ</button>
-      <button class="btn btn-ghost" onclick="goPage('pg-amount')">เลือกจำนวนใหม่</button>
+      <button class="btn btn-primary" onclick="goMethod()">เลือกวิธีชำระเงิน</button>
+      <button class="btn btn-ghost" onclick="goPage('pg-amount')">ย้อนกลับ</button>
     </div>
 
 
-    <!-- วิธีชำระ -->
+    <!-- เลือกวิธีชำระเงิน -->
     <div class="page" id="pg-method">
-      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.75rem">฿<span id="mAmt">—</span> · <span id="mTime">—</span></p>
-      <div class="method-list">
-        <button class="method-item" onclick="createSession('qr')">
-          <img src="assets/promptpay-logo.png" alt="PromptPay" style="width:36px;height:36px;object-fit:contain;border-radius:.4rem;flex-shrink:0">
-          <div><div class="ml">PromptPay QR Code</div><div class="ms">สแกนด้วยแอปธนาคาร แล้วอัปโหลดสลิป</div></div>
-          <span class="method-badge">ทุกยอด (1฿+)</span>
-        </button>
-        <button class="method-item" onclick="createSession('transfer')">
-          <img src="assets/bank.png" alt="โอนธนาคาร" class="img-invert-dark" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0">
-          <div><div class="ml">โอนธนาคาร</div><div class="ms">โอนเข้าบัญชีที่แสดง แล้วอัปโหลดสลิป</div></div>
-          <span class="method-badge">ตรวจสลิป</span>
-        </button>
-        <button class="method-item" id="btnMethodCash" onclick="handleCashMethodClick()">
-          <img src="assets/banknote.png" alt="เงินสด" class="img-invert-dark" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0">
+      <div class="method-list" id="methodList">
+        <button class="method-item" id="mItemQR" onclick="createSession('qr')">
           <div>
-            <div class="ml">เงินสด</div>
-            <div class="ms" id="cashMethodSub">ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100</div>
+            <div class="ml">พร้อมเพย์ QR Code</div>
+            <div class="ms">สแกนจ่ายผ่านแอปธนาคารทุกธนาคาร</div>
           </div>
-          <span class="method-badge" id="cashMethodBadge">รับเหรียญ & แบงค์</span>
+          <span class="method-badge">แนะนำ</span>
+        </button>
+
+        <button class="method-item" id="mItemTR" onclick="createSession('transfer')">
+          <div>
+            <div class="ml">โอนเงินเข้าบัญชีธนาคาร</div>
+            <div class="ms">โอนผ่านเลขที่บัญชีหรือเบอร์พร้อมเพย์</div>
+          </div>
+        </button>
+
+        <button class="method-item" id="mItemCash" onclick="createSession('cash')">
+          <div>
+            <div class="ml">หยอดเงินสดที่ตู้</div>
+            <div class="ms">เหรียญ 5, 10 บาท / ธนบัตร 20, 50, 100 บาท</div>
+          </div>
         </button>
       </div>
-      <button class="btn btn-ghost" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
+      <div id="cashOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:.45rem;display:none;text-align:center">
+        ⚠️ ยอด 1-4 บาท รองรับการชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น (เงินสดขั้นต่ำ 5 บาท)
+      </div>
+      <button class="btn btn-ghost" style="margin-top:.75rem" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
     </div>
 
     <!-- QR -->
@@ -631,7 +713,7 @@ body{
         <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="qr-time">—</div></div>
       </div>
       <div class="expire-row">หมดอายุใน <strong id="qrCD">10:00</strong></div>
-      <div class="qr-wrap"><img id="qrImg" src="" alt="QR Code"/></div>
+      <div class="qr-wrap"><img id="qrImg" src="" alt="PromptPay QR"/></div>
       <p class="slip-lbl">อัปโหลดสลิปยืนยัน</p>
       <div class="slip-zone" id="dropQR" onclick="pickFile('fQR')"
            ondrop="handleDrop(event,'fQR','prevQR','btnQR')"
@@ -973,9 +1055,11 @@ function renderPorts(ports){
         const tEl = $(`t-${p.id}`);
         const bpEl = $(`bp-${p.id}`);
         const bfEl = $(`bf-${p.id}`);
+        const wEl = $(`w1m-${p.id}`);
         if (tEl) tEl.textContent = fmtSecs(rem);
         if (bpEl) bpEl.textContent = `${pct} %`;
         if (bfEl) bfEl.style.background = grad;
+        if (wEl) wEl.style.display = (rem <= 60 && rem > 0) ? 'block' : 'none';
       }
     });
     return;
@@ -1020,6 +1104,19 @@ function renderPorts(ports){
         <div class="bar-pill">
           <div class="bar-fill" id="bf-${p.id}" style="background:${grad}"></div>
           <div class="bar-pct" id="bp-${p.id}">${pct} %</div>
+        </div>
+        <div class="warn-1min" id="w1m-${p.id}" style="display:${(rem <= 60 && rem > 0) ? 'block' : 'none'};margin-top:.6rem">
+          <div role="alert" class="alert-warning">
+            <div class="alert-content">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="alert-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+              </svg>
+              <div class="alert-text">
+                <strong class="alert-title">ระวัง: เหลือเวลาชาร์จ 1 นาทีสุดท้าย</strong>
+                <p class="alert-desc">ระบบจะทำการตัดไฟอัตโนมัติเมื่อครบเวลา กรุณาเตรียมถอดสายหรือเติมเงินเพิ่ม</p>
+              </div>
+            </div>
+          </div>
         </div>`;
       el.dataset.rem = rem;
       el.dataset.total = total;
@@ -1078,9 +1175,10 @@ setInterval(() => {
       }
     }
 
-    const tEl = $(`t-${id}`), bpEl = $(`bp-${id}`), bfEl = $(`bf-${id}`);
+    const tEl = $(`t-${id}`), bpEl = $(`bp-${id}`), bfEl = $(`bf-${id}`), wEl = $(`w1m-${id}`);
     if (tEl) tEl.textContent = fmtSecs(rem);
     if (bpEl) bpEl.textContent = `${pct} %`;
+    if (wEl) wEl.style.display = (rem <= 60 && rem > 0) ? 'block' : 'none';
     if (bfEl) {
       const used = 100 - pct;
       bfEl.style.background = pct === 100
@@ -1094,6 +1192,13 @@ setInterval(() => {
     savePersistentPorts(currentPorts);
   }
 }, 1000);
+
+// ─── FAQ Accordion Toggle ─────────────────────
+function toggleAcc(btn) {
+  if (!btn) return;
+  const acc = btn.parentElement;
+  if (acc) acc.classList.toggle('open');
+}
 
 
 // ─── Sheet Controls ───────────────────────────
