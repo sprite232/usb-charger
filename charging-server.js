@@ -82,6 +82,7 @@ function saveState() {
     const data = {
       transactions: state.transactions,
       usedTransRefs: Array.from(state.usedTransRefs),
+      visits: state.visits || [],
       ports: Object.values(state.ports).map(p => ({
         id: p.id, status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
         remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
@@ -109,6 +110,7 @@ function loadState() {
     const data = JSON.parse(raw);
     if (data.transactions && Array.isArray(data.transactions)) state.transactions = data.transactions;
     if (data.usedTransRefs && Array.isArray(data.usedTransRefs)) state.usedTransRefs = new Set(data.usedTransRefs);
+    if (data.visits && Array.isArray(data.visits)) state.visits = data.visits;
     if (data.config) {
       if (data.config.promptpayPhone) CFG.promptpayPhone = data.config.promptpayPhone;
       if (data.config.bankName) CFG.bankName = data.config.bankName;
@@ -605,12 +607,40 @@ app.post("/api/admin/login", (req, res) => {
 
 
 
+// GET /api/ping or /api/health — Keep-Alive & Uptime Check
+app.get(["/api/ping", "/api/health"], (_, res) => {
+  const activeCount = Object.values(state.ports).filter(p => p.status === "in-use").length;
+  res.json({
+    status: "ok",
+    system: "Smart USB Charger",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: now(),
+    activePorts: activeCount,
+    totalVisits: (state.visits || []).length,
+    easyslip: !!CFG.easyslipKey,
+  });
+});
+
+// POST /api/stats/visit — Record pageview visit
+app.post("/api/stats/visit", (req, res) => {
+  if (!state.visits) state.visits = [];
+  const v = {
+    timestamp: now(),
+    ip: (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "local").toString().slice(0, 45),
+  };
+  state.visits.push(v);
+  if (state.visits.length > 3000) state.visits = state.visits.slice(-3000);
+  saveState();
+  res.json({ success: true, totalVisits: state.visits.length });
+});
+
 // GET /api/admin/dashboard — full data (admin only)
 app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
   res.json({
     summary: summary(),
     ports: Object.values(state.ports),
     transactions: state.transactions.slice(0, 100),
+    visits: state.visits || [],
     config: {
       promptpayPhone: CFG.promptpayPhone,
       bankName: CFG.bankName,

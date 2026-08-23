@@ -809,6 +809,17 @@ document.addEventListener('keydown', (e) => {
 });
 
 
+// ─── Record Visit Pageview ─────────────────────
+(function recordVisit() {
+  try {
+    const visits = JSON.parse(localStorage.getItem('usb_charger_visits') || '[]');
+    visits.push({ timestamp: new Date().toISOString() });
+    if (visits.length > 2000) visits.shift();
+    localStorage.setItem('usb_charger_visits', JSON.stringify(visits));
+    apiFetch('POST', '/api/stats/visit', {}).catch(() => null);
+  } catch(e){}
+})();
+
 // ─── Config & API ──────────────────────────────
 const BASE = window.API_BASE || '';
 const apiFetch = (m,url,b) => {
