@@ -5,10 +5,17 @@ const generatePayload = require("promptpay-qr");
 const QRCode   = require("qrcode");
 const multer   = require("multer");
 const jwt      = require("jsonwebtoken");
+const fs       = require("fs");
 const path     = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DATA_DIR = path.join(__dirname, "data");
+const STATE_FILE = path.join(DATA_DIR, "state.json");
+
+if (!fs.existsSync(DATA_DIR)) {
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch(_) {}
+}
 
 // ─── Config (all from .env) ───────────────────────────────────────────────────
 const CFG = {
@@ -17,9 +24,9 @@ const CFG = {
   adminPin:         process.env.ADMIN_PIN            || "00000000", // ≥8 หลัก (แนะนำ)
   jwtSecret:        process.env.JWT_SECRET           || `secret-${Math.random()}`,
   easyslipKey:      process.env.EASYSLIP_API_KEY     || "",
-  bankName:         process.env.BANK_NAME            || "ไทยพาณิชย์ (SCB)",
-  bankAccount:      process.env.BANK_ACCOUNT         || "xxx-x-xxxxx-x",
-  bankAccountName:  process.env.BANK_ACCOUNT_NAME    || "กรุณาตั้งค่าใน .env",
+  bankName:         process.env.BANK_NAME            || "กสิกรไทย (kbank)",
+  bankAccount:      process.env.BANK_ACCOUNT         || "193-3-86131-3",
+  bankAccountName:  process.env.BANK_ACCOUNT_NAME    || "ศุภกฤต สอนบุญมา",
   sessionExpireMs:  10 * 60 * 1000,   // 10 นาที
   slipMaxAgeMins:   30,
   cashScoreMin:     70,                // คะแนนรวมขั้นต่ำ (UV+Color+Magnetic)
@@ -52,7 +59,7 @@ const state = {
   deviceId: "charger01",
   ports: {},
   transactions: [],
-  usedTransRefs: new Set(),   // ป้องกันสลิปซ้ำ (in-memory)
+  usedTransRefs: new Set(),   // ป้องกันสลิปซ้ำ
   lastEsp32: null,
   updatedAt: new Date().toISOString(),
 };
@@ -62,12 +69,56 @@ PORT_DEFS.forEach((d) => {
     ...d,
     status: "available",      // available | pending_payment | in-use
     relayOn: false,
-    isPaused: false,          // หยุดชั่วคราว (สำหรับทดสอบ / พักชาร์จ)
+    isPaused: false,          // หยุดชั่วคราว
     paymentSession: null,     // { id, portId, amount, method, chargeSeconds, createdAt, expiresAt, qr?, bank? }
     currentTx: null,
     remainingSeconds: 0,
   };
 });
+
+// ─── State Persistence (บันทึกลงไฟล์ ป้องกันไฟดับ/รีสตาร์ท) ─────────────────
+function saveState() {
+  try {
+    const data = {
+      transactions: state.transactions,
+      usedTransRefs: Array.from(state.usedTransRefs),
+      ports: Object.values(state.ports).map(p => ({
+        id: p.id, status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
+        remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
+      })),
+      updatedAt: state.updatedAt,
+    };
+    fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), "utf8");
+  } catch(e) {
+    console.error("[Persistence Error]", e.message);
+  }
+}
+
+function loadState() {
+  try {
+    if (!fs.existsSync(STATE_FILE)) return;
+    const raw = fs.readFileSync(STATE_FILE, "utf8");
+    const data = JSON.parse(raw);
+    if (data.transactions && Array.isArray(data.transactions)) state.transactions = data.transactions;
+    if (data.usedTransRefs && Array.isArray(data.usedTransRefs)) state.usedTransRefs = new Set(data.usedTransRefs);
+    if (data.ports && Array.isArray(data.ports)) {
+      data.ports.forEach(saved => {
+        const p = state.ports[saved.id];
+        if (p) {
+          p.status = saved.status || "available";
+          p.relayOn = !!saved.relayOn;
+          p.isPaused = !!saved.isPaused;
+          p.remainingSeconds = Number(saved.remainingSeconds) || 0;
+          p.currentTx = saved.currentTx || null;
+        }
+      });
+    }
+    console.log(`[💾 Persistence] Loaded state with ${state.transactions.length} transactions & ${state.usedTransRefs.size} verified slips`);
+  } catch(e) {
+    console.error("[Persistence Load Error]", e.message);
+  }
+}
+loadState();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const now = () => new Date().toISOString();
@@ -85,6 +136,7 @@ function createTx(portId, amount, method, extra = {}) {
   };
   state.transactions.unshift(tx);
   state.transactions = state.transactions.slice(0, 500);
+  saveState();
   return tx;
 }
 
@@ -99,6 +151,7 @@ function activatePort(portId, amount, method, extra = {}) {
   port.currentTx = tx;
   port.remainingSeconds = tx.chargeSeconds;
   state.updatedAt = now();
+  saveState();
   console.log(`[✅ Activated] port=${portId} ฿${amount} method=${method} tx=${tx.id}`);
   return tx;
 }
@@ -118,6 +171,7 @@ function stopPort(portId, reason = "time_up") {
   port.currentTx = null;
   port.remainingSeconds = 0;
   state.updatedAt = now();
+  saveState();
   return true;
 }
 
@@ -128,7 +182,9 @@ function clearSession(portId) {
   port.paymentSession = null;
   port.isPaused = false;
   state.updatedAt = now();
+  saveState();
 }
+
 
 
 function summary() {
@@ -243,17 +299,28 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
     }
   }
 
-  // 4. ตรวจผู้รับ (PromptPay phone) — normalize เลขท้าย 9 หลัก
+  // 4. ตรวจผู้รับ (PromptPay phone หรือ Bank Account)
   const receiverProxy = raw?.receiver?.account?.proxy?.account || "";
+  const receiverAcc = raw?.receiver?.account?.bank?.account || raw?.receiver?.account?.account || "";
+  
   if (receiverProxy && CFG.promptpayPhone) {
     const tail = (s) => s.replace(/\D/g, "").slice(-9);
     if (tail(receiverProxy) !== tail(CFG.promptpayPhone)) {
-      return { valid: false, reason: "WRONG_RECEIVER", message: "❌ โอนไปยังหมายเลขที่ไม่ตรงกับระบบ" };
+      return { valid: false, reason: "WRONG_RECEIVER", message: "❌ โอนไปยังเบอร์พร้อมเพย์ที่ไม่ตรงกับระบบ" };
+    }
+  } else if (receiverAcc && CFG.bankAccount && !CFG.bankAccount.includes("xxx")) {
+    const norm = (s) => s.replace(/\D/g, "");
+    if (norm(receiverAcc) && norm(CFG.bankAccount) && !norm(receiverAcc).includes(norm(CFG.bankAccount).slice(-6))) {
+      return { valid: false, reason: "WRONG_RECEIVER", message: "❌ โอนไปยังเลขบัญชีที่ไม่ตรงกับระบบ" };
     }
   }
 
-  // ผ่านทุกอย่าง — บันทึก transRef
-  if (raw?.transRef) state.usedTransRefs.add(raw.transRef);
+  // ผ่านทุกอย่าง — บันทึก transRef ป้องกันการใช้ซ้ำ
+  if (raw?.transRef) {
+    state.usedTransRefs.add(raw.transRef);
+    saveState();
+  }
+
 
   return {
     valid: true,
@@ -457,15 +524,39 @@ app.post("/api/payment/cancel", (req, res) => {
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
+// Rate limiting for admin login (ป้องกัน Brute-Force PIN)
+const loginAttempts = new Map(); // ip -> { count, lockUntil }
+
 // POST /api/admin/login — { pin } → { token }
 app.post("/api/admin/login", (req, res) => {
-  if (String(req.body.pin) !== String(CFG.adminPin)) {
-    return res.status(401).json({ error: "PIN ไม่ถูกต้อง" });
+  const ip = req.ip || req.connection?.remoteAddress || "local";
+  const nowMs = Date.now();
+  const rec = loginAttempts.get(ip) || { count: 0, lockUntil: 0 };
+
+  if (rec.lockUntil > nowMs) {
+    const remainSec = Math.ceil((rec.lockUntil - nowMs) / 1000);
+    return res.status(429).json({ error: `ใส่รหัสผิดเกินจำนวน กรุณารอ ${remainSec} วินาที` });
   }
+
+  if (String(req.body.pin) !== String(CFG.adminPin)) {
+    rec.count += 1;
+    if (rec.count >= 5) {
+      rec.lockUntil = nowMs + 5 * 60 * 1000; // ล็อก 5 นาที
+      rec.count = 0;
+      loginAttempts.set(ip, rec);
+      return res.status(429).json({ error: "ใส่รหัสผิดเกิน 5 ครั้ง บัญชีถูกระงับชั่วคราว 5 นาที" });
+    }
+    loginAttempts.set(ip, rec);
+    return res.status(401).json({ error: `PIN ไม่ถูกต้อง (เหลือโอกาส ${5 - rec.count} ครั้ง)` });
+  }
+
+  // เข้าสู่ระบบสำเร็จ -> รีเซ็ตการนับ
+  loginAttempts.delete(ip);
   const token = jwt.sign({ role: "admin" }, CFG.jwtSecret, { expiresIn: "4h" });
   console.log("[🔐 Admin] Login success");
   res.json({ success: true, token });
 });
+
 
 // GET /api/admin/dashboard — full data (admin only)
 app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
