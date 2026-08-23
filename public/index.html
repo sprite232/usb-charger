@@ -176,27 +176,71 @@ body{
   text-shadow:0 1px 5px rgba(0,0,0,.7);
 }
 
-/* ─── USB icons ───────────────────────────────── */
+/* ─── USB icons (Dynamic color matching theme & port status) ── */
 .pc-usb-icon{
-  display:block;margin-bottom:.625rem;
-  object-fit:contain;
-  transition:opacity .15s;
+  display:block;
+  margin-bottom:.625rem;
+  mask-size:contain;
+  -webkit-mask-size:contain;
+  mask-repeat:no-repeat;
+  -webkit-mask-repeat:no-repeat;
+  mask-position:left center;
+  -webkit-mask-position:left center;
+  background-color:var(--muted);
+  transition:background-color .2s ease, transform .15s ease, filter .2s ease;
 }
-.pc-usb-icon.type-a{width:54px;height:auto;opacity:.5}
-.pc-usb-icon.type-c{width:42px;height:auto;opacity:.5}
-.port-card.available .pc-usb-icon{opacity:.85}
+.pc-usb-icon.type-a{
+  width:50px;height:52px;
+  mask-image:url('assets/usb-a-icon.png');
+  -webkit-mask-image:url('assets/usb-a-icon.png');
+}
+.pc-usb-icon.type-c{
+  width:38px;height:52px;
+  mask-image:url('assets/usb-c-icon.png');
+  -webkit-mask-image:url('assets/usb-c-icon.png');
+}
+
+/* Color according to port status */
+.port-card.available .pc-usb-icon{
+  background-color:var(--green);
+  filter:drop-shadow(0 2px 8px var(--green-bg));
+}
+.port-card.pending_payment .pc-usb-icon{
+  background-color:var(--amber);
+  filter:drop-shadow(0 2px 8px var(--amber-bg));
+}
+.port-card.in-use .pc-usb-icon{
+  background-color:var(--blue);
+  filter:drop-shadow(0 2px 8px var(--blue-bg));
+}
 
 .bar-type-icon{
   display:inline-block;vertical-align:middle;
-  margin-right:.45rem;object-fit:contain;opacity:.8;
+  margin-right:.45rem;
+  mask-size:contain;
+  -webkit-mask-size:contain;
+  mask-repeat:no-repeat;
+  -webkit-mask-repeat:no-repeat;
+  mask-position:center;
+  -webkit-mask-position:center;
+  background-color:var(--blue);
 }
-.bar-type-icon.type-a{width:28px;height:auto}
-.bar-type-icon.type-c{width:22px;height:auto}
+.bar-type-icon.type-a{
+  width:22px;height:24px;
+  mask-image:url('assets/usb-a-icon.png');
+  -webkit-mask-image:url('assets/usb-a-icon.png');
+}
+.bar-type-icon.type-c{
+  width:18px;height:24px;
+  mask-image:url('assets/usb-c-icon.png');
+  -webkit-mask-image:url('assets/usb-c-icon.png');
+}
 
 /* Invert filter for black PNG icons in dark mode */
 .img-invert-dark{
   filter:var(--img-invert);
 }
+
 
 /* ─── BOTTOM SHEET / MODAL ────────────────────── */
 .overlay{
@@ -796,7 +840,7 @@ function renderPorts(ports){
       el.innerHTML = `
         <div class="bar-header">
           <div class="bar-user">
-            <img src="${svgSrc}" class="bar-type-icon ${typeClass}" alt="${p.type}">
+            <span class="bar-type-icon ${typeClass}"></span>
             ${p.label} ${pauseBadge}
           </div>
           <div class="bar-meta">
@@ -816,7 +860,7 @@ function renderPorts(ports){
       const dotColor = isA ? 'color-green' : isP ? 'color-amber' : 'color-blue';
       const statusTxt = isA ? 'ว่าง' : isP ? 'รอชำระ' : 'กำลังใช้งาน';
       el.innerHTML = `
-        <img src="${svgSrc}" class="pc-usb-icon ${typeClass}" alt="${p.type}">
+        <span class="pc-usb-icon ${typeClass}"></span>
         <div class="pc-row">
           <div>
             <div class="pc-name">${p.label}</div>
@@ -827,6 +871,7 @@ function renderPorts(ports){
             <span class="${dotColor}">${statusTxt}</span>
           </div>
         </div>
+
         ${isA
           ? `<div class="pc-hint">กดเพื่อใช้งาน</div>`
           : isP

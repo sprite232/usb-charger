@@ -166,6 +166,29 @@ body{
 .port-method{font-size:.75rem;color:var(--muted);margin-top:.15rem}
 .port-actions{display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap}
 
+/* ─── USB Icon in Admin Card ─── */
+.admin-usb-icon{
+  display:inline-block;vertical-align:middle;
+  margin-right:.4rem;
+  mask-size:contain;-webkit-mask-size:contain;
+  mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;
+  mask-position:center;-webkit-mask-position:center;
+  background-color:var(--muted);
+  transition:background-color .2s ease;
+}
+.admin-usb-icon.type-a{
+  width:20px;height:22px;
+  mask-image:url('assets/usb-a-icon.png');-webkit-mask-image:url('assets/usb-a-icon.png');
+}
+.admin-usb-icon.type-c{
+  width:16px;height:22px;
+  mask-image:url('assets/usb-c-icon.png');-webkit-mask-image:url('assets/usb-c-icon.png');
+}
+.port-card-admin.available .admin-usb-icon{background-color:var(--green)}
+.port-card-admin.pending_payment .admin-usb-icon{background-color:var(--yellow)}
+.port-card-admin.in-use .admin-usb-icon{background-color:var(--blue)}
+
+
 /* ─── Section Header ──────────────────────────── */
 .section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
 .section-hdr h2{font-size:.92rem;font-weight:700}
@@ -632,15 +655,21 @@ function renderPortGrid(ports) {
       actions = `<button class="btn-sm btn-yellow" onclick="clearPortSession('${p.id}')">🗑 ล้าง Session</button>`;
     }
 
+    const typeClass = p.type === 'USB-C' ? 'type-c' : 'type-a';
+
     d.innerHTML = `
       <div class="port-head">
-        <div class="name">${p.label} <span style="font-size:.72rem;color:var(--muted)">(${p.type})</span></div>
+        <div class="name">
+          <span class="admin-usb-icon ${typeClass}"></span>
+          ${p.label} <span style="font-size:.72rem;color:var(--muted)">(${p.type})</span>
+        </div>
         ${badgeHtml}
       </div>
       <div style="font-size:.75rem;color:var(--muted)">GPIO ${p.relayGpio} · Relay: <strong style="color:${p.relayOn?'var(--green)':'var(--red)'}">${p.relayOn?'เปิด (ON)':'ปิด (OFF)'}</strong></div>
       ${timerHtml}${methodHtml}
       ${actions ? `<div class="port-actions">${actions}</div>` : ''}`;
     g.appendChild(d);
+
   });
 }
 
