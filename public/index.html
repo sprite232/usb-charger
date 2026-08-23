@@ -786,6 +786,7 @@ const apiFetch = (m,url,b) => {
 let SPB=180;
 const S={portId:null,portLabel:null,amount:null,method:null,session:null};
 let _expTimer=null,_cashPoll=null;
+const EASYSLIP_KEY = 'REDACTED_EASYSLIP_KEY';
 
 const DEFAULT_PORTS = [
   { id: "usb-a-1", label: "USB-A 1", type: "USB-A", status: "available" },
@@ -793,7 +794,39 @@ const DEFAULT_PORTS = [
   { id: "usb-c-1", label: "USB-C 1", type: "USB-C", status: "available" },
   { id: "usb-c-2", label: "USB-C 2", type: "USB-C", status: "available" },
 ];
-let currentPorts = JSON.parse(JSON.stringify(DEFAULT_PORTS));
+
+function loadPersistentPorts() {
+  try {
+    const saved = localStorage.getItem('usb_charger_ports_state');
+    const lastTime = Number(localStorage.getItem('usb_charger_last_time') || 0);
+    if (saved && lastTime) {
+      const ports = JSON.parse(saved);
+      const passedSeconds = Math.max(0, Math.floor((Date.now() - lastTime) / 1000));
+      
+      ports.forEach(p => {
+        if (p.status === 'in-use' && p.remainingSeconds > 0) {
+          p.remainingSeconds = Math.max(0, p.remainingSeconds - passedSeconds);
+          if (p.remainingSeconds <= 0) {
+            p.status = 'available';
+            p.remainingSeconds = 0;
+            p.currentTx = null;
+          }
+        }
+      });
+      return ports;
+    }
+  } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_PORTS));
+}
+
+function savePersistentPorts(ports) {
+  try {
+    localStorage.setItem('usb_charger_ports_state', JSON.stringify(ports));
+    localStorage.setItem('usb_charger_last_time', String(Date.now()));
+  } catch(e){}
+}
+
+let currentPorts = loadPersistentPorts();
 
 // ─── Utils ─────────────────────────────────────
 const $=id=>document.getElementById(id);
@@ -823,12 +856,12 @@ const denomImg = a => ({
   100: 'assets/note-100.jpg'
 }[a] || null);
 
-
 // ─── Refresh State ─────────────────────────────
 async function refreshPorts(){
   const d = await apiFetch('GET','/api/state');
   if(!d || !d.ports){
     // If backend is not connected (e.g. static on Firebase), maintain current local ports state
+    currentPorts = loadPersistentPorts();
     renderPorts(currentPorts);
     return;
   }
@@ -838,12 +871,13 @@ async function refreshPorts(){
     el.textContent = fmtTime(Number(el.dataset.for) * SPB);
   });
   currentPorts = d.ports;
+  savePersistentPorts(d.ports);
   renderPorts(d.ports);
   if(S.session && _cashPoll) checkCash(d.ports);
 }
 
-// Initial immediate render so screen is never blank
-renderPorts(DEFAULT_PORTS);
+// Initial immediate render from persistent state so screen is never blank and remembers active timers
+renderPorts(currentPorts);
 setInterval(refreshPorts, 3000);
 refreshPorts();
 
@@ -860,6 +894,7 @@ refreshPorts();
     }, 400);
   }
 })();
+
 
 
 // ─── Render Ports ──────────────────────────────
@@ -972,6 +1007,7 @@ function renderPorts(ports){
 
 // ─── Local Live Timer Countdown ───────────────
 setInterval(() => {
+  let hasInUse = false;
   document.querySelectorAll('[data-rem]').forEach(card => {
     if (card.dataset.paused === '1') return;
     const rem = Math.max(0, (Number(card.dataset.rem || 0)) - 1);
@@ -984,11 +1020,14 @@ setInterval(() => {
     // Update local state if running standalone
     const localP = currentPorts.find(x => x.id === id);
     if (localP && localP.status === 'in-use') {
+      hasInUse = true;
       localP.remainingSeconds = rem;
       if (rem <= 0) {
         localP.status = 'available';
         localP.remainingSeconds = 0;
+        localP.currentTx = null;
         renderPorts(currentPorts);
+        savePersistentPorts(currentPorts);
         return;
       }
     }
@@ -1005,7 +1044,11 @@ setInterval(() => {
         : `linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
     }
   });
+  if (hasInUse) {
+    savePersistentPorts(currentPorts);
+  }
 }, 1000);
+
 
 // ─── Sheet Controls ───────────────────────────
 function openSheet(portId,label){
@@ -1274,34 +1317,103 @@ function handleDrop(e,fId,pvId,btnId){
 }
 
 async function submitSlip(method){
-  const fId=method==='qr'?'fQR':'fTR';
-  const file=$(fId).files[0];if(!file) return;
-  goPage('pg-proc');$('procMsg').textContent='กำลังตรวจสอบสลิป…';
+  const fId = method === 'qr' ? 'fQR' : 'fTR';
+  const file = $(fId).files[0];
+  if (!file) return;
   
-  const fd=new FormData();fd.append('portId',S.portId);fd.append('image',file);
-  let res=null;
+  goPage('pg-proc');
+  $('procMsg').textContent = 'กำลังส่งสลิปตรวจกับธนาคารผ่าน EasySlip…';
+  
+  // 1. Try Backend if connected
+  let res = null;
   try {
-    res = await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>null);
+    const fd = new FormData();
+    fd.append('portId', S.portId);
+    fd.append('image', file);
+    res = await fetch(BASE + '/api/payment/verify-slip', { method: 'POST', body: fd }).then(r => r.json()).catch(() => null);
   } catch(e){}
 
-  // If connected to backend and verified
-  if(res && res.success) {
-    showOK(res.transaction.chargeSeconds,res.sender,res.isDev);
+  if (res && res.success) {
+    const cs = res.transaction?.chargeSeconds || S.amount * SPB;
+    const localP = currentPorts.find(x => x.id === S.portId);
+    if (localP) {
+      localP.status = 'in-use';
+      localP.remainingSeconds = cs;
+      localP.totalSeconds = cs;
+      localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: S.method };
+      savePersistentPorts(currentPorts);
+      renderPorts(currentPorts);
+    }
+    showOK(cs, res.sender, res.isDev);
     return;
   }
-  
-  // Fallback standalone simulation for Firebase Hosting
-  const cs = S.amount * SPB;
-  const localP = currentPorts.find(x => x.id === S.portId);
-  if (localP) {
-    localP.status = 'in-use';
-    localP.remainingSeconds = cs;
-    localP.totalSeconds = cs;
-    localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: S.method };
-    renderPorts(currentPorts);
+
+  // 2. Direct EasySlip API Verification (Client-Side for Firebase Hosting)
+  try {
+    const form = new FormData();
+    form.append('image', file, 'slip.jpg');
+    form.append('checkDuplicate', 'true');
+    form.append('matchAmount', String(S.amount));
+
+    const resp = await fetch('https://api.easyslip.com/v2/verify/bank', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${EASYSLIP_KEY}` },
+      body: form
+    });
+    const data = await resp.json();
+
+    if (!data.success) {
+      const codeMap = {
+        SLIP_NOT_FOUND: 'ไม่พบ QR Code ในรูป กรุณาถ่ายหรือแคปสลิปให้เห็น QR Code ชัดเจนครับ',
+        IMAGE_SIZE_TOO_LARGE: 'รูปภาพมีขนาดใหญ่เกิน 4 MB',
+        INVALID_IMAGE_FORMAT: 'รูปแบบไฟล์รูปภาพไม่ถูกต้อง',
+        SLIP_PENDING: 'สลิปกำลังรอดำเนินการจากธนาคาร กรุณารอ 1-2 นาทีแล้วลองใหม่'
+      };
+      const msg = codeMap[data.error?.code] || data.error?.message || 'ตรวจสอบสลิปไม่ผ่าน';
+      showErr(msg);
+      return;
+    }
+
+    const raw = data.data?.rawSlip;
+    const slipAmount = data.data?.amountInSlip ?? raw?.amount?.amount ?? 0;
+
+    // ตรวจจำนวนเงิน
+    if (slipAmount < S.amount) {
+      showErr(`❌ ยอดเงินในสลิปไม่พอ (ในสลิป: ฿${slipAmount} — ยอดที่ต้องชำระ: ฿${S.amount})`);
+      return;
+    }
+
+    // ตรวจสลิปซ้ำในเครื่อง
+    const usedSlips = JSON.parse(localStorage.getItem('usb_charger_used_slips') || '[]');
+    if (data.data?.isDuplicate || (raw?.transRef && usedSlips.includes(raw.transRef))) {
+      showErr('❌ สลิปนี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้');
+      return;
+    }
+    if (raw?.transRef) {
+      usedSlips.push(raw.transRef);
+      localStorage.setItem('usb_charger_used_slips', JSON.stringify(usedSlips));
+    }
+
+    // เปิดใช้งานพอร์ตและบันทึกสถานะ
+    const cs = S.amount * SPB;
+    const localP = currentPorts.find(x => x.id === S.portId);
+    if (localP) {
+      localP.status = 'in-use';
+      localP.remainingSeconds = cs;
+      localP.totalSeconds = cs;
+      localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: S.method };
+      savePersistentPorts(currentPorts);
+      renderPorts(currentPorts);
+    }
+
+    const senderName = raw?.sender?.account?.name?.th || raw?.sender?.account?.name?.en || 'ผู้โอน';
+    showOK(cs, `${senderName} (฿${slipAmount})`);
+  } catch (err) {
+    console.error('EasySlip verification error:', err);
+    showErr('ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิป กรุณาลองใหม่อีกครั้ง');
   }
-  showOK(cs, 'ศุภกฤต สอนบุญมา (สลิปถูกต้อง)');
 }
+
 
 function retrySlip(){
   if(!S.session){goPage('pg-amount');return;}
