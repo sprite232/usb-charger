@@ -678,16 +678,18 @@ body{
     <!-- สำเร็จ -->
     <div class="page" id="pg-ok">
       <div class="result-box">
+        <img src="assets/icon-success.png" alt="Success" style="width:64px;height:64px;margin:0 auto .85rem;display:block" />
         <h2 id="okTitle">ชำระเงินสำเร็จ</h2>
         <p id="okPort">—</p>
         <div class="result-ok">
           <div class="result-time" id="okTime">—</div>
           <div class="result-sender" id="okSender"></div>
         </div>
-        <p style="font-size:.75rem;color:var(--muted)">เสียบสายได้เลย ระบบหยุดอัตโนมัติเมื่อหมดเวลา</p>
-        <button class="btn btn-primary" onclick="closeSheet()" style="margin-top:.75rem">ปิด</button>
+        <p style="font-size:.78rem;color:var(--muted)">เสียบสายชาร์จได้ทันที ระบบจะจ่ายไฟและหยุดอัตโนมัติเมื่อครบเวลา</p>
+        <button class="btn btn-primary" onclick="closeSheet()" style="margin-top:.85rem">ปิดหน้าต่าง</button>
       </div>
     </div>
+
 
     <!-- ไม่สำเร็จ -->
     <div class="page" id="pg-err">
@@ -1249,25 +1251,25 @@ function updateCashUI(targetAmt){
   const pct = Math.min(100, Math.round((liveCashInserted / targetAmt) * 100));
   
   $('cash-live-status').textContent = `ใส่แล้ว: ฿${liveCashInserted} / ฿${targetAmt}`;
-  $('cash-remain-status').textContent = remain > 0 ? `ยังขาดอีก: ฿${remain}` : '✅ ใส่เงินครบแล้ว!';
+  $('cash-remain-status').textContent = remain > 0 ? `ยังขาดอีก: ฿${remain}` : 'ใส่เงินครบตามจำนวนแล้ว';
   $('cash-progress').style.width = `${pct}%`;
   
   const ex = $('cash-example-note');
   if (ex) {
     if (targetAmt === 5) {
-      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
     } else if (targetAmt === 10) {
-      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
     } else if (targetAmt === 15) {
-      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ + 5฿ <u>หรือ</u> เหรียญ 5฿ (3 เหรียญ)';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ + 5฿ <u>หรือ</u> เหรียญ 5฿ (3 เหรียญ)';
     } else if (targetAmt === 20) {
-      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 20฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (2 เหรียญ)';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> ธนบัตร 20฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (2 เหรียญ)';
     } else if (targetAmt === 50) {
-      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 50฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> แบงค์ 20฿ (2 ใบ) + เหรียญ 10฿ (1 เหรียญ)';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> ธนบัตร 50฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> ธนบัตร 20฿ (2 ใบ) + 10฿ (1 เหรียญ)';
     } else if (targetAmt === 100) {
-      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 100฿ (1 ใบ) <u>หรือ</u> แบงค์ 50฿ (2 ใบ) <u>หรือ</u> แบงค์ 20฿ (5 ใบ) <u>หรือ</u> รวมเหรียญได้';
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> ธนบัตร 100฿ (1 ใบ) <u>หรือ</u> ธนบัตร 50฿ (2 ใบ) <u>หรือ</u> ธนบัตร 20฿ (5 ใบ)';
     } else {
-      ex.innerHTML = '💡 <strong>วิธีใส่เงิน:</strong> สามารถใส่เหรียญ 5/10 หรือแบงค์ 20/50/100 รวมกันจนครบ ฿' + targetAmt;
+      ex.innerHTML = '<strong>วิธีใส่เงิน:</strong> สามารถใส่เหรียญ 5, 10 บาท หรือธนบัตร 20, 50, 100 บาท รวมกันจนครบ ฿' + targetAmt;
     }
   }
 }
@@ -1407,12 +1409,34 @@ async function submitSlip(method){
     }
 
     const senderName = raw?.sender?.account?.name?.th || raw?.sender?.account?.name?.en || 'ผู้โอน';
+    
+    // บันทึกรายการจริงลงในประวัติ
+    const newTx = {
+      id: `TXN-${Date.now().toString().slice(-6)}`,
+      portId: S.portId,
+      amount: Number(slipAmount || S.amount),
+      method: S.method,
+      status: 'finished',
+      createdAt: new Date().toISOString(),
+      verification: {
+        sender: senderName,
+        transRef: raw?.transRef || `REF-${Date.now()}`
+      }
+    };
+    try {
+      const txs = JSON.parse(localStorage.getItem('usb_charger_transactions') || '[]');
+      txs.unshift(newTx);
+      if (txs.length > 200) txs.pop();
+      localStorage.setItem('usb_charger_transactions', JSON.stringify(txs));
+    } catch(e){}
+
     showOK(cs, `${senderName} (฿${slipAmount})`);
   } catch (err) {
     console.error('EasySlip verification error:', err);
     showErr('ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิป กรุณาลองใหม่อีกครั้ง');
   }
 }
+
 
 
 function retrySlip(){
