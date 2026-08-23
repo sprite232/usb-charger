@@ -4,3 +4,8 @@ node_modules/
 npm-debug.log*
 .DS_Store
 Thumbs.db
+.firebase/
+.mimocode/
+.tempmediaStorage/
+.user_uploaded/
+data/state.json

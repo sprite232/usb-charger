@@ -1,112 +1,86 @@
 /*
-  ESP32 demo idea for this project.
-
+  🔌 ESP32 Smart USB Charger Controller (4 Ports)
+  
+  GPIO Pin Mapping:
+  - Port 1: USB-A 1 -> GPIO 26 (Relay 1)
+  - Port 2: USB-A 2 -> GPIO 27 (Relay 2)
+  - Port 3: USB-C 1 -> GPIO 25 (Relay 3)
+  - Port 4: USB-C 2 -> GPIO 33 (Relay 4)
+  
   Flow:
-  1. Website/Server creates QR or receives cash simulation.
-  2. Server stores central charger state.
-  3. ESP32 polls /api/esp32/command.
-  4. If relayOn is true, ESP32 turns relay on.
-  5. ESP32 can report batteryFull back to /api/esp32/report.
-
-  This file is a skeleton. Replace SERVER_URL with your PC IP address,
-  for example: http://192.168.1.50:3000
+  1. ESP32 connects to WiFi.
+  2. Polls /api/esp32/command every 2 seconds.
+  3. Updates GPIO 26, 27, 25, 33 according to relayOn state.
+  4. Reports hardware heartbeat to /api/esp32/report.
 */
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-#define WIFI_SSID "YOUR_WIFI"
-#define WIFI_PASSWORD "YOUR_PASSWORD"
-#define SERVER_URL "http://192.168.1.50:3000"
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define SERVER_URL "http://192.168.1.50:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
 
-#define RELAY_PIN 26
-#define CURRENT_SENSOR_PIN 35
-#define COIN_5_PIN 32
-#define COIN_10_PIN 33
-#define QR_CONFIRM_BUTTON_PIN 21
-#define RESET_BUTTON_PIN 22
-
-// TCS3200 color sensor pins for banknote detection.
-#define TCS_S0_PIN 14
-#define TCS_S1_PIN 27
-#define TCS_S2_PIN 25
-#define TCS_S3_PIN 13
-#define TCS_OUT_PIN 34
-
-// TFT SPI common pins.
-#define TFT_SCK_PIN 18
-#define TFT_MOSI_PIN 23
-#define TFT_CS_PIN 5
-#define TFT_DC_PIN 2
-#define TFT_RST_PIN 4
+// 4 Relays Pins
+const int RELAY_PINS[4] = { 26, 27, 25, 33 };
+const char* PORT_KEYS[4] = { "usb-a-1", "usb-a-2", "usb-c-1", "usb-c-2" };
 
 void setup() {
   Serial.begin(115200);
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(COIN_5_PIN, INPUT_PULLUP);
-  pinMode(COIN_10_PIN, INPUT_PULLUP);
-  pinMode(QR_CONFIRM_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(RESET_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(TCS_S0_PIN, OUTPUT);
-  pinMode(TCS_S1_PIN, OUTPUT);
-  pinMode(TCS_S2_PIN, OUTPUT);
-  pinMode(TCS_S3_PIN, OUTPUT);
-  pinMode(TCS_OUT_PIN, INPUT);
-  digitalWrite(RELAY_PIN, LOW);
+  
+  // Setup Relay Pins
+  for (int i = 0; i < 4; i++) {
+    pinMode(RELAY_PINS[i], OUTPUT);
+    digitalWrite(RELAY_PINS[i], LOW); // ปิดไฟเริ่มต้น (Active-High)
+  }
 
+  Serial.println("\n🔌 Starting Smart USB Charger ESP32...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nWiFi connected");
+  Serial.println("\n✅ WiFi Connected! IP: " + WiFi.localIP().toString());
 }
 
 void loop() {
-  readCommandFromServer();
-  delay(3000);
+  if (WiFi.status() == WL_CONNECTED) {
+    fetchRelayCommands();
+  } else {
+    Serial.println("⚠️ WiFi Disconnected, reconnecting...");
+    WiFi.reconnect();
+  }
+  delay(2000); // ตรวจสอบสถานะทุกๆ 2 วินาที
 }
 
-void readCommandFromServer() {
-  if (WiFi.status() != WL_CONNECTED) return;
-
+void fetchRelayCommands() {
   HTTPClient http;
   http.begin(String(SERVER_URL) + "/api/esp32/command");
-  int code = http.GET();
+  http.setTimeout(3000);
+  
+  int httpCode = http.GET();
+  if (httpCode == 200) {
+    String payload = http.getString();
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, payload);
 
-  if (code == 200) {
-    String body = http.getString();
-    StaticJsonDocument<512> doc;
-    deserializeJson(doc, body);
-
-    bool relayOn = doc["relayOn"] | false;
-    int remainingMinutes = doc["remainingMinutes"] | 0;
-
-    digitalWrite(RELAY_PIN, relayOn ? HIGH : LOW);
-
-    Serial.print("relay=");
-    Serial.print(relayOn ? "ON" : "OFF");
-    Serial.print(" remaining=");
-    Serial.println(remainingMinutes);
-
-    if (relayOn && isBatteryFull()) {
-      reportBatteryFull();
+    if (!error && doc.containsKey("relays")) {
+      JsonObject relays = doc["relays"];
+      
+      for (int i = 0; i < 4; i++) {
+        const char* key = PORT_KEYS[i];
+        if (relays.containsKey(key)) {
+          bool isOn = relays[key]["on"] | false;
+          int gpio = RELAY_PINS[i];
+          
+          // สั่ง Relay (HIGH = เปิดไฟ, LOW = ปิดไฟ)
+          digitalWrite(gpio, isOn ? HIGH : LOW);
+        }
+      }
     }
+  } else {
+    Serial.printf("❌ HTTP Error: %d\n", httpCode);
   }
-
   http.end();
-}
-
-void reportBatteryFull() {
-  HTTPClient http;
-  http.begin(String(SERVER_URL) + "/api/esp32/report");
-  http.addHeader("Content-Type", "application/json");
-  http.POST("{\"batteryFull\":true}");
-  http.end();
-}
-
-bool isBatteryFull() {
-  int raw = analogRead(CURRENT_SENSOR_PIN);
-  return raw < 80;
 }
