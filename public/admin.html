@@ -597,7 +597,16 @@ function renderAll(d) {
   renderSettings(d.config);
 }
 
-const fmtSecs = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtSecs = s => {
+  if (s >= 3600) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sc = s % 60;
+    return `${h}:${String(m).padStart(2, '0')}:${String(sc).padStart(2, '0')}`;
+  }
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+
 const fmtDate = s => { try { return new Date(s).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}); } catch{return s;} };
 
 // ─── Render Port Grid ─────────────────────────

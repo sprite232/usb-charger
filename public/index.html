@@ -123,13 +123,19 @@ body{
   box-shadow:var(--shadow);
 }
 .port-card.available{cursor:pointer}
-.port-card.available:hover{border-color:var(--green);background:var(--card-hover)}
+.port-card.available:hover{border-color:var(--green);background:var(--card-hover);transform:translateY(-2px)}
 .port-card.available:active{transform:scale(.97);border-color:var(--green)}
 .port-card.in-use{
   grid-column:1/-1;cursor:default;
   border-color:var(--line);
+  animation:glowPulse 3s infinite alternate ease-in-out;
+}
+@keyframes glowPulse{
+  0%{box-shadow:0 0 0 rgba(68,138,255,0)}
+  100%{box-shadow:0 0 16px rgba(68,138,255,0.18)}
 }
 .port-card.pending_payment{cursor:default;border-color:var(--amber)}
+
 
 /* card top row */
 .pc-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem}
@@ -647,23 +653,13 @@ body{
         <p style="font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem" id="cash-example-note">
           รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿
         </p>
-        <!-- ปุ่มจำลองใส่เงินสด (ทดสอบหยอดเหรียญ/ใส่แบงค์) -->
-        <div style="margin-top:.6rem;background:var(--card2);border:1px solid var(--border);border-radius:.4rem;padding:.5rem">
-          <div style="font-size:.7rem;color:var(--muted);margin-bottom:.35rem">💡 กดเพื่อจำลองหยอดเงิน (ทดสอบระบบ):</div>
-          <div style="display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap">
-            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(5)">+5฿ (เหรียญ 5)</button>
-            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(10)">+10฿ (เหรียญ 10)</button>
-            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(20)">+20฿ (แบงค์ 20)</button>
-            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(50)">+50฿ (แบงค์ 50)</button>
-            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(100)">+100฿ (แบงค์ 100)</button>
-          </div>
-        </div>
         <div style="font-size:.72rem;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:.4rem;padding:.4rem;margin-top:.75rem">
           ⚠️ ตู้ไม่มีระบบทอนเงิน กรุณาใส่เงินให้พอดีกับยอดที่เลือก
         </div>
       </div>
       <button class="btn btn-ghost" style="margin-top:.75rem" onclick="cancelSession()">ยกเลิก</button>
     </div>
+
 
 
 
@@ -797,7 +793,16 @@ let currentPorts = JSON.parse(JSON.stringify(DEFAULT_PORTS));
 
 // ─── Utils ─────────────────────────────────────
 const $=id=>document.getElementById(id);
-const fmtSecs=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtSecs = s => {
+  if (s >= 3600) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sc = s % 60;
+    return `${h}:${String(m).padStart(2, '0')}:${String(sc).padStart(2, '0')}`;
+  }
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+
 const fmtTime=s=>{
   const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
   if(h&&m) return `${h} ชม. ${m} นาที`;
