@@ -528,20 +528,21 @@ body{
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
-        <input type="number" id="customIn" min="5" step="5" placeholder="ระบุจำนวน (ขั้นต่ำ 5฿)" oninput="onCustomIn()"/>
+        <input type="number" id="customIn" min="1" step="1" placeholder="ระบุจำนวนบาท (ขั้นต่ำ 1฿)" oninput="onCustomIn()"/>
         <span class="cp" id="customPrev"></span>
       </div>
-      <div id="customHint" style="font-size:.72rem;color:var(--muted);margin-top:.35rem;display:none;text-align:left">
-        💡 ระบุเป็นทวีคูณของ 5 บาท (เช่น 5, 10, 15, 20, 25, 30...)
-      </div>
+      <div id="customHint" style="font-size:.72rem;color:var(--muted);margin-top:.35rem;display:none;text-align:left"></div>
       <button class="btn btn-primary" id="btnNext" onclick="goConfirm()" disabled>ถัดไป</button>
       <button class="btn btn-ghost" onclick="closeSheet()">ยกเลิก</button>
     </div>
 
-
     <!-- ยืนยันจำนวน -->
     <div class="page" id="pg-confirm">
       <div class="conf-img" id="confImgWrap"><img id="confImg" src="" alt=""/></div>
+      <div id="customAmtBox" style="display:none;padding:1.25rem;text-align:center;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:1rem">
+        <div style="font-size:2rem;font-weight:900;color:var(--amber)" id="customAmtVal">฿—</div>
+        <div style="font-size:.8rem;color:var(--muted)" id="customAmtTime">—</div>
+      </div>
       <div class="tbl">
         <div class="tbl-row"><span class="tbl-k">พอร์ต</span><span class="tbl-v" id="cPort">—</span></div>
         <div class="tbl-row hi"><span class="tbl-k">จำนวนเงิน</span><span class="tbl-v" id="cAmt">—</span></div>
@@ -560,17 +561,20 @@ body{
         <button class="method-item" onclick="createSession('qr')">
           <img src="assets/promptpay-logo.png" alt="PromptPay" style="width:36px;height:36px;object-fit:contain;border-radius:.4rem;flex-shrink:0">
           <div><div class="ml">PromptPay QR Code</div><div class="ms">สแกนด้วยแอปธนาคาร แล้วอัปโหลดสลิป</div></div>
-          <span class="method-badge">ทุกธนาคาร</span>
+          <span class="method-badge">ทุกยอด (1฿+)</span>
         </button>
         <button class="method-item" onclick="createSession('transfer')">
           <img src="assets/bank.png" alt="โอนธนาคาร" class="img-invert-dark" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0">
           <div><div class="ml">โอนธนาคาร</div><div class="ms">โอนเข้าบัญชีที่แสดง แล้วอัปโหลดสลิป</div></div>
           <span class="method-badge">ตรวจสลิป</span>
         </button>
-        <button class="method-item" onclick="createSession('cash')">
+        <button class="method-item" id="btnMethodCash" onclick="handleCashMethodClick()">
           <img src="assets/banknote.png" alt="เงินสด" class="img-invert-dark" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0">
-          <div><div class="ml">เงินสด</div><div class="ms">ใส่ธนบัตรหรือเหรียญในช่องตู้</div></div>
-          <span class="method-badge">ตรวจ UV</span>
+          <div>
+            <div class="ml">เงินสด</div>
+            <div class="ms" id="cashMethodSub">ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100</div>
+          </div>
+          <span class="method-badge" id="cashMethodBadge">รับเหรียญ & แบงค์</span>
         </button>
       </div>
       <button class="btn btn-ghost" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
@@ -634,18 +638,25 @@ body{
         <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="cash-time">—</div></div>
       </div>
       <div class="cash-box">
-        <h3>ใส่เงินสดที่ช่องรับเงิน</h3>
-        <div style="font-size:1.1rem;font-weight:800;color:var(--green);margin:.25rem 0" id="cash-need-amt">฿—</div>
-        <p style="font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem">
-          รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br>
-          <span style="color:var(--text)">(เช่น ยอด 10฿ สามารถใส่เหรียญ 10฿ หรือเหรียญ 5฿ สองเหรียญได้)</span>
+        <h3>ใส่เงินสดที่ช่องรับเงินของตู้</h3>
+        <div style="font-size:1.35rem;font-weight:800;color:var(--amber);margin:.35rem 0" id="cash-live-status">ใส่แล้ว: ฿0 / ฿—</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem" id="cash-remain-status">ยังขาดอีก: ฿—</div>
+        <div class="bar-pill" style="height:10px;margin-bottom:.75rem">
+          <div class="bar-fill" id="cash-progress" style="width:0%;background:linear-gradient(90deg,#f59e0b,#22c55e);transition:width .3s ease"></div>
+        </div>
+        <p style="font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem" id="cash-example-note">
+          รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿
         </p>
-        <div class="cash-denoms">
-          <img src="assets/coin-5.png" class="coin" alt="5฿">
-          <img src="assets/coin-10.png" class="coin" alt="10฿">
-          <img src="assets/note-20.jpg" alt="20฿">
-          <img src="assets/note-50.jpg" alt="50฿">
-          <img src="assets/note-100.jpg" alt="100฿">
+        <!-- ปุ่มจำลองใส่เงินสด (ทดสอบหยอดเหรียญ/ใส่แบงค์) -->
+        <div style="margin-top:.6rem;background:var(--card2);border:1px solid var(--border);border-radius:.4rem;padding:.5rem">
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:.35rem">💡 กดเพื่อจำลองหยอดเงิน (ทดสอบระบบ):</div>
+          <div style="display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap">
+            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(5)">+5฿ (เหรียญ 5)</button>
+            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(10)">+10฿ (เหรียญ 10)</button>
+            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(20)">+20฿ (แบงค์ 20)</button>
+            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(50)">+50฿ (แบงค์ 50)</button>
+            <button type="button" class="btn-sm btn-gray" onclick="insertSimCash(100)">+100฿ (แบงค์ 100)</button>
+          </div>
         </div>
         <div style="font-size:.72rem;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:.4rem;padding:.4rem;margin-top:.75rem">
           ⚠️ ตู้ไม่มีระบบทอนเงิน กรุณาใส่เงินให้พอดีกับยอดที่เลือก
@@ -653,6 +664,7 @@ body{
       </div>
       <button class="btn btn-ghost" style="margin-top:.75rem" onclick="cancelSession()">ยกเลิก</button>
     </div>
+
 
 
     <!-- กำลังตรวจ -->
@@ -794,7 +806,14 @@ const fmtTime=s=>{
   if(m)    return `${m} นาที`;
   return `${sc} วิ`;
 };
-const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||'assets/note-100.jpg');
+const denomImg = a => ({
+  5: 'assets/coin-5.png',
+  10: 'assets/coin-10.png',
+  20: 'assets/note-20.jpg',
+  50: 'assets/note-50.jpg',
+  100: 'assets/note-100.jpg'
+}[a] || null);
+
 
 // ─── Refresh State ─────────────────────────────
 async function refreshPorts(){
@@ -1019,21 +1038,20 @@ function focusCustom(){
 function onCustomIn(){
   const v = Number($('customIn').value);
   const hint = $('customHint');
-  if (v >= 5 && v % 5 === 0) {
+  if (v >= 1) {
     S.amount = v;
     $('customPrev').textContent = '= ' + fmtTime(v * SPB);
     $('customMinPreview').textContent = fmtTime(v * SPB);
     $('btnNext').disabled = false;
-    if (hint) hint.style.display = 'none';
-  } else if (v > 0) {
-    S.amount = null;
-    $('customPrev').textContent = '';
-    $('customMinPreview').textContent = '';
-    $('btnNext').disabled = true;
     if (hint) {
       hint.style.display = 'block';
-      hint.style.color = 'var(--amber)';
-      hint.textContent = '⚠️ กรุณาระบุจำนวนเงินเป็นทวีคูณของ 5 บาท (เช่น 5, 10, 15, 20, 25 บาท)';
+      if (v < 5 || v % 5 !== 0) {
+        hint.style.color = 'var(--blue)';
+        hint.textContent = `📱 ยอด ฿${v} (มีเศษ) ชำระผ่าน PromptPay / โอนเงิน (เงินสดรับเฉพาะยอดลงท้าย 0 หรือ 5)`;
+      } else {
+        hint.style.color = 'var(--green)';
+        hint.textContent = `💵 ยอด ฿${v} ชำระได้ทั้งเงินสดและโอนจ่าย`;
+      }
     }
   } else {
     S.amount = null;
@@ -1044,24 +1062,64 @@ function onCustomIn(){
   }
 }
 
-
 // ─── Confirm Flow ─────────────────────────────
 function goConfirm(){
   if(!S.amount) return;
-  $('confImg').src=denomImg(S.amount);
-  $('confImgWrap').className='conf-img'+(S.amount<=10?' coin':'');
-  $('cPort').textContent=S.portLabel;
-  $('cAmt').textContent=`฿${S.amount}`;
-  $('cTime').textContent=fmtTime(S.amount*SPB);
-  $('cRate').textContent=`1 บาท = ${SPB/60} นาที`;
-  $('sheetTitle').textContent='ยืนยันจำนวน';
+  const imgUrl = denomImg(S.amount);
+  if (imgUrl) {
+    $('confImgWrap').style.display = 'block';
+    $('customAmtBox').style.display = 'none';
+    $('confImg').src = imgUrl;
+    $('confImgWrap').className = 'conf-img' + (S.amount <= 10 ? ' coin' : '');
+  } else {
+    // Custom amount -> Show clean custom card (never defaults to 100฿ note!)
+    $('confImgWrap').style.display = 'none';
+    $('customAmtBox').style.display = 'block';
+    $('customAmtVal').textContent = `฿${S.amount}`;
+    $('customAmtTime').textContent = `${fmtTime(S.amount * SPB)} · กำหนดเอง`;
+  }
+  $('cPort').textContent = S.portLabel;
+  $('cAmt').textContent = `฿${S.amount}`;
+  $('cTime').textContent = fmtTime(S.amount * SPB);
+  $('cRate').textContent = `1 บาท = ${SPB/60} นาที`;
+  $('sheetTitle').textContent = 'ยืนยันจำนวน';
   goPage('pg-confirm');
 }
+
 function goMethod(){
-  $('mAmt').textContent=S.amount;
-  $('mTime').textContent=fmtTime(S.amount*SPB);
-  $('sheetTitle').textContent='วิธีชำระเงิน';
+  $('mAmt').textContent = S.amount;
+  $('mTime').textContent = fmtTime(S.amount * SPB);
+  
+  const isCashAllowed = S.amount >= 5 && S.amount % 5 === 0;
+  const btnCash = $('btnMethodCash');
+  const subCash = $('cashMethodSub');
+  const badgeCash = $('cashMethodBadge');
+
+  if (isCashAllowed) {
+    btnCash.style.opacity = '1';
+    btnCash.style.cursor = 'pointer';
+    subCash.textContent = 'ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100';
+    subCash.style.color = '';
+    badgeCash.textContent = 'รับเหรียญ & แบงค์';
+    badgeCash.className = 'method-badge';
+  } else {
+    btnCash.style.opacity = '0.6';
+    subCash.textContent = `ยอด ฿${S.amount} มีเศษ (ตู้ไม่มีช่องรับเหรียญ 1-2฿)`;
+    subCash.style.color = 'var(--amber)';
+    badgeCash.textContent = 'เงินโอนเท่านั้น';
+    badgeCash.className = 'method-badge warn';
+  }
+
+  $('sheetTitle').textContent = 'วิธีชำระเงิน';
   goPage('pg-method');
+}
+
+function handleCashMethodClick(){
+  if (S.amount < 5 || S.amount % 5 !== 0) {
+    alert(`ยอด ฿${S.amount} มีเศษบาท ไม่สามารถรับด้วยเหรียญ 5/10 หรือธนบัตรได้ครับ\n\nกรุณาเลือกชำระผ่าน PromptPay QR หรือโอนเงินธนาคารครับ (รองรับเริ่มต้นตั้งแต่ 1 บาท)`);
+    return;
+  }
+  createSession('cash');
 }
 
 // ─── Create Payment Session ───────────────────
@@ -1118,18 +1176,68 @@ function setupTR(s){
   $('prevTR').style.display='none';$('btnTR').disabled=true;$('fTR').value='';
   startExpire('trCD',s.expiresAt);$('sheetTitle').textContent='โอนธนาคาร';goPage('pg-transfer');
 }
+
+let liveCashInserted = 0;
+
 function setupCash(s){
-  $('cash-port').textContent=S.portLabel;$('cash-amt').textContent=`฿${s.amount}`;
-  $('cash-time').textContent=Math.round(s.chargeSeconds/60);
-  $('sheetTitle').textContent='ใส่เงินสด';goPage('pg-cash');
-  _cashPoll=setInterval(()=>apiFetch('GET','/api/state').then(d=>d&&checkCash(d.ports)),3000);
+  liveCashInserted = 0;
+  $('cash-port').textContent = S.portLabel;
+  $('cash-amt').textContent = `฿${s.amount}`;
+  $('cash-time').textContent = Math.round(s.chargeSeconds / 60);
+  
+  updateCashUI(s.amount);
+
+  $('sheetTitle').textContent = 'ใส่เงินสด';
+  goPage('pg-cash');
+  _cashPoll = setInterval(() => apiFetch('GET', '/api/state').then(d => d && checkCash(d.ports)), 3000);
 }
+
+function updateCashUI(targetAmt){
+  const remain = Math.max(0, targetAmt - liveCashInserted);
+  const pct = Math.min(100, Math.round((liveCashInserted / targetAmt) * 100));
+  
+  $('cash-live-status').textContent = `ใส่แล้ว: ฿${liveCashInserted} / ฿${targetAmt}`;
+  $('cash-remain-status').textContent = remain > 0 ? `ยังขาดอีก: ฿${remain}` : '✅ ใส่เงินครบแล้ว!';
+  $('cash-progress').style.width = `${pct}%`;
+  
+  const ex = $('cash-example-note');
+  if (ex) {
+    if (targetAmt === 15) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 15฿ ใส่เหรียญ 5฿ 3 เหรียญ หรือเหรียญ 10฿ + 5฿ ได้)</span>';
+    else if (targetAmt === 35) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 35฿ ใส่แบงค์ 20฿ + เหรียญ 10฿ + เหรียญ 5฿ ได้)</span>';
+    else if (targetAmt === 95) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 95฿ ใส่แบงค์ 50฿ + แบงค์ 20฿ สองใบ + เหรียญ 5฿ ได้)</span>';
+    else ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿ (ใส่รวมกันจนครบยอดได้)';
+  }
+}
+
+async function insertSimCash(amt){
+  if (!S.session) return;
+  liveCashInserted += amt;
+  updateCashUI(S.amount);
+
+  if (liveCashInserted >= S.amount) {
+    stopTimers();
+    setTimeout(() => {
+      const cs = S.amount * SPB;
+      const localP = currentPorts.find(x => x.id === S.portId);
+      if (localP) {
+        localP.status = 'in-use';
+        localP.remainingSeconds = cs;
+        localP.totalSeconds = cs;
+        localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: 'cash' };
+        renderPorts(currentPorts);
+      }
+      showOK(cs, `เงินสด (ใส่ครบ ฿${liveCashInserted})`);
+    }, 400);
+  }
+}
+
 function checkCash(ports){
   if(!S.session) return;
   const p=ports?.find(x=>x.id===S.portId);
   if(p?.status==='in-use'){stopTimers();showOK(p.remainingSeconds,null);}
   else if(p?.status==='available'&&!p.hasSession){stopTimers();showErr('Session หมดอายุ กรุณาเริ่มใหม่');}
 }
+
 
 // ─── Slip Upload ──────────────────────────────
 function pickFile(id){$(id).click();}
