@@ -93,11 +93,42 @@ body{
 
 .header-actions{display:flex;align-items:center;gap:.5rem}
 
+/* Smooth sleek entrance animation */
+@keyframes sleekEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main, .header, .footer {
+  animation: sleekEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .rate-label{
-  font-size:.72rem;font-weight:600;color:var(--amber);
-  background:var(--amber-bg);
-  border:1px solid var(--amber);border-radius:.4rem;padding:.2rem .55rem;
-  white-space:nowrap;
+  font-size: .84rem;
+  font-weight: 800;
+  color: var(--green);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+  border: 1.5px solid var(--green);
+  border-radius: 999px;
+  padding: .32rem .8rem;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  animation: ratePulse 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes ratePulse {
+  0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.25); }
+  100% { box-shadow: 0 0 18px rgba(16, 185, 129, 0.55); border-color: #34d399; }
 }
 
 /* Theme Toggle Button */

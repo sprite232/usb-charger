@@ -603,21 +603,18 @@ tr:last-child td{border-bottom:none}
           <img src="assets/icon-success.png" style="width:16px;height:16px"/> บันทึกการตั้งค่าระบบเรียบร้อย ข้อมูลมีผลกับตู้ชาร์จทันที
         </div>
 
-        <div style="margin-top:1.5rem;display:flex;gap:.75rem;align-items:center">
+        <div style="margin-top:1.5rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
           <button type="submit" class="btn-sm btn-primary" style="padding:.75rem 1.5rem;font-size:.85rem">
             บันทึกการตั้งค่าระบบ
           </button>
+          <a href="https://developer.easyslip.com/dashboard/10283/transaction" target="_blank" rel="noopener noreferrer" class="btn-sm btn-gray" style="padding:.75rem 1.25rem;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;font-size:.82rem">
+            ตรวจสอบสลิปใน EasySlip Dashboard ↗
+          </a>
         </div>
       </form>
     </div>
 
-    <div style="margin-top:1.25rem;text-align:center">
-      <a href="/stickers.html" target="_blank" class="btn-sm btn-gray" style="display:inline-block;padding:.65rem 1.25rem;text-decoration:none;font-size:.82rem">
-        พิมพ์สติกเกอร์ QR Code ติดหน้าตู้ชาร์จ (A4 Sheet)
-      </a>
-    </div>
-    <br>
-    <div style="text-align:center">
+    <div style="margin-top:1.5rem;text-align:center">
       <a href="/" style="color:var(--muted);font-size:.8rem;text-decoration:none">กลับหน้าหลัก</a>
     </div>
   </div>
@@ -1195,6 +1192,7 @@ function createOrUpdateChart(canvasId, type, data, opts={}) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false, // Prevents the spinning animation bug on auto-refresh!
     plugins: {
       legend: {
         display: !!opts.legend,
@@ -1264,21 +1262,29 @@ function renderTestingTab(ports) {
 }
 
 // ─── Settings Form & Real Save ────────────────
-function populateSettingsForm(cfg) {
+let isSettingsLoadedOnce = false;
+
+function populateSettingsForm(cfg, force = false) {
   if (!cfg) return;
+  const isUserFocused = document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('cfg');
+  if (isUserFocused) return;
+  if (isSettingsLoadedOnce && !force) return;
+
   if (document.getElementById('cfgPhone')) document.getElementById('cfgPhone').value = cfg.promptpayPhone || '0969679951';
   if (document.getElementById('cfgBank')) document.getElementById('cfgBank').value = cfg.bankName || 'กสิกรไทย (kbank)';
   if (document.getElementById('cfgAccount')) document.getElementById('cfgAccount').value = cfg.bankAccount || '193-3-86131-3';
   if (document.getElementById('cfgAccountName')) document.getElementById('cfgAccountName').value = cfg.bankAccountName || 'ศุภกฤต สอนบุญมา';
   if (document.getElementById('cfgRate')) document.getElementById('cfgRate').value = String(cfg.secondsPerBaht || 180);
   if (document.getElementById('cfgEasySlipKey') && cfg.easyslipKey) document.getElementById('cfgEasySlipKey').value = cfg.easyslipKey;
+  
+  isSettingsLoadedOnce = true;
 }
 
 async function saveSettings() {
-  const promptpayPhone = document.getElementById('cfgPhone')?.value?.trim();
-  const bankName = document.getElementById('cfgBank')?.value?.trim();
-  const bankAccount = document.getElementById('cfgAccount')?.value?.trim();
-  const bankAccountName = document.getElementById('cfgAccountName')?.value?.trim();
+  const promptpayPhone = document.getElementById('cfgPhone')?.value?.trim() || '0969679951';
+  const bankName = document.getElementById('cfgBank')?.value?.trim() || 'กสิกรไทย (kbank)';
+  const bankAccount = document.getElementById('cfgAccount')?.value?.trim() || '193-3-86131-3';
+  const bankAccountName = document.getElementById('cfgAccountName')?.value?.trim() || 'ศุภกฤต สอนบุญมา';
   const secondsPerBaht = Number(document.getElementById('cfgRate')?.value) || 180;
   const easyslipKey = document.getElementById('cfgEasySlipKey')?.value?.trim() || 'REDACTED_EASYSLIP_KEY';
 
@@ -1312,7 +1318,7 @@ async function saveSettings() {
   }
 
   setActionNotice('บันทึกการตั้งค่าระบบเรียบร้อย');
-  renderAll(dashData);
+  populateSettingsForm(updatedConfig, true);
 }
 
 // ─── Test Actions ─────────────────────────────
