@@ -299,20 +299,39 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
     }
   }
 
-  // 4. ตรวจผู้รับ (PromptPay phone หรือ Bank Account)
-  const receiverProxy = raw?.receiver?.account?.proxy?.account || "";
+  // 4. ตรวจผู้รับ (PromptPay phone, Bank Account, หรือชื่อบัญชี)
+  const receiverProxy = raw?.receiver?.account?.proxy?.account || raw?.receiver?.proxy?.account || "";
   const receiverAcc = raw?.receiver?.account?.bank?.account || raw?.receiver?.account?.account || "";
-  
-  if (receiverProxy && CFG.promptpayPhone) {
-    const tail = (s) => s.replace(/\D/g, "").slice(-9);
-    if (tail(receiverProxy) !== tail(CFG.promptpayPhone)) {
-      return { valid: false, reason: "WRONG_RECEIVER", message: "❌ โอนไปยังเบอร์พร้อมเพย์ที่ไม่ตรงกับระบบ" };
+  const receiverName = raw?.receiver?.account?.name?.th || raw?.receiver?.name || raw?.receiver?.displayName || "";
+
+  let receiverMatch = false;
+
+  // ตรวจชื่อผู้รับ (เช่น ศุภกฤต)
+  if (receiverName && (receiverName.includes("ศุภกฤต") || receiverName.includes("supakit"))) {
+    receiverMatch = true;
+  }
+
+  // ตรวจเบอร์ PromptPay (รองรับทั้งแบบเต็ม และแบบ masked เช่น xxx-xxx-9951)
+  if (!receiverMatch && receiverProxy && CFG.promptpayPhone) {
+    const proxyDigits = receiverProxy.replace(/\D/g, "");
+    const cfgDigits = CFG.promptpayPhone.replace(/\D/g, "");
+    if (proxyDigits.length >= 4 && cfgDigits.endsWith(proxyDigits.slice(-4))) {
+      receiverMatch = true;
     }
-  } else if (receiverAcc && CFG.bankAccount && !CFG.bankAccount.includes("xxx")) {
-    const norm = (s) => s.replace(/\D/g, "");
-    if (norm(receiverAcc) && norm(CFG.bankAccount) && !norm(receiverAcc).includes(norm(CFG.bankAccount).slice(-6))) {
-      return { valid: false, reason: "WRONG_RECEIVER", message: "❌ โอนไปยังเลขบัญชีที่ไม่ตรงกับระบบ" };
+  }
+
+  // ตรวจเลขที่บัญชีธนาคาร (รองรับ masked เช่น 193-x-x6131-x)
+  if (!receiverMatch && receiverAcc && CFG.bankAccount) {
+    const accDigits = receiverAcc.replace(/\D/g, "");
+    const cfgAccDigits = CFG.bankAccount.replace(/\D/g, "");
+    if (accDigits.length >= 4 && cfgAccDigits.endsWith(accDigits.slice(-4))) {
+      receiverMatch = true;
     }
+  }
+
+  // ถ้ามีข้อมูลผู้รับระบุในสลิป แต่ไม่ตรงกับระบบเลย
+  if ((receiverProxy || receiverAcc || receiverName) && !receiverMatch) {
+    return { valid: false, reason: "WRONG_RECEIVER", message: "❌ สลิปไม่ได้โอนเข้าบัญชีหรือพร้อมเพย์ของตู้ชาร์จนี้" };
   }
 
   // ผ่านทุกอย่าง — บันทึก transRef ป้องกันการใช้ซ้ำ
@@ -320,6 +339,7 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
     state.usedTransRefs.add(raw.transRef);
     saveState();
   }
+
 
 
   return {

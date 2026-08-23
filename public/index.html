@@ -1385,16 +1385,30 @@ async function submitSlip(method){
       return;
     }
 
+    // ตรวจผู้รับ (PromptPay Phone หรือ Bank Account หรือ ชื่อบัญชี)
+    const receiverProxy = raw?.receiver?.account?.proxy?.account || raw?.receiver?.proxy?.account || '';
+    const receiverAcc = raw?.receiver?.account?.bank?.account || raw?.receiver?.account?.account || '';
+    const receiverName = raw?.receiver?.account?.name?.th || raw?.receiver?.name || '';
+    
+    let receiverValid = false;
+    if (receiverName && (receiverName.includes('ศุภกฤต') || receiverName.includes('supakit'))) receiverValid = true;
+    if (!receiverValid && receiverProxy && receiverProxy.replace(/\D/g, '').endsWith('9951')) receiverValid = true;
+    if (!receiverValid && receiverAcc && receiverAcc.replace(/\D/g, '').endsWith('86131')) receiverValid = true;
+    
+    if ((receiverProxy || receiverAcc || receiverName) && !receiverValid) {
+      showErr('❌ สลิปไม่ได้โอนเข้าพร้อมเพย์หรือบัญชีของตู้ชาร์จนี้');
+      return;
+    }
+
     // ตรวจสลิปซ้ำในเครื่อง
     const usedSlips = JSON.parse(localStorage.getItem('usb_charger_used_slips') || '[]');
-    if (data.data?.isDuplicate || (raw?.transRef && usedSlips.includes(raw.transRef))) {
+    const transRef = raw?.transRef || data.data?.transRef || `REF-${Date.now()}`;
+    if (data.data?.isDuplicate || usedSlips.includes(transRef)) {
       showErr('❌ สลิปนี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้');
       return;
     }
-    if (raw?.transRef) {
-      usedSlips.push(raw.transRef);
-      localStorage.setItem('usb_charger_used_slips', JSON.stringify(usedSlips));
-    }
+    usedSlips.push(transRef);
+    localStorage.setItem('usb_charger_used_slips', JSON.stringify(usedSlips));
 
     // เปิดใช้งานพอร์ตและบันทึกสถานะ
     const cs = S.amount * SPB;
@@ -1408,19 +1422,26 @@ async function submitSlip(method){
       renderPorts(currentPorts);
     }
 
-    const senderName = raw?.sender?.account?.name?.th || raw?.sender?.account?.name?.en || 'ผู้โอน';
+    const senderName = raw?.sender?.account?.name?.th || raw?.sender?.account?.name?.en || raw?.sender?.name || 'ผู้โอน';
+    const senderBank = raw?.sender?.bank || raw?.sender?.account?.bank?.name || 'ธนาคาร';
+    const senderAcc = raw?.sender?.account?.bank?.account || raw?.sender?.account?.proxy?.account || '';
     
-    // บันทึกรายการจริงลงในประวัติ
+    // บันทึกรายการจริงลงในประวัติพร้อมข้อมูลสลิป
     const newTx = {
-      id: `TXN-${Date.now().toString().slice(-6)}`,
+      id: transRef,
       portId: S.portId,
       amount: Number(slipAmount || S.amount),
       method: S.method,
       status: 'finished',
-      createdAt: new Date().toISOString(),
+      createdAt: raw?.date || new Date().toISOString(),
       verification: {
         sender: senderName,
-        transRef: raw?.transRef || `REF-${Date.now()}`
+        senderBank: senderBank,
+        senderAccount: senderAcc,
+        receiver: receiverName || 'ด.ช. ศุภกฤต ส.',
+        transRef: transRef,
+        apiStatus: 'สำเร็จ',
+        verifiedAt: new Date().toLocaleString('th-TH')
       }
     };
     try {
