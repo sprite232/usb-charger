@@ -1,77 +1,140 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<meta name="theme-color" content="#0c0c0c"/>
+<meta name="theme-color" content="#0c0c0c" id="metaThemeColor"/>
 <title>ตู้ชาร์จ USB</title>
 <script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#0c0c0c;
-  --card:#161616;
-  --card2:#1e1e1e;
-  --line:#272727;
-  --text:#efefef;
-  --muted:#666;
-  --muted2:#3a3a3a;
-  --green:#00c853;
-  --amber:#ffab00;
-  --blue:#448aff;
-  --red:#f44336;
-  --r:.75rem;
+
+/* ─── THEME VARIABLES ─────────────────────────── */
+:root, [data-theme="dark"] {
+  --bg: #0c0c0c;
+  --header-bg: rgba(12, 12, 12, 0.95);
+  --card: #161616;
+  --card2: #1e1e1e;
+  --card-hover: #222222;
+  --line: #272727;
+  --line-subtle: #1f1f1f;
+  --text: #f0f0f0;
+  --muted: #888888;
+  --muted2: #444444;
+  --green: #00c853;
+  --green-bg: rgba(0, 200, 83, 0.1);
+  --amber: #ffab00;
+  --amber-bg: rgba(255, 171, 0, 0.1);
+  --blue: #448aff;
+  --blue-bg: rgba(68, 138, 255, 0.1);
+  --red: #f44336;
+  --red-bg: rgba(244, 67, 54, 0.1);
+  --pill-bg: #0a0a0a;
+  --img-invert: invert(1);
+  --shadow: none;
+  --r: .75rem;
 }
+
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --card: #ffffff;
+  --card2: #f1f5f9;
+  --card-hover: #f8fafc;
+  --line: #e2e8f0;
+  --line-subtle: #edf2f7;
+  --text: #0f172a;
+  --muted: #64748b;
+  --muted2: #94a3b8;
+  --green: #16a34a;
+  --green-bg: rgba(22, 163, 74, 0.08);
+  --amber: #d97706;
+  --amber-bg: rgba(217, 119, 6, 0.08);
+  --blue: #2563eb;
+  --blue-bg: rgba(37, 99, 235, 0.08);
+  --red: #dc2626;
+  --red-bg: rgba(220, 38, 38, 0.08);
+  --pill-bg: #e2e8f0;
+  --img-invert: none;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --r: .75rem;
+}
+
 html,body{height:100%}
 body{
   background:var(--bg);color:var(--text);
-  font-family:-apple-system,'Segoe UI',system-ui,sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   min-height:100vh;min-height:100dvh;
   -webkit-font-smoothing:antialiased;
+  transition:background .2s ease, color .2s ease;
 }
 
-/* ── HEADER */
+/* ─── HEADER ──────────────────────────────────── */
 .header{
   display:flex;align-items:center;gap:.75rem;
   padding:.875rem 1.125rem;
   border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:40;
-  background:var(--bg);
+  background:var(--header-bg);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  transition:background .2s ease, border-color .2s ease;
 }
-.header-title{font-size:.95rem;font-weight:700;flex:1}
-.header-sub{font-size:.72rem;color:var(--muted)}
+.header-brand{
+  flex:1;cursor:default;user-select:none;-webkit-user-select:none;
+}
+.header-title{
+  font-size:.95rem;font-weight:700;letter-spacing:-0.2px;
+  display:inline-block;
+}
+.header-sub{font-size:.72rem;color:var(--muted);margin-top:.1rem}
+
+.header-actions{display:flex;align-items:center;gap:.5rem}
+
 .rate-label{
   font-size:.72rem;font-weight:600;color:var(--amber);
+  background:var(--amber-bg);
   border:1px solid var(--amber);border-radius:.4rem;padding:.2rem .55rem;
+  white-space:nowrap;
 }
-.admin-link{font-size:.72rem;color:var(--muted);text-decoration:none}
-.admin-link:hover{color:var(--text)}
 
-/* ── MAIN */
+/* Theme Toggle Button */
+.theme-btn{
+  background:var(--card2);border:1px solid var(--line);
+  color:var(--muted);width:32px;height:32px;border-radius:.5rem;
+  display:grid;place-items:center;cursor:pointer;
+  transition:all .15s ease;
+}
+.theme-btn:hover{color:var(--text);border-color:var(--muted)}
+.theme-btn svg{width:16px;height:16px;fill:currentColor}
+
+/* ─── MAIN ────────────────────────────────────── */
 .main{padding:1.125rem;max-width:640px;margin:0 auto}
-.section-label{font-size:.68rem;color:var(--muted);margin-bottom:.75rem;letter-spacing:.5px}
+.section-label{font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.75rem;letter-spacing:.5px;text-transform:uppercase}
 
-/* ── PORT GRID */
+/* ─── PORT GRID ───────────────────────────────── */
 .port-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
 
 .port-card{
   background:var(--card);border:1px solid var(--line);
   border-radius:var(--r);padding:.875rem;
-  transition:border-color .15s,transform .12s;
+  transition:border-color .15s,transform .12s,box-shadow .15s,background .15s;
   user-select:none;-webkit-user-select:none;
+  box-shadow:var(--shadow);
 }
 .port-card.available{cursor:pointer}
+.port-card.available:hover{border-color:var(--green);background:var(--card-hover)}
 .port-card.available:active{transform:scale(.97);border-color:var(--green)}
 .port-card.in-use{
   grid-column:1/-1;cursor:default;
   border-color:var(--line);
 }
-.port-card.pending_payment{cursor:default;border-color:rgba(255,171,0,.3)}
+.port-card.pending_payment{cursor:default;border-color:var(--amber)}
 
 /* card top row */
 .pc-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem}
 .pc-name{font-size:.88rem;font-weight:700}
-.pc-type-tag{font-size:.62rem;color:var(--muted);margin-top:.15rem}
+.pc-type-tag{font-size:.65rem;color:var(--muted);margin-top:.15rem}
 
 /* status dot */
 .status{display:flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:600}
@@ -91,46 +154,51 @@ body{
 /* pending */
 .pc-pending{font-size:.75rem;color:var(--amber);margin-top:.4rem}
 
-/* ── PROGRESS BAR (in-use) */
+/* ─── PROGRESS BAR (in-use) ───────────────────── */
 .bar-header{
   display:flex;justify-content:space-between;align-items:baseline;
   margin-bottom:.55rem;
 }
-.bar-user{font-size:.82rem;font-weight:700}
+.bar-user{font-size:.84rem;font-weight:700;display:flex;align-items:center}
 .bar-meta{font-size:.72rem;color:var(--muted);text-align:right}
-.bar-timer{font-size:.9rem;font-weight:800;color:var(--blue);margin-top:.1rem;display:block}
+.bar-timer{font-size:.95rem;font-weight:800;color:var(--blue);margin-top:.1rem;display:block}
 
 .bar-pill{
   position:relative;height:52px;border-radius:999px;
-  overflow:hidden;background:#0a0a0a;
+  overflow:hidden;background:var(--pill-bg);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.15);
 }
 .bar-fill{height:100%;width:100%;transition:background .8s linear}
 .bar-pct{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
   font-size:1.35rem;font-weight:900;color:#fff;
-  text-shadow:0 1px 5px rgba(0,0,0,.6);
+  text-shadow:0 1px 5px rgba(0,0,0,.7);
 }
 
-/* ── USB icons (PNG รูปจริง) */
+/* ─── USB icons ───────────────────────────────── */
 .pc-usb-icon{
   display:block;margin-bottom:.625rem;
   object-fit:contain;
+  transition:opacity .15s;
 }
-.pc-usb-icon.type-a{width:56px;height:auto;opacity:.5}
-.pc-usb-icon.type-c{width:44px;height:auto;opacity:.5}
-/* highlight when available */
+.pc-usb-icon.type-a{width:54px;height:auto;opacity:.5}
+.pc-usb-icon.type-c{width:42px;height:auto;opacity:.5}
 .port-card.available .pc-usb-icon{opacity:.85}
-/* in-use bar header icon */
+
 .bar-type-icon{
   display:inline-block;vertical-align:middle;
-  margin-right:.45rem;object-fit:contain;opacity:.7;
+  margin-right:.45rem;object-fit:contain;opacity:.8;
 }
-.bar-type-icon.type-a{width:30px;height:auto}
-.bar-type-icon.type-c{width:24px;height:auto}
+.bar-type-icon.type-a{width:28px;height:auto}
+.bar-type-icon.type-c{width:22px;height:auto}
 
+/* Invert filter for black PNG icons in dark mode */
+.img-invert-dark{
+  filter:var(--img-invert);
+}
 
-/* ── BOTTOM SHEET */
+/* ─── BOTTOM SHEET / MODAL ────────────────────── */
 .overlay{
   position:fixed;inset:0;z-index:80;
   background:rgba(0,0,0,.55);
@@ -148,10 +216,11 @@ body{
   padding-bottom:max(1.25rem,env(safe-area-inset-bottom));
   animation:slideUp .24s ease-out;
   overscroll-behavior:contain;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.15);
 }
 @media(min-width:560px){
   .sheet{border-radius:.875rem;border-bottom:1px solid var(--line);
-    animation:fadeUp .2s ease-out}
+    animation:fadeUp .2s ease-out;box-shadow:0 10px 30px rgba(0,0,0,0.25)}
 }
 @keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes fadeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -164,21 +233,22 @@ body{
   width:28px;height:28px;border-radius:50%;cursor:pointer;
   font-size:.9rem;display:grid;place-items:center;
 }
+.sheet-close:hover{color:var(--text)}
 .sheet-body{padding:.875rem 1rem}
 
 .page{display:none}.page.active{display:block}
 
-/* ── DENOM GRID */
+/* ─── DENOM GRID ──────────────────────────────── */
 .denom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.75rem}
 .dc{
   background:var(--card2);border:1px solid var(--line);
   border-radius:.625rem;overflow:hidden;cursor:pointer;
-  transition:border-color .15s;
+  transition:border-color .15s, transform .1s;
 }
 .dc:active{transform:scale(.96)}
-.dc.sel{border-color:var(--amber)}
+.dc.sel{border-color:var(--amber);background:var(--amber-bg)}
 .dc img{width:100%;height:52px;object-fit:cover;display:block}
-.dc.coin img{object-fit:contain;background:#111;padding:.25rem;height:60px}
+.dc.coin img{object-fit:contain;background:var(--pill-bg);padding:.25rem;height:60px}
 .dc-foot{padding:.35rem .4rem;text-align:center}
 .dc-amt{font-size:.85rem;font-weight:700}
 .dc-min{font-size:.62rem;color:var(--muted);margin-top:.05rem}
@@ -200,12 +270,12 @@ body{
 .custom-row input:focus{border-color:var(--amber)}
 .custom-row .cp{font-size:.75rem;color:var(--green);white-space:nowrap}
 
-/* ── CONFIRM */
+/* ─── CONFIRM ─────────────────────────────────── */
 .conf-img{border-radius:.625rem;overflow:hidden;margin-bottom:.75rem;border:1px solid var(--line)}
 .conf-img img{width:100%;max-height:130px;object-fit:cover;display:block}
-.conf-img.coin img{object-fit:contain;background:#111;padding:.875rem}
+.conf-img.coin img{object-fit:contain;background:var(--pill-bg);padding:.875rem}
 
-.tbl{background:var(--card2);border-radius:.625rem;overflow:hidden;margin-bottom:.625rem}
+.tbl{background:var(--card2);border-radius:.625rem;overflow:hidden;margin-bottom:.625rem;border:1px solid var(--line)}
 .tbl-row{display:flex;justify-content:space-between;padding:.55rem .875rem;border-bottom:1px solid var(--line)}
 .tbl-row:last-child{border-bottom:none}
 .tbl-k{font-size:.78rem;color:var(--muted)}
@@ -213,45 +283,46 @@ body{
 .tbl-row.hi .tbl-v{color:var(--amber)}
 
 .warn-box{
-  border:1px solid rgba(244,67,54,.2);background:rgba(244,67,54,.05);
+  border:1px solid var(--red);background:var(--red-bg);
   border-radius:.5rem;padding:.55rem .875rem;font-size:.75rem;
-  color:#e57373;margin-bottom:.75rem;text-align:center;
+  color:var(--red);margin-bottom:.75rem;text-align:center;
 }
 
-/* ── METHOD */
+/* ─── METHOD ──────────────────────────────────── */
 .method-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem}
 .method-item{
   display:flex;align-items:center;gap:.875rem;padding:.8rem .875rem;
   background:var(--card2);border:1px solid var(--line);
   border-radius:.625rem;cursor:pointer;text-align:left;
-  -webkit-appearance:none;color:var(--text);transition:border-color .15s;
+  -webkit-appearance:none;color:var(--text);transition:border-color .15s, background .15s;
 }
+.method-item:hover{border-color:var(--blue);background:var(--card-hover)}
 .method-item:active{border-color:var(--blue);transform:scale(.99)}
 .method-item .ml{font-size:.88rem;font-weight:700;margin-bottom:.15rem}
 .method-item .ms{font-size:.7rem;color:var(--muted)}
 .method-badge{
   margin-left:auto;font-size:.62rem;font-weight:700;
-  color:var(--green);border:1px solid rgba(0,200,83,.2);
-  background:rgba(0,200,83,.07);border-radius:.35rem;
+  color:var(--green);border:1px solid var(--green);
+  background:var(--green-bg);border-radius:.35rem;
   padding:.15rem .45rem;flex-shrink:0;
 }
 
-/* ── PAY INFO ROW */
+/* ─── PAY INFO ROW ────────────────────────────── */
 .pay-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.75rem}
-.pay-cell{background:var(--card2);border-radius:.5rem;padding:.5rem;text-align:center}
+.pay-cell{background:var(--card2);border:1px solid var(--line);border-radius:.5rem;padding:.5rem;text-align:center}
 .pay-lbl{font-size:.62rem;color:var(--muted);margin-bottom:.15rem}
 .pay-val{font-size:.85rem;font-weight:700}
 
 .expire-row{
   display:flex;align-items:center;justify-content:center;gap:.5rem;
   font-size:.78rem;color:var(--amber);
-  border:1px solid rgba(255,171,0,.2);border-radius:.5rem;
-  padding:.45rem;margin-bottom:.75rem;background:rgba(255,171,0,.05);
+  border:1px solid var(--amber);border-radius:.5rem;
+  padding:.45rem;margin-bottom:.75rem;background:var(--amber-bg);
 }
 .expire-row strong{font-weight:800}
 
 /* QR */
-.qr-wrap{background:#fff;border-radius:.625rem;padding:.625rem;text-align:center;margin-bottom:.75rem}
+.qr-wrap{background:#fff;border-radius:.625rem;padding:.625rem;text-align:center;margin-bottom:.75rem;border:1px solid var(--line)}
 .qr-wrap img{width:188px;height:188px;display:block;margin:0 auto}
 
 /* Bank box */
@@ -301,33 +372,40 @@ body{
 .result-box h2{font-size:1.05rem;font-weight:800;margin-bottom:.2rem}
 .result-box p{font-size:.8rem;color:var(--muted)}
 .result-ok{
-  background:rgba(0,200,83,.07);border:1px solid rgba(0,200,83,.2);
+  background:var(--green-bg);border:1px solid var(--green);
   border-radius:.625rem;padding:.875rem;margin:.75rem 0;
 }
 .result-time{font-size:1.85rem;font-weight:800;color:var(--green);margin-bottom:.2rem}
 .result-sender{font-size:.72rem;color:var(--muted)}
 .err-box{
-  background:rgba(244,67,54,.05);border:1px solid rgba(244,67,54,.2);
+  background:var(--red-bg);border:1px solid var(--red);
   border-radius:.625rem;padding:.75rem .875rem;
-  font-size:.8rem;color:#e57373;line-height:1.6;margin:.75rem 0;
+  font-size:.8rem;color:var(--red);line-height:1.6;margin:.75rem 0;
 }
 
-/* ── BUTTONS */
+/* ─── BUTTONS ─────────────────────────────────── */
 .btn{
   display:block;width:100%;margin-top:.5rem;
   padding:.82rem;border-radius:.625rem;border:none;
   font-size:.9rem;font-weight:600;cursor:pointer;
-  -webkit-appearance:none;transition:opacity .15s,transform .12s;
+  -webkit-appearance:none;transition:opacity .15s,transform .12s,background .15s;
 }
 .btn:active{transform:scale(.98);opacity:.88}
 .btn:disabled{opacity:.4;cursor:default;transform:none}
 .btn-primary{background:var(--blue);color:#fff}
-.btn-green{background:var(--green);color:#000}
+.btn-green{background:var(--green);color:#fff}
 .btn-amber{background:var(--amber);color:#000}
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}
 .btn-ghost:hover{color:var(--text);border-color:var(--muted)}
 
-/* ── SCROLLBAR */
+/* Footer info */
+.footer{
+  text-align:center;padding:2rem 1rem 1.5rem;
+  font-size:.68rem;color:var(--muted2);
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ─── SCROLLBAR ───────────────────────────────── */
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px}
 </style>
@@ -336,19 +414,31 @@ body{
 
 <!-- ══ HEADER ══════════════════════════════════════ -->
 <header class="header">
-  <div style="flex:1">
+  <div class="header-brand" id="adminSecretTrigger">
     <div class="header-title">ตู้ชาร์จ USB</div>
     <div class="header-sub" id="headerSub">4 พอร์ต · QR · โอนธนาคาร · เงินสด</div>
   </div>
-  <span class="rate-label" id="rateLabel">1฿ = 3 นาที</span>
-  <a href="/admin" class="admin-link" style="margin-left:.625rem">จัดการ</a>
+  <div class="header-actions">
+    <span class="rate-label" id="rateLabel">1฿ = 3 นาที</span>
+    <!-- Theme Toggle (Day / Night) -->
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="เปลี่ยนธีม กลางวัน/กลางคืน" aria-label="Toggle theme">
+      <!-- Sun Icon (shown in dark mode) -->
+      <svg id="sunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
+      <!-- Moon Icon (shown in light mode) -->
+      <svg id="moonIcon" style="display:none" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-.19 20 10.04 10.04 0 0 0 9.95-8.51 1 1 0 0 0-1.21-1.12A8 8 0 0 1 10.63 3.4a1 1 0 0 0-1.12-1.21A10.2 10.2 0 0 0 12.3 2z"/></svg>
+    </button>
+  </div>
 </header>
 
 <!-- ══ MAIN ════════════════════════════════════════ -->
 <main class="main">
-  <p class="section-label">เลือกพอร์ตที่ต้องการ</p>
+  <p class="section-label">เลือกพอร์ตที่ต้องการชาร์จ</p>
   <div class="port-grid" id="portGrid"></div>
 </main>
+
+<footer class="footer" id="footerSecretTrigger">
+  ตู้ชาร์จ USB อัจฉริยะ · ระบบเหมาจ่ายตามเวลา
+</footer>
 
 <!-- ══ SHEET ═══════════════════════════════════════ -->
 <div class="overlay" id="overlay">
@@ -423,12 +513,12 @@ body{
           <span class="method-badge">ทุกธนาคาร</span>
         </button>
         <button class="method-item" onclick="createSession('transfer')">
-          <img src="assets/bank.png" alt="โอนธนาคาร" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0;filter:invert(1)">
+          <img src="assets/bank.png" alt="โอนธนาคาร" class="img-invert-dark" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0">
           <div><div class="ml">โอนธนาคาร</div><div class="ms">โอนเข้าบัญชีที่แสดง แล้วอัปโหลดสลิป</div></div>
           <span class="method-badge">ตรวจสลิป</span>
         </button>
         <button class="method-item" onclick="createSession('cash')">
-          <img src="assets/banknote.png" alt="เงินสด" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0;filter:invert(1)">
+          <img src="assets/banknote.png" alt="เงินสด" class="img-invert-dark" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0">
           <div><div class="ml">เงินสด</div><div class="ms">ใส่ธนบัตรหรือเหรียญในช่องตู้</div></div>
           <span class="method-badge">ตรวจ UV</span>
         </button>
@@ -544,7 +634,61 @@ body{
 </div>
 
 <script>
-// ── Config
+// ─── Theme Management ─────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const isDark = theme === 'dark';
+  document.getElementById('sunIcon').style.display = isDark ? 'block' : 'none';
+  document.getElementById('moonIcon').style.display = isDark ? 'none' : 'block';
+  document.getElementById('metaThemeColor').setAttribute('content', isDark ? '#0c0c0c' : '#f8fafc');
+  localStorage.setItem('usb_charger_theme', theme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Init theme on load
+(function initTheme() {
+  const saved = localStorage.getItem('usb_charger_theme');
+  if (saved) {
+    applyTheme(saved);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    applyTheme('light');
+  } else {
+    applyTheme('dark');
+  }
+})();
+
+// ─── Stealth Admin Entry (เนียน ไม่โจ่งแจ้ง) ──────
+let secretTapCount = 0;
+let secretTapTimer = null;
+
+function handleSecretTap() {
+  secretTapCount++;
+  clearTimeout(secretTapTimer);
+  if (secretTapCount >= 5) {
+    secretTapCount = 0;
+    window.location.href = '/admin';
+    return;
+  }
+  secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 2500);
+}
+
+document.getElementById('adminSecretTrigger')?.addEventListener('click', handleSecretTap);
+document.getElementById('footerSecretTrigger')?.addEventListener('click', handleSecretTap);
+
+// Keyboard shortcut: Ctrl + Shift + A or Alt + A
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) ||
+      (e.altKey && (e.key === 'a' || e.key === 'A'))) {
+    e.preventDefault();
+    window.location.href = '/admin';
+  }
+});
+
+// ─── Config & API ──────────────────────────────
 const BASE = window.API_BASE || '';
 const apiFetch = (m,url,b) => {
   const o={method:m,headers:{'Content-Type':'application/json'}};
@@ -552,12 +696,12 @@ const apiFetch = (m,url,b) => {
   return fetch(BASE+url,o).then(r=>r.json()).catch(()=>null);
 };
 
-// ── State
+// ─── State ─────────────────────────────────────
 let SPB=180;
 const S={portId:null,portLabel:null,amount:null,method:null,session:null};
 let _expTimer=null,_cashPoll=null;
 
-// ── Utils
+// ─── Utils ─────────────────────────────────────
 const $=id=>document.getElementById(id);
 const fmtSecs=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 const fmtTime=s=>{
@@ -570,7 +714,7 @@ const fmtTime=s=>{
 };
 const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||'assets/note-100.jpg');
 
-// ── Refresh
+// ─── Refresh State ─────────────────────────────
 async function refreshPorts(){
   const d=await apiFetch('GET','/api/state');
   if(!d) return;
@@ -585,7 +729,7 @@ async function refreshPorts(){
 setInterval(refreshPorts,3000);
 refreshPorts();
 
-// ── Render ports
+// ─── Render Ports ──────────────────────────────
 function renderPorts(ports){
   const g=$('portGrid');g.innerHTML='';
   ports.forEach((p,i)=>{
@@ -603,16 +747,18 @@ function renderPorts(ports){
       const pct=Math.max(0,Math.min(100,Math.round((rem/total)*100)));
       const used=100-pct;
       const grad=pct===100
-        ?'linear-gradient(90deg,#1b5e20,#388e3c)'
+        ?'linear-gradient(90deg,#16a34a,#22c55e)'
         :pct===0
-        ?'linear-gradient(90deg,#b71c1c,#e53935)'
-        :`linear-gradient(90deg,#e53935 ${used}%,#1b5e20 ${used}%)`;
+        ?'linear-gradient(90deg,#b91c1c,#ef4444)'
+        :`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
+
+      const pauseBadge = p.isPaused ? '<span style="color:var(--amber);font-size:.72rem;margin-left:.4rem">(พักชั่วคราว)</span>' : '';
 
       el.innerHTML=`
         <div class="bar-header">
           <div class="bar-user">
             <img src="${svgSrc}" class="bar-type-icon ${typeClass}" alt="${p.type}">
-            ${p.label}
+            ${p.label} ${pauseBadge}
           </div>
           <div class="bar-meta">
             จ่ายมา ฿${p.currentTx?.amount||'—'}
@@ -625,6 +771,7 @@ function renderPorts(ports){
         </div>`;
       el.dataset.rem=rem;
       el.dataset.total=total;
+      el.dataset.paused=p.isPaused ? '1' : '0';
     } else {
       const dot=isA?'dot-green':isP?'dot-amber':'dot-blue';
       const dotColor=isA?'color-green':isP?'color-amber':'color-blue';
@@ -652,10 +799,10 @@ function renderPorts(ports){
   });
 }
 
-
-// ── Live timer (local)
+// ─── Local Live Timer Countdown ───────────────
 setInterval(()=>{
   document.querySelectorAll('[data-rem]').forEach(card=>{
+    if(card.dataset.paused === '1') return; // ไม่ลดเวลาถ้ากำลัง Pause อยู่
     const rem=Math.max(0,(Number(card.dataset.rem||0))-1);
     card.dataset.rem=rem;
     const total=Number(card.dataset.total||1);
@@ -668,15 +815,15 @@ setInterval(()=>{
     if(bfEl){
       const used=100-pct;
       bfEl.style.background=pct===100
-        ?'linear-gradient(90deg,#1b5e20,#388e3c)'
+        ?'linear-gradient(90deg,#16a34a,#22c55e)'
         :pct===0
-        ?'linear-gradient(90deg,#b71c1c,#e53935)'
-        :`linear-gradient(90deg,#e53935 ${used}%,#1b5e20 ${used}%)`;
+        ?'linear-gradient(90deg,#b91c1c,#ef4444)'
+        :`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
     }
   });
 },1000);
 
-// ── Sheet
+// ─── Sheet Controls ───────────────────────────
 function openSheet(portId,label){
   Object.assign(S,{portId,portLabel:label,amount:null,method:null,session:null});
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
@@ -699,7 +846,7 @@ function goPage(id){
   $(id).classList.add('active');
 }
 
-// ── Amount
+// ─── Amount Selection ─────────────────────────
 function pickDenom(amt,el){
   S.amount=amt;
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
@@ -726,7 +873,7 @@ function onCustomIn(){
   }
 }
 
-// ── Confirm
+// ─── Confirm Flow ─────────────────────────────
 function goConfirm(){
   if(!S.amount) return;
   $('confImg').src=denomImg(S.amount);
@@ -745,7 +892,7 @@ function goMethod(){
   goPage('pg-method');
 }
 
-// ── Session
+// ─── Create Payment Session ───────────────────
 async function createSession(method){
   S.method=method;
   goPage('pg-proc');$('procMsg').textContent='กำลังสร้าง session…';
@@ -784,7 +931,7 @@ function checkCash(ports){
   else if(p?.status==='available'&&!p.hasSession){stopTimers();showErr('Session หมดอายุ กรุณาเริ่มใหม่');}
 }
 
-// ── Slip
+// ─── Slip Upload ──────────────────────────────
 function pickFile(id){$(id).click();}
 function onFile(fId,pvId,btnId,dropId){
   const f=$(fId).files[0];if(!f) return;
@@ -810,7 +957,7 @@ function retrySlip(){
   goPage(S.method==='qr'?'pg-qr':'pg-transfer');
 }
 
-// ── Result
+// ─── Result Display ───────────────────────────
 function showOK(cs,sender,isDev){
   $('okTitle').textContent='ชำระเงินสำเร็จ';
   $('okPort').textContent=`${S.portLabel} พร้อมใช้งานแล้ว`;
@@ -820,7 +967,7 @@ function showOK(cs,sender,isDev){
 }
 function showErr(msg){$('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';goPage('pg-err');}
 
-// ── Timers
+// ─── Timers ───────────────────────────────────
 function startExpire(spanId,isoStr){
   stopTimers();
   const fn=()=>{

@@ -62,6 +62,7 @@ PORT_DEFS.forEach((d) => {
     ...d,
     status: "available",      // available | pending_payment | in-use
     relayOn: false,
+    isPaused: false,          // หยุดชั่วคราว (สำหรับทดสอบ / พักชาร์จ)
     paymentSession: null,     // { id, portId, amount, method, chargeSeconds, createdAt, expiresAt, qr?, bank? }
     currentTx: null,
     remainingSeconds: 0,
@@ -73,7 +74,7 @@ const now = () => new Date().toISOString();
 const getPort = (id) => state.ports[id] || null;
 
 function createTx(portId, amount, method, extra = {}) {
-  const chargeSeconds = Math.round(amount * CFG.secondsPerBaht);
+  const chargeSeconds = extra.testDuration || Math.round(amount * CFG.secondsPerBaht);
   const tx = {
     id: `txn_${Date.now()}`,
     portId, amount, method, chargeSeconds,
@@ -93,6 +94,7 @@ function activatePort(portId, amount, method, extra = {}) {
   const tx = createTx(portId, amount, method, extra);
   port.status = "in-use";
   port.relayOn = true;
+  port.isPaused = false;
   port.paymentSession = null;
   port.currentTx = tx;
   port.remainingSeconds = tx.chargeSeconds;
@@ -112,6 +114,7 @@ function stopPort(portId, reason = "time_up") {
   }
   port.status = "available";
   port.relayOn = false;
+  port.isPaused = false;
   port.currentTx = null;
   port.remainingSeconds = 0;
   state.updatedAt = now();
@@ -123,8 +126,10 @@ function clearSession(portId) {
   if (!port || port.status !== "pending_payment") return;
   port.status = "available";
   port.paymentSession = null;
+  port.isPaused = false;
   state.updatedAt = now();
 }
+
 
 function summary() {
   const txs = state.transactions;
@@ -147,7 +152,7 @@ function summary() {
 setInterval(() => {
   let changed = false;
   Object.values(state.ports).forEach((p) => {
-    if (p.status === "in-use" && p.remainingSeconds > 0) {
+    if (p.status === "in-use" && p.remainingSeconds > 0 && !p.isPaused) {
       p.remainingSeconds -= 1;
       changed = true;
       if (p.remainingSeconds <= 0) stopPort(p.id, "time_up");
@@ -155,6 +160,7 @@ setInterval(() => {
   });
   if (changed) state.updatedAt = now();
 }, 1000);
+
 
 // ✅ Session timeout (ทุก 30 วินาที)
 setInterval(() => {
@@ -285,6 +291,7 @@ app.get("/api/state", (_, res) => {
       id: p.id, label: p.label, type: p.type, relayGpio: p.relayGpio,
       status: p.status,
       relayOn: p.relayOn,
+      isPaused: !!p.isPaused,
       remainingSeconds: p.remainingSeconds,
       hasSession: !!p.paymentSession,
       sessionMethod: p.paymentSession?.method || null,
@@ -292,6 +299,7 @@ app.get("/api/state", (_, res) => {
     })),
   });
 });
+
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
@@ -484,10 +492,74 @@ app.post("/api/admin/port/:id/clear", requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
+// POST /api/admin/port/:id/pause (admin only) — พักชาร์จชั่วคราว (หยุดนับเวลา & ตัดไฟ relay)
+app.post("/api/admin/port/:id/pause", requireAdmin, (req, res) => {
+  const port = getPort(req.params.id);
+  if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
+  port.isPaused = true;
+  port.relayOn = false; // ตัดไฟ relay ระหว่าง pause
+  state.updatedAt = now();
+  console.log(`[⏸️ Admin] Pause port=${port.id} remaining=${port.remainingSeconds}s`);
+  res.json({ success: true, isPaused: true, remainingSeconds: port.remainingSeconds });
+});
+
+// POST /api/admin/port/:id/resume (admin only) — ชาร์จต่อ (เดินเวลาต่อ & เปิดไฟ relay)
+app.post("/api/admin/port/:id/resume", requireAdmin, (req, res) => {
+  const port = getPort(req.params.id);
+  if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
+  port.isPaused = false;
+  port.relayOn = true; // จ่ายไฟ relay ต่อ
+  state.updatedAt = now();
+  console.log(`[▶️ Admin] Resume port=${port.id} remaining=${port.remainingSeconds}s`);
+  res.json({ success: true, isPaused: false, remainingSeconds: port.remainingSeconds });
+});
+
+// POST /api/admin/port/:id/test-start (admin only) — ทดสอบเริ่มชาร์จจำลอง (ไม่ต้องจ่ายเงินจริง)
+app.post("/api/admin/port/:id/test-start", requireAdmin, (req, res) => {
+  const port = getPort(req.params.id);
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (port.status === "in-use") return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่ กรุณาหยุดก่อน" });
+
+  const durationSeconds = Number(req.body.durationSeconds) || 30; // ค่าเริ่มต้น 30 วินาที
+  const amount = Number(req.body.amount) || Math.max(1, Math.round(durationSeconds / CFG.secondsPerBaht));
+
+  const tx = activatePort(port.id, amount, "test", {
+    isTest: true,
+    testDuration: durationSeconds,
+    tester: "Admin Simulator",
+    testStartedAt: now(),
+  });
+
+  console.log(`[🧪 Admin Test] Started test on port=${port.id} for ${durationSeconds}s`);
+  res.json({ success: true, transaction: tx, durationSeconds, port: state.ports[port.id] });
+});
+
+// POST /api/admin/port/:id/set-time (admin only) — ปรับ/เร่งเวลาจำลอง (เช่น ปรับเหลือ 5 วิ เพื่อดูระบบตัดเวลา)
+app.post("/api/admin/port/:id/set-time", requireAdmin, (req, res) => {
+  const port = getPort(req.params.id);
+  if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
+  const seconds = Math.max(1, Number(req.body.seconds) || 5);
+  port.remainingSeconds = seconds;
+  state.updatedAt = now();
+  console.log(`[⏩ Admin Fast-Forward] Set port=${port.id} remaining=${seconds}s`);
+  res.json({ success: true, remainingSeconds: port.remainingSeconds });
+});
+
+// POST /api/admin/port/:id/toggle-relay (admin only) — ทดสอบฮาร์ดแวร์ Relay สลับ เปิด/ปิด โดยตรง
+app.post("/api/admin/port/:id/toggle-relay", requireAdmin, (req, res) => {
+  const port = getPort(req.params.id);
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  const turnOn = typeof req.body.on === "boolean" ? req.body.on : !port.relayOn;
+  port.relayOn = turnOn;
+  state.updatedAt = now();
+  console.log(`[🔌 Admin Relay Test] Port=${port.id} GPIO=${port.relayGpio} RelayOn=${turnOn}`);
+  res.json({ success: true, portId: port.id, relayGpio: port.relayGpio, relayOn: port.relayOn });
+});
+
 // POST /api/admin/reset (admin only)
 app.post("/api/admin/reset", requireAdmin, (_, res) => {
   Object.values(state.ports).forEach((p) => {
-    p.status = "available"; p.relayOn = false;
+    p.status = "available"; p.relayOn = false; p.isPaused = false;
     p.paymentSession = null; p.currentTx = null; p.remainingSeconds = 0;
   });
   state.updatedAt = now();
@@ -500,10 +572,11 @@ app.post("/api/admin/reset", requireAdmin, (_, res) => {
 app.get("/api/esp32/command", (_, res) => {
   const relays = {};
   Object.values(state.ports).forEach((p) => {
-    relays[p.id] = { gpio: p.relayGpio, on: p.relayOn, remainingSeconds: p.remainingSeconds };
+    relays[p.id] = { gpio: p.relayGpio, on: p.relayOn, isPaused: !!p.isPaused, remainingSeconds: p.remainingSeconds };
   });
   res.json({ relays, updatedAt: state.updatedAt });
 });
+
 
 app.post("/api/esp32/report", (req, res) => {
   state.lastEsp32 = { ...req.body, receivedAt: now() };
