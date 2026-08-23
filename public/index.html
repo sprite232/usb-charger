@@ -1183,8 +1183,10 @@ async function createSession(method){
   
   let res = await apiFetch('POST','/api/payment/create',{portId:S.portId,amount:S.amount,method});
   
-  // Fallback for standalone Firebase Hosting (works smoothly even without live Node server)
+  // Fallback for standalone Firebase Hosting (uses dynamic configuration)
   if(!res || !res.session){
+    const cfg = getAppConfig();
+    SPB = cfg.secondsPerBaht || 180;
     const chargeSeconds = S.amount * SPB;
     const expiresAt = new Date(Date.now() + 600000).toISOString();
     res = {
@@ -1195,13 +1197,13 @@ async function createSession(method){
         chargeSeconds,
         expiresAt,
         bank: {
-          name: 'กสิกรไทย (kbank)',
-          account: '193-3-86131-3',
-          accountName: 'ศุภกฤต สอนบุญมา',
-          phone: '0969679951'
+          name: cfg.bankName || 'กสิกรไทย (kbank)',
+          account: cfg.bankAccount || '193-3-86131-3',
+          accountName: cfg.bankAccountName || 'ศุภกฤต สอนบุญมา',
+          phone: cfg.promptpayPhone || '0969679951'
         },
         qr: {
-          image: `https://promptpay.io/0969679951/${S.amount}.png`
+          image: `https://promptpay.io/${cfg.promptpayPhone || '0969679951'}/${S.amount}.png`
         }
       }
     };
@@ -1213,6 +1215,29 @@ async function createSession(method){
   else setupCash(res.session);
 }
 
+function getAppConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
+    return {
+      promptpayPhone: saved.promptpayPhone || '0969679951',
+      bankName: saved.bankName || 'กสิกรไทย (kbank)',
+      bankAccount: saved.bankAccount || '193-3-86131-3',
+      bankAccountName: saved.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      secondsPerBaht: Number(saved.secondsPerBaht) || 180,
+      easyslipKey: saved.easyslipKey || EASYSLIP_KEY
+    };
+  } catch(e) {
+    return {
+      promptpayPhone: '0969679951',
+      bankName: 'กสิกรไทย (kbank)',
+      bankAccount: '193-3-86131-3',
+      bankAccountName: 'ศุภกฤต สอนบุญมา',
+      secondsPerBaht: 180,
+      easyslipKey: EASYSLIP_KEY
+    };
+  }
+}
+
 function setupQR(s){
   $('qr-port').textContent=S.portLabel;$('qr-amt').textContent=`฿${s.amount}`;
   $('qr-time').textContent=Math.round(s.chargeSeconds/60);
@@ -1221,15 +1246,17 @@ function setupQR(s){
   startExpire('qrCD',s.expiresAt);$('sheetTitle').textContent='สแกน QR Code';goPage('pg-qr');
 }
 function setupTR(s){
+  const cfg = getAppConfig();
   $('tr-port').textContent=S.portLabel;$('tr-amt').textContent=`฿${s.amount}`;
   $('tr-time').textContent=Math.round(s.chargeSeconds/60);
-  $('bAcc').textContent=s.bank?.account||'193-3-86131-3';
-  $('bName').textContent=s.bank?.accountName||'ศุภกฤต สอนบุญมา';
-  $('bBank').textContent=s.bank?.name||'กสิกรไทย (kbank)';
-  $('bPP').textContent=s.bank?.phone||'0969679951';
+  $('bAcc').textContent=s.bank?.account||cfg.bankAccount||'193-3-86131-3';
+  $('bName').textContent=s.bank?.accountName||cfg.bankAccountName||'ศุภกฤต สอนบุญมา';
+  $('bBank').textContent=s.bank?.name||cfg.bankName||'กสิกรไทย (kbank)';
+  $('bPP').textContent=s.bank?.phone||cfg.promptpayPhone||'0969679951';
   $('prevTR').style.display='none';$('btnTR').disabled=true;$('fTR').value='';
   startExpire('trCD',s.expiresAt);$('sheetTitle').textContent='โอนธนาคาร';goPage('pg-transfer');
 }
+
 
 let liveCashInserted = 0;
 

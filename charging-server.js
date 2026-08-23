@@ -86,6 +86,14 @@ function saveState() {
         id: p.id, status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
         remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
       })),
+      config: {
+        promptpayPhone: CFG.promptpayPhone,
+        bankName: CFG.bankName,
+        bankAccount: CFG.bankAccount,
+        bankAccountName: CFG.bankAccountName,
+        secondsPerBaht: CFG.secondsPerBaht,
+        easyslipKey: CFG.easyslipKey,
+      },
       updatedAt: state.updatedAt,
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), "utf8");
@@ -101,6 +109,14 @@ function loadState() {
     const data = JSON.parse(raw);
     if (data.transactions && Array.isArray(data.transactions)) state.transactions = data.transactions;
     if (data.usedTransRefs && Array.isArray(data.usedTransRefs)) state.usedTransRefs = new Set(data.usedTransRefs);
+    if (data.config) {
+      if (data.config.promptpayPhone) CFG.promptpayPhone = data.config.promptpayPhone;
+      if (data.config.bankName) CFG.bankName = data.config.bankName;
+      if (data.config.bankAccount) CFG.bankAccount = data.config.bankAccount;
+      if (data.config.bankAccountName) CFG.bankAccountName = data.config.bankAccountName;
+      if (data.config.secondsPerBaht) CFG.secondsPerBaht = Number(data.config.secondsPerBaht);
+      if (data.config.easyslipKey) CFG.easyslipKey = data.config.easyslipKey;
+    }
     if (data.ports && Array.isArray(data.ports)) {
       data.ports.forEach(saved => {
         const p = state.ports[saved.id];
@@ -607,6 +623,33 @@ app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
     updatedAt: state.updatedAt,
   });
 });
+
+// POST /api/admin/config — update settings (admin only)
+app.post("/api/admin/config", requireAdmin, (req, res) => {
+  const { promptpayPhone, bankName, bankAccount, bankAccountName, secondsPerBaht, easyslipKey } = req.body;
+  if (promptpayPhone !== undefined) CFG.promptpayPhone = promptpayPhone.trim();
+  if (bankName !== undefined) CFG.bankName = bankName.trim();
+  if (bankAccount !== undefined) CFG.bankAccount = bankAccount.trim();
+  if (bankAccountName !== undefined) CFG.bankAccountName = bankAccountName.trim();
+  if (secondsPerBaht !== undefined) CFG.secondsPerBaht = Number(secondsPerBaht) || 180;
+  if (easyslipKey !== undefined && easyslipKey.trim()) CFG.easyslipKey = easyslipKey.trim();
+  
+  saveState();
+  console.log(`[⚙️ Admin] Updated config: phone=${CFG.promptpayPhone} rate=${CFG.secondsPerBaht}s`);
+  res.json({
+    success: true,
+    message: "บันทึกการตั้งค่าระบบเรียบร้อย",
+    config: {
+      promptpayPhone: CFG.promptpayPhone,
+      bankName: CFG.bankName,
+      bankAccount: CFG.bankAccount,
+      bankAccountName: CFG.bankAccountName,
+      secondsPerBaht: CFG.secondsPerBaht,
+      easyslipEnabled: !!CFG.easyslipKey,
+    }
+  });
+});
+
 
 // POST /api/admin/port/:id/stop (admin only)
 app.post("/api/admin/port/:id/stop", requireAdmin, (req, res) => {
