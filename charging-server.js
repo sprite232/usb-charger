@@ -293,12 +293,19 @@ app.get("/api/state", (_, res) => {
       relayOn: p.relayOn,
       isPaused: !!p.isPaused,
       remainingSeconds: p.remainingSeconds,
+      totalSeconds: p.currentTx?.chargeSeconds || (p.remainingSeconds > 0 ? p.remainingSeconds : 0),
+      currentTx: p.currentTx ? {
+        amount: p.currentTx.amount,
+        chargeSeconds: p.currentTx.chargeSeconds,
+        method: p.currentTx.method,
+      } : null,
       hasSession: !!p.paymentSession,
       sessionMethod: p.paymentSession?.method || null,
       sessionExpiresAt: p.paymentSession?.expiresAt || null,
     })),
   });
 });
+
 
 
 // ─── Payment ──────────────────────────────────────────────────────────────────

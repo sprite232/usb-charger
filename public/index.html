@@ -731,37 +731,76 @@ refreshPorts();
 
 // ─── Render Ports ──────────────────────────────
 function renderPorts(ports){
-  const g=$('portGrid');g.innerHTML='';
-  ports.forEach((p,i)=>{
-    const el=document.createElement('div');
-    const isA=p.status==='available',isP=p.status==='pending_payment',isU=p.status==='in-use';
-    el.className=`port-card ${p.status}`;
+  const g=$('portGrid');
+  
+  // Check if we can do an in-place update to prevent flicker
+  const existingCards = g.querySelectorAll('.port-card');
+  const canUpdateInPlace = existingCards.length === ports.length && 
+    Array.from(existingCards).every((card, i) => card.dataset.portId === ports[i].id && card.dataset.status === ports[i].status);
 
-    const isC = p.type==='USB-C';
+  if (canUpdateInPlace) {
+    ports.forEach((p, i) => {
+      const card = existingCards[i];
+      if (p.status === 'in-use') {
+        const total = p.totalSeconds || p.currentTx?.chargeSeconds || Number(card.dataset.total) || p.remainingSeconds || 1;
+        const rem = p.remainingSeconds || 0;
+        card.dataset.rem = rem;
+        card.dataset.total = total;
+        card.dataset.paused = p.isPaused ? '1' : '0';
+        
+        const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+        const used = 100 - pct;
+        const grad = pct === 100
+          ? 'linear-gradient(90deg,#16a34a,#22c55e)'
+          : pct === 0
+          ? 'linear-gradient(90deg,#b91c1c,#ef4444)'
+          : `linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
+
+        const tEl = $(`t-${p.id}`);
+        const bpEl = $(`bp-${p.id}`);
+        const bfEl = $(`bf-${p.id}`);
+        if (tEl) tEl.textContent = fmtSecs(rem);
+        if (bpEl) bpEl.textContent = `${pct} %`;
+        if (bfEl) bfEl.style.background = grad;
+      }
+    });
+    return;
+  }
+
+  // Full re-render if structure changed
+  g.innerHTML = '';
+  ports.forEach((p, i) => {
+    const el = document.createElement('div');
+    const isA = p.status === 'available', isP = p.status === 'pending_payment', isU = p.status === 'in-use';
+    el.className = `port-card ${p.status}`;
+    el.dataset.portId = p.id;
+    el.dataset.status = p.status;
+
+    const isC = p.type === 'USB-C';
     const svgSrc = isC ? 'assets/usb-c-icon.png' : 'assets/usb-a-icon.png';
     const typeClass = isC ? 'type-c' : 'type-a';
 
     if(isU){
-      const total=p.currentTx?.chargeSeconds||1;
-      const rem=p.remainingSeconds||0;
-      const pct=Math.max(0,Math.min(100,Math.round((rem/total)*100)));
-      const used=100-pct;
-      const grad=pct===100
-        ?'linear-gradient(90deg,#16a34a,#22c55e)'
-        :pct===0
-        ?'linear-gradient(90deg,#b91c1c,#ef4444)'
-        :`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
+      const total = p.totalSeconds || p.currentTx?.chargeSeconds || p.remainingSeconds || 1;
+      const rem = p.remainingSeconds || 0;
+      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+      const used = 100 - pct;
+      const grad = pct === 100
+        ? 'linear-gradient(90deg,#16a34a,#22c55e)'
+        : pct === 0
+        ? 'linear-gradient(90deg,#b91c1c,#ef4444)'
+        : `linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
 
       const pauseBadge = p.isPaused ? '<span style="color:var(--amber);font-size:.72rem;margin-left:.4rem">(พักชั่วคราว)</span>' : '';
 
-      el.innerHTML=`
+      el.innerHTML = `
         <div class="bar-header">
           <div class="bar-user">
             <img src="${svgSrc}" class="bar-type-icon ${typeClass}" alt="${p.type}">
             ${p.label} ${pauseBadge}
           </div>
           <div class="bar-meta">
-            จ่ายมา ฿${p.currentTx?.amount||'—'}
+            จ่ายมา ฿${p.currentTx?.amount || Math.round(total / SPB) || '—'}
             <span class="bar-timer" id="t-${p.id}">${fmtSecs(rem)}</span>
           </div>
         </div>
@@ -769,14 +808,14 @@ function renderPorts(ports){
           <div class="bar-fill" id="bf-${p.id}" style="background:${grad}"></div>
           <div class="bar-pct" id="bp-${p.id}">${pct} %</div>
         </div>`;
-      el.dataset.rem=rem;
-      el.dataset.total=total;
-      el.dataset.paused=p.isPaused ? '1' : '0';
+      el.dataset.rem = rem;
+      el.dataset.total = total;
+      el.dataset.paused = p.isPaused ? '1' : '0';
     } else {
-      const dot=isA?'dot-green':isP?'dot-amber':'dot-blue';
-      const dotColor=isA?'color-green':isP?'color-amber':'color-blue';
-      const statusTxt=isA?'ว่าง':isP?'รอชำระ':'กำลังใช้งาน';
-      el.innerHTML=`
+      const dot = isA ? 'dot-green' : isP ? 'dot-amber' : 'dot-blue';
+      const dotColor = isA ? 'color-green' : isP ? 'color-amber' : 'color-blue';
+      const statusTxt = isA ? 'ว่าง' : isP ? 'รอชำระ' : 'กำลังใช้งาน';
+      el.innerHTML = `
         <img src="${svgSrc}" class="pc-usb-icon ${typeClass}" alt="${p.type}">
         <div class="pc-row">
           <div>
@@ -789,39 +828,40 @@ function renderPorts(ports){
           </div>
         </div>
         ${isA
-          ?`<div class="pc-hint">กดเพื่อใช้งาน</div>`
-          :isP
-          ?`<div class="pc-pending">รอชำระเงิน (${p.sessionMethod||'—'})</div>`
-          :''}`;
-      if(isA) el.addEventListener('click',()=>openSheet(p.id,p.label));
+          ? `<div class="pc-hint">กดเพื่อใช้งาน</div>`
+          : isP
+          ? `<div class="pc-pending">รอชำระเงิน (${p.sessionMethod || '—'})</div>`
+          : ''}`;
+      if(isA) el.addEventListener('click', () => openSheet(p.id, p.label));
     }
     g.appendChild(el);
   });
 }
 
 // ─── Local Live Timer Countdown ───────────────
-setInterval(()=>{
-  document.querySelectorAll('[data-rem]').forEach(card=>{
-    if(card.dataset.paused === '1') return; // ไม่ลดเวลาถ้ากำลัง Pause อยู่
-    const rem=Math.max(0,(Number(card.dataset.rem||0))-1);
-    card.dataset.rem=rem;
-    const total=Number(card.dataset.total||1);
-    const pct=Math.max(0,Math.min(100,Math.round((rem/total)*100)));
-    const id=card.querySelector('[id^="t-"]')?.id?.replace('t-','');
-    if(!id) return;
-    const tEl=$(`t-${id}`),bpEl=$(`bp-${id}`),bfEl=$(`bf-${id}`);
-    if(tEl) tEl.textContent=fmtSecs(rem);
-    if(bpEl) bpEl.textContent=`${pct} %`;
-    if(bfEl){
-      const used=100-pct;
-      bfEl.style.background=pct===100
-        ?'linear-gradient(90deg,#16a34a,#22c55e)'
-        :pct===0
-        ?'linear-gradient(90deg,#b91c1c,#ef4444)'
-        :`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
+setInterval(() => {
+  document.querySelectorAll('[data-rem]').forEach(card => {
+    if (card.dataset.paused === '1') return; // ไม่ลดเวลาถ้ากำลัง Pause อยู่
+    const rem = Math.max(0, (Number(card.dataset.rem || 0)) - 1);
+    card.dataset.rem = rem;
+    const total = Number(card.dataset.total || 1);
+    const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+    const id = card.dataset.portId || card.querySelector('[id^="t-"]')?.id?.replace('t-', '');
+    if (!id) return;
+    const tEl = $(`t-${id}`), bpEl = $(`bp-${id}`), bfEl = $(`bf-${id}`);
+    if (tEl) tEl.textContent = fmtSecs(rem);
+    if (bpEl) bpEl.textContent = `${pct} %`;
+    if (bfEl) {
+      const used = 100 - pct;
+      bfEl.style.background = pct === 100
+        ? 'linear-gradient(90deg,#16a34a,#22c55e)'
+        : pct === 0
+        ? 'linear-gradient(90deg,#b91c1c,#ef4444)'
+        : `linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
     }
   });
-},1000);
+}, 1000);
+
 
 // ─── Sheet Controls ───────────────────────────
 function openSheet(portId,label){
