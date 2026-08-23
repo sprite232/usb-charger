@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "YOUR-FIREBASE-PROJECT-ID"
-  }
+    "default": "usb-charger-project"
+  },
+  "targets": {},
+  "etags": {}
 }

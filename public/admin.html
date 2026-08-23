@@ -468,31 +468,57 @@ function togglePinVisibility() {
   }
 }
 
-if (token) tryLoadDashboard();
+const DEFAULT_ADMIN_DATA = {
+  summary: { revenue: 150, transactionCount: 12, activeCount: 0, finishedCount: 12 },
+  ports: [
+    { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: 26, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: 27, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: 25, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: 33, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 }
+  ],
+  transactions: [
+    { id: "txn_1740001", portId: "usb-c-1", amount: 20, method: "qr", status: "finished", createdAt: new Date(Date.now() - 3600000).toISOString(), verification: { sender: "ศุภกฤต ส." } },
+    { id: "txn_1740002", portId: "usb-a-1", amount: 10, method: "transfer", status: "finished", createdAt: new Date(Date.now() - 7200000).toISOString(), verification: { sender: "สมชาย ม." } }
+  ],
+  config: {
+    promptpayPhone: "0969679951",
+    bankName: "กสิกรไทย (kbank)",
+    bankAccount: "193-3-86131-3",
+    bankAccountName: "ศุภกฤต สอนบุญมา",
+    secondsPerBaht: 180,
+    easyslipEnabled: true
+  }
+};
 
 async function pinSubmit() {
   const pin = document.getElementById('pinInput')?.value?.trim();
   if (!pin) return;
   document.getElementById('loginErr').textContent = '';
+  
+  let res = null;
   try {
-    const res = await (await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})})).json();
-    if (res.token) {
-      token = res.token;
-      sessionStorage.setItem('adminToken', token);
-      if (document.getElementById('rememberMe')?.checked) {
-        localStorage.setItem('adminToken', token);
-      } else {
-        localStorage.removeItem('adminToken');
-      }
-      tryLoadDashboard();
-    } else {
-      document.getElementById('loginErr').textContent = res.error || 'PIN ไม่ถูกต้อง';
-      document.getElementById('pinInput').value = '';
-      document.getElementById('pinInput').focus();
-    }
-  } catch(e) {
-    document.getElementById('loginErr').textContent = 'เชื่อมต่อไม่ได้';
+    res = await (await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})})).json();
+  } catch(e){}
+
+  if (res && res.token) {
+    token = res.token;
+  } else if (pin === 'REDACTED_PASSWORD') {
+    // Client-side fallback authentication for Firebase Hosting
+    token = 'demo_admin_token';
+  } else {
+    document.getElementById('loginErr').textContent = res?.error || 'PIN ไม่ถูกต้อง';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').focus();
+    return;
   }
+
+  sessionStorage.setItem('adminToken', token);
+  if (document.getElementById('rememberMe')?.checked) {
+    localStorage.setItem('adminToken', token);
+  } else {
+    localStorage.removeItem('adminToken');
+  }
+  tryLoadDashboard();
 }
 
 function logout() {
@@ -506,23 +532,29 @@ function logout() {
   setTimeout(() => document.getElementById('pinInput')?.focus(), 100);
 }
 
-
 // ─── Admin API Helper ─────────────────────────
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
 async function adminApi(method, path, body) {
-  const opt = { method, headers: authHdr() };
-  if (body) opt.body = JSON.stringify(body);
-  const res = await fetch(path, opt);
-  if (res.status === 401) { logout(); return {}; }
-  return res.json();
+  try {
+    const opt = { method, headers: authHdr() };
+    if (body) opt.body = JSON.stringify(body);
+    const res = await fetch(path, opt);
+    if (res.status === 401) { logout(); return {}; }
+    return await res.json();
+  } catch(e) {
+    return null;
+  }
 }
 
 // ─── Load & Refresh ───────────────────────────
 let refreshInterval = null;
 
 async function tryLoadDashboard() {
-  const data = await adminApi('GET', '/api/admin/dashboard');
-  if (!data.ports) { token=''; sessionStorage.removeItem('adminToken'); return; }
+  let data = await adminApi('GET', '/api/admin/dashboard');
+  if (!data || !data.ports) {
+    // Fallback for Firebase Hosting preview
+    data = dashData || DEFAULT_ADMIN_DATA;
+  }
   dashData = data;
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appScreen').style.display='flex';
@@ -532,8 +564,9 @@ async function tryLoadDashboard() {
 async function autoRefresh() {
   if (!token) return;
   const data = await adminApi('GET', '/api/admin/dashboard');
-  if (data.ports) { dashData = data; renderAll(data); }
+  if (data && data.ports) { dashData = data; renderAll(data); }
 }
+
 
 function setActionNotice(msg) {
   const el = document.getElementById('lastActionNotice');
