@@ -807,6 +807,21 @@ renderPorts(DEFAULT_PORTS);
 setInterval(refreshPorts, 3000);
 refreshPorts();
 
+// ─── Auto Select Port from QR Code Scan (?port=usb-a-1) ───────────
+(function checkUrlPortParam(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetPort = urlParams.get('port');
+  if (targetPort) {
+    setTimeout(() => {
+      const p = currentPorts.find(x => x.id === targetPort);
+      if (p && p.status === 'available') {
+        openSheet(p.id, p.label);
+      }
+    }, 400);
+  }
+})();
+
+
 // ─── Render Ports ──────────────────────────────
 function renderPorts(ports){
   const g=$('portGrid');

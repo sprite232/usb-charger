@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>พิมพ์สติกเกอร์ QR Code - ตู้ชาร์จ USB</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#f1f5f9;color:#0f172a;padding:1.5rem;
+}
+
+.no-print-bar{
+  max-width:900px;margin:0 auto 1.5rem;
+  background:#fff;border-radius:.75rem;padding:1rem 1.25rem;
+  display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+.no-print-bar h1{font-size:1.1rem;font-weight:700}
+.no-print-bar p{font-size:.8rem;color:#64748b}
+.btn-print{
+  background:#2563eb;color:#fff;border:none;padding:.6rem 1.2rem;
+  border-radius:.5rem;font-size:.88rem;font-weight:600;cursor:pointer;
+}
+
+.sheet-container{
+  max-width:900px;margin:0 auto;
+  background:#fff;border-radius:.75rem;padding:2rem;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.stickers-grid{
+  display:grid;grid-template-columns:repeat(2, 1fr);gap:1.5rem;
+}
+
+.sticker-card{
+  border:2px dashed #cbd5e1;border-radius:.75rem;padding:1.25rem;
+  text-align:center;background:#fafafa;position:relative;
+}
+.sticker-card.main-badge{
+  grid-column:1 / -1;background:#f8fafc;border:2px solid #0f172a;
+}
+
+.st-tag{
+  display:inline-block;background:#0f172a;color:#fff;
+  font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:.35rem;margin-bottom:.5rem;
+}
+.st-title{font-size:1.15rem;font-weight:800;margin-bottom:.2rem}
+.st-sub{font-size:.78rem;color:#64748b;margin-bottom:1rem}
+
+.qr-box{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:.5rem;
+  padding:.75rem;display:inline-block;margin-bottom:.75rem;
+}
+.qr-box img{width:160px;height:160px;display:block}
+
+.st-steps{
+  font-size:.72rem;color:#475569;line-height:1.6;
+  background:#fff;border:1px solid #e2e8f0;border-radius:.4rem;padding:.5rem;
+}
+.st-steps strong{color:#0f172a}
+
+@media print{
+  body{background:#fff;padding:0}
+  .no-print-bar{display:none}
+  .sheet-container{box-shadow:none;padding:0;max-width:100%}
+  .sticker-card{border:2px dashed #94a3b8;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="no-print-bar">
+  <div>
+    <h1>🖨️ สติกเกอร์ QR Code ติดหน้าตู้ชาร์จ</h1>
+    <p>ปริ้นท์ลงกระดาษ A4 หรือสติกเกอร์ แล้วตัดแปะที่หน้าตู้ชาร์จได้ทันที</p>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ (Print / PDF)</button>
+</div>
+
+<div class="sheet-container">
+  <div class="stickers-grid">
+
+    <!-- สติกเกอร์รวมหน้าตู้ -->
+    <div class="sticker-card main-badge">
+      <span class="st-tag">สติกเกอร์หลักหน้าตู้</span>
+      <div class="st-title">ตู้ชาร์จโทรศัพท์ USB</div>
+      <div class="st-sub">อัตราค่าบริการ 1 บาท = 3 นาที · รองรับพร้อมเพย์ & โอนธนาคาร</div>
+      <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://usb-charger-project.web.app/" alt="QR Main">
+      </div>
+      <div class="st-steps">
+        <strong>วิธีใช้งาน:</strong> 1. สแกน QR Code ด้วยมือถือ  ➔  2. เลือกช่องชาร์จและจำนวนเงิน  ➔  3. ชำระเงินแล้วเริ่มชาร์จได้ทันที
+      </div>
+    </div>
+
+    <!-- สติกเกอร์ช่อง 1: USB-A 1 -->
+    <div class="sticker-card">
+      <span class="st-tag" style="background:#16a34a">ช่องที่ 1</span>
+      <div class="st-title">USB-A 1</div>
+      <div class="st-sub">สแกนเพื่อชาร์จช่องนี้โดยเฉพาะ</div>
+      <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-a-1" alt="QR USB-A 1">
+      </div>
+      <div class="st-steps">
+        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+      </div>
+    </div>
+
+    <!-- สติกเกอร์ช่อง 2: USB-A 2 -->
+    <div class="sticker-card">
+      <span class="st-tag" style="background:#16a34a">ช่องที่ 2</span>
+      <div class="st-title">USB-A 2</div>
+      <div class="st-sub">สแกนเพื่อชาร์จช่องนี้โดยเฉพาะ</div>
+      <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-a-2" alt="QR USB-A 2">
+      </div>
+      <div class="st-steps">
+        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+      </div>
+    </div>
+
+    <!-- สติกเกอร์ช่อง 3: USB-C 1 -->
+    <div class="sticker-card">
+      <span class="st-tag" style="background:#2563eb">ช่องที่ 3</span>
+      <div class="st-title">USB-C 1 (Type-C)</div>
+      <div class="st-sub">สแกนเพื่อชาร์จช่องนี้โดยเฉพาะ</div>
+      <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-c-1" alt="QR USB-C 1">
+      </div>
+      <div class="st-steps">
+        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+      </div>
+    </div>
+
+    <!-- สติกเกอร์ช่อง 4: USB-C 2 -->
+    <div class="sticker-card">
+      <span class="st-tag" style="background:#2563eb">ช่องที่ 4</span>
+      <div class="st-title">USB-C 2 (Type-C)</div>
+      <div class="st-sub">สแกนเพื่อชาร์จช่องนี้โดยเฉพาะ</div>
+      <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-c-2" alt="QR USB-C 2">
+      </div>
+      <div class="st-steps">
+        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
