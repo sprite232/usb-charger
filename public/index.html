@@ -528,12 +528,16 @@ body{
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
-        <input type="number" id="customIn" min="1" placeholder="จำนวนบาท" oninput="onCustomIn()"/>
+        <input type="number" id="customIn" min="5" step="5" placeholder="ระบุจำนวน (ขั้นต่ำ 5฿)" oninput="onCustomIn()"/>
         <span class="cp" id="customPrev"></span>
+      </div>
+      <div id="customHint" style="font-size:.72rem;color:var(--muted);margin-top:.35rem;display:none;text-align:left">
+        💡 ระบุเป็นทวีคูณของ 5 บาท (เช่น 5, 10, 15, 20, 25, 30...)
       </div>
       <button class="btn btn-primary" id="btnNext" onclick="goConfirm()" disabled>ถัดไป</button>
       <button class="btn btn-ghost" onclick="closeSheet()">ยกเลิก</button>
     </div>
+
 
     <!-- ยืนยันจำนวน -->
     <div class="page" id="pg-confirm">
@@ -630,8 +634,12 @@ body{
         <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="cash-time">—</div></div>
       </div>
       <div class="cash-box">
-        <h3>รอรับเงินสด</h3>
-        <p>ใส่ธนบัตรหรือเหรียญที่ช่องรับเงิน<br>ระบบตรวจสอบ UV · สี · แม่เหล็กอัตโนมัติ</p>
+        <h3>ใส่เงินสดที่ช่องรับเงิน</h3>
+        <div style="font-size:1.1rem;font-weight:800;color:var(--green);margin:.25rem 0" id="cash-need-amt">฿—</div>
+        <p style="font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:.6rem">
+          รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br>
+          <span style="color:var(--text)">(เช่น ยอด 10฿ สามารถใส่เหรียญ 10฿ หรือเหรียญ 5฿ สองเหรียญได้)</span>
+        </p>
         <div class="cash-denoms">
           <img src="assets/coin-5.png" class="coin" alt="5฿">
           <img src="assets/coin-10.png" class="coin" alt="10฿">
@@ -639,9 +647,13 @@ body{
           <img src="assets/note-50.jpg" alt="50฿">
           <img src="assets/note-100.jpg" alt="100฿">
         </div>
+        <div style="font-size:.72rem;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:.4rem;padding:.4rem;margin-top:.75rem">
+          ⚠️ ตู้ไม่มีระบบทอนเงิน กรุณาใส่เงินให้พอดีกับยอดที่เลือก
+        </div>
       </div>
-      <button class="btn btn-ghost" style="margin-top:1rem" onclick="cancelSession()">ยกเลิก</button>
+      <button class="btn btn-ghost" style="margin-top:.75rem" onclick="cancelSession()">ยกเลิก</button>
     </div>
+
 
     <!-- กำลังตรวจ -->
     <div class="page" id="pg-proc">
@@ -1005,17 +1017,33 @@ function focusCustom(){
   $('customIn').focus();
 }
 function onCustomIn(){
-  const v=Number($('customIn').value);
-  if(v>=1){
-    S.amount=v;
-    $('customPrev').textContent='= '+fmtTime(v*SPB);
-    $('customMinPreview').textContent=fmtTime(v*SPB);
-    $('btnNext').disabled=false;
+  const v = Number($('customIn').value);
+  const hint = $('customHint');
+  if (v >= 5 && v % 5 === 0) {
+    S.amount = v;
+    $('customPrev').textContent = '= ' + fmtTime(v * SPB);
+    $('customMinPreview').textContent = fmtTime(v * SPB);
+    $('btnNext').disabled = false;
+    if (hint) hint.style.display = 'none';
+  } else if (v > 0) {
+    S.amount = null;
+    $('customPrev').textContent = '';
+    $('customMinPreview').textContent = '';
+    $('btnNext').disabled = true;
+    if (hint) {
+      hint.style.display = 'block';
+      hint.style.color = 'var(--amber)';
+      hint.textContent = '⚠️ กรุณาระบุจำนวนเงินเป็นทวีคูณของ 5 บาท (เช่น 5, 10, 15, 20, 25 บาท)';
+    }
   } else {
-    S.amount=null;$('customPrev').textContent='';
-    $('customMinPreview').textContent='';$('btnNext').disabled=true;
+    S.amount = null;
+    $('customPrev').textContent = '';
+    $('customMinPreview').textContent = '';
+    $('btnNext').disabled = true;
+    if (hint) hint.style.display = 'none';
   }
 }
+
 
 // ─── Confirm Flow ─────────────────────────────
 function goConfirm(){

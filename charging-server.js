@@ -389,9 +389,10 @@ app.post("/api/payment/create", async (req, res) => {
   if (!["qr", "transfer", "cash"].includes(method)) {
     return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | cash)" });
   }
-  if (!Number.isFinite(amount) || amount < 1) {
-    return res.status(400).json({ error: "จำนวนเงินต้องไม่น้อยกว่า 1 บาท" });
+  if (!Number.isFinite(amount) || amount < 5 || amount % 5 !== 0) {
+    return res.status(400).json({ error: "จำนวนเงินต้องเริ่มต้นที่ 5 บาท และเพิ่มทีละ 5 บาท (เช่น 5, 10, 15, 20 บาท)" });
   }
+
 
   const port = getPort(portId);
   if (!port)                       return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
