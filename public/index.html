@@ -715,13 +715,28 @@ function handleSecretTap() {
   clearTimeout(secretTapTimer);
   if (secretTapCount >= 5) {
     secretTapCount = 0;
+    try { if (navigator.vibrate) navigator.vibrate(40); } catch(e){}
     window.location.href = '/admin';
     return;
   }
   secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 2500);
 }
 
-document.getElementById('adminSecretTrigger')?.addEventListener('click', handleSecretTap);
+const triggerEl = document.getElementById('adminSecretTrigger');
+if (triggerEl) {
+  triggerEl.addEventListener('click', handleSecretTap);
+  // Long-press support (hold for 2 seconds)
+  let lpTimer = null;
+  triggerEl.addEventListener('touchstart', () => {
+    lpTimer = setTimeout(() => {
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch(e){}
+      window.location.href = '/admin';
+    }, 2000);
+  }, { passive: true });
+  triggerEl.addEventListener('touchend', () => clearTimeout(lpTimer));
+  triggerEl.addEventListener('touchcancel', () => clearTimeout(lpTimer));
+}
+
 document.getElementById('footerSecretTrigger')?.addEventListener('click', handleSecretTap);
 
 // Keyboard shortcut: Ctrl + Shift + A or Alt + A
@@ -732,6 +747,7 @@ document.addEventListener('keydown', (e) => {
     window.location.href = '/admin';
   }
 });
+
 
 // ─── Config & API ──────────────────────────────
 const BASE = window.API_BASE || '';

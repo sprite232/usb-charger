@@ -258,27 +258,38 @@ td .small{font-size:.68rem;color:var(--muted)}
 <div id="loginScreen">
   <div class="login-box">
     <h1>ระบบจัดการตู้ชาร์จ</h1>
-    <p>กรุณาใส่รหัส PIN เพื่อเข้าใช้งาน</p>
-    <div class="pin-dots" id="pinDots"></div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinKey(7)">7</button>
-      <button class="pin-key" onclick="pinKey(8)">8</button>
-      <button class="pin-key" onclick="pinKey(9)">9</button>
-      <button class="pin-key" onclick="pinKey(4)">4</button>
-      <button class="pin-key" onclick="pinKey(5)">5</button>
-      <button class="pin-key" onclick="pinKey(6)">6</button>
-      <button class="pin-key" onclick="pinKey(1)">1</button>
-      <button class="pin-key" onclick="pinKey(2)">2</button>
-      <button class="pin-key" onclick="pinKey(3)">3</button>
-      <button class="pin-key del" onclick="pinDel()">⌫</button>
-      <button class="pin-key" onclick="pinKey(0)">0</button>
-      <button class="pin-key" onclick="pinSubmit()">✓</button>
-    </div>
+    <p>ใส่รหัส PIN เพื่อเข้าใช้งาน</p>
+    
+    <form id="loginForm" onsubmit="event.preventDefault(); pinSubmit();">
+      <div style="position:relative;margin-bottom:.75rem">
+        <input type="password" id="pinInput" placeholder="รหัส PIN" autofocus required
+               style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:.75rem 2.5rem .75rem .9rem;border-radius:.5rem;font-size:1rem;outline:none;-webkit-appearance:none;letter-spacing:2px;" />
+        <button type="button" onclick="togglePinVisibility()" title="ดูรหัส"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;font-size:1rem;">
+          <span id="eyeIcon">👁️</span>
+        </button>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;font-size:.75rem;color:var(--muted)">
+        <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer">
+          <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
+          <span>จำรหัสในอุปกรณ์นี้</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-sm btn-primary" style="width:100%;padding:.75rem;font-size:.88rem;border-radius:.5rem">
+        เข้าสู่ระบบ
+      </button>
+    </form>
+
     <div class="login-err" id="loginErr"></div>
-    <br>
-    <a href="/" style="color:var(--muted);font-size:.75rem;text-decoration:none">← กลับหน้าหลัก</a>
+    
+    <div style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1rem">
+      <a href="/" style="color:var(--muted);font-size:.78rem;text-decoration:none">← กลับหน้าหลัก</a>
+    </div>
   </div>
 </div>
+
 
 <!-- ══════════════════════════════════════ APP -->
 <div id="appScreen">
@@ -442,68 +453,59 @@ function toggleAdminTheme() {
 })();
 
 // ─── Auth & PIN ───────────────────────────────
-let token = sessionStorage.getItem('adminToken') || '';
-let pinBuf = '';
+let token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
 let dashData = null;
-const MAX_PIN = 16;
 
-function buildDots(n) {
-  const d = document.getElementById('pinDots');
-  d.innerHTML = Array.from({length: n}, (_,i) => `<div class="pin-dot" id="d${i}"></div>`).join('');
+function togglePinVisibility() {
+  const inp = document.getElementById('pinInput');
+  const icon = document.getElementById('eyeIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.textContent = '🔒';
+  } else {
+    inp.type = 'password';
+    icon.textContent = '👁️';
+  }
 }
-buildDots(10);
 
 if (token) tryLoadDashboard();
 
-function pinKey(ch) {
-  if (pinBuf.length >= MAX_PIN) return;
-  pinBuf += String(ch);
-  updateDots();
-}
-function pinDel() { if (pinBuf.length) { pinBuf = pinBuf.slice(0,-1); updateDots(); } }
-function updateDots() {
-  const dots = document.querySelectorAll('#pinDots .pin-dot');
-  if (pinBuf.length > dots.length) buildDots(pinBuf.length);
-  document.querySelectorAll('#pinDots .pin-dot').forEach((el,i) => {
-    el.className = 'pin-dot' + (i < pinBuf.length ? ' filled' : '');
-  });
-}
-
-document.addEventListener('keydown', e => {
-  const onLogin = document.getElementById('loginScreen').style.display !== 'none'
-                  || !document.getElementById('appScreen').style.display
-                  || document.getElementById('appScreen').style.display === 'none';
-  if (!onLogin) return;
-  if (e.key === 'Backspace')    { e.preventDefault(); pinDel(); }
-  else if (e.key === 'Enter')   { e.preventDefault(); pinSubmit(); }
-  else if (e.key.length === 1)  { pinKey(e.key); }
-});
-
 async function pinSubmit() {
-  if (!pinBuf) return;
+  const pin = document.getElementById('pinInput')?.value?.trim();
+  if (!pin) return;
   document.getElementById('loginErr').textContent = '';
   try {
-    const res = await (await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pinBuf})})).json();
+    const res = await (await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})})).json();
     if (res.token) {
       token = res.token;
       sessionStorage.setItem('adminToken', token);
+      if (document.getElementById('rememberMe')?.checked) {
+        localStorage.setItem('adminToken', token);
+      } else {
+        localStorage.removeItem('adminToken');
+      }
       tryLoadDashboard();
     } else {
       document.getElementById('loginErr').textContent = res.error || 'PIN ไม่ถูกต้อง';
-      pinBuf=''; updateDots();
+      document.getElementById('pinInput').value = '';
+      document.getElementById('pinInput').focus();
     }
   } catch(e) {
     document.getElementById('loginErr').textContent = 'เชื่อมต่อไม่ได้';
-    pinBuf=''; updateDots();
   }
 }
+
 function logout() {
-  token=''; sessionStorage.removeItem('adminToken');
-  pinBuf=''; updateDots();
-  document.getElementById('loginErr').textContent='';
-  document.getElementById('appScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
+  token = '';
+  sessionStorage.removeItem('adminToken');
+  localStorage.removeItem('adminToken');
+  document.getElementById('loginErr').textContent = '';
+  if (document.getElementById('pinInput')) document.getElementById('pinInput').value = '';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  setTimeout(() => document.getElementById('pinInput')?.focus(), 100);
 }
+
 
 // ─── Admin API Helper ─────────────────────────
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
