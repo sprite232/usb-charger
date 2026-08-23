@@ -555,10 +555,14 @@ body{
         <div class="tbl-row hi"><span class="tbl-k">เวลาที่ได้รับ</span><span class="tbl-v" id="cTime">—</span></div>
         <div class="tbl-row"><span class="tbl-k">อัตรา</span><span class="tbl-v" id="cRate" style="color:var(--muted);font-size:.76rem">—</span></div>
       </div>
+      <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:.65rem">
+        💡 สามารถหยอดเหรียญ 5/10 หรือใส่แบงค์ 20/50/100 รวมกันให้ครบยอดได้
+      </div>
       <div class="warn-box">เมื่อชำระเงินแล้ว ไม่สามารถขอคืนได้ทุกกรณี</div>
       <button class="btn btn-amber" onclick="goMethod()">ยืนยัน — เลือกวิธีชำระ</button>
       <button class="btn btn-ghost" onclick="goPage('pg-amount')">เลือกจำนวนใหม่</button>
     </div>
+
 
     <!-- วิธีชำระ -->
     <div class="page" id="pg-method">
@@ -1207,12 +1211,24 @@ function updateCashUI(targetAmt){
   
   const ex = $('cash-example-note');
   if (ex) {
-    if (targetAmt === 15) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 15฿ ใส่เหรียญ 5฿ 3 เหรียญ หรือเหรียญ 10฿ + 5฿ ได้)</span>';
-    else if (targetAmt === 35) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 35฿ ใส่แบงค์ 20฿ + เหรียญ 10฿ + เหรียญ 5฿ ได้)</span>';
-    else if (targetAmt === 95) ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿<br><span style="color:var(--text)">(เช่น ยอด 95฿ ใส่แบงค์ 50฿ + แบงค์ 20฿ สองใบ + เหรียญ 5฿ ได้)</span>';
-    else ex.innerHTML = 'รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿ (ใส่รวมกันจนครบยอดได้)';
+    if (targetAmt === 5) {
+      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
+    } else if (targetAmt === 10) {
+      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
+    } else if (targetAmt === 15) {
+      ex.innerHTML = '🪙 <strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ + 5฿ <u>หรือ</u> เหรียญ 5฿ (3 เหรียญ)';
+    } else if (targetAmt === 20) {
+      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 20฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (2 เหรียญ)';
+    } else if (targetAmt === 50) {
+      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 50฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> แบงค์ 20฿ (2 ใบ) + เหรียญ 10฿ (1 เหรียญ)';
+    } else if (targetAmt === 100) {
+      ex.innerHTML = '💵 <strong>วิธีใส่เงิน:</strong> แบงค์ 100฿ (1 ใบ) <u>หรือ</u> แบงค์ 50฿ (2 ใบ) <u>หรือ</u> แบงค์ 20฿ (5 ใบ) <u>หรือ</u> รวมเหรียญได้';
+    } else {
+      ex.innerHTML = '💡 <strong>วิธีใส่เงิน:</strong> สามารถใส่เหรียญ 5/10 หรือแบงค์ 20/50/100 รวมกันจนครบ ฿' + targetAmt;
+    }
   }
 }
+
 
 async function insertSimCash(amt){
   if (!S.session) return;
