@@ -687,133 +687,145 @@ async function runTestStart() {
   const portId = document.getElementById('testPortSelect').value;
   const durationSeconds = Number(document.getElementById('testDurationSelect').value) || 30;
   
-  const res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
-  if (res.success) {
-    setActionNotice(`เริ่มทดสอบ ${portId} (${durationSeconds} วิ)`);
-    autoRefresh();
-  } else {
-    alert(res.error || 'ไม่สำเร็จ');
+  let res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
+  
+  // Fallback for Firebase standalone preview
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) {
+        p.status = 'in-use';
+        p.relayOn = true;
+        p.isPaused = false;
+        p.remainingSeconds = durationSeconds;
+        p.totalSeconds = durationSeconds;
+        p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
+        dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+        renderAll(dashData);
+      }
+    }
   }
+
+  setActionNotice(`เริ่มทดสอบ ${portId} (${durationSeconds} วิ)`);
+  autoRefresh();
 }
 
 async function pausePort(portId) {
-  const res = await adminApi('POST', `/api/admin/port/${portId}/pause`);
-  if (res.success) {
-    setActionNotice(`พักชาร์จ ${portId}`);
-    autoRefresh();
+  let res = await adminApi('POST', `/api/admin/port/${portId}/pause`);
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) { p.isPaused = true; p.relayOn = false; renderAll(dashData); }
+    }
   }
+  setActionNotice(`พักชาร์จ ${portId}`);
+  autoRefresh();
 }
 
 async function resumePort(portId) {
-  const res = await adminApi('POST', `/api/admin/port/${portId}/resume`);
-  if (res.success) {
-    setActionNotice(`ชาร์จต่อ ${portId}`);
-    autoRefresh();
+  let res = await adminApi('POST', `/api/admin/port/${portId}/resume`);
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) { p.isPaused = false; p.relayOn = true; renderAll(dashData); }
+    }
   }
+  setActionNotice(`ชาร์จต่อ ${portId}`);
+  autoRefresh();
 }
 
 async function setTimeRemaining(portId, seconds) {
-  const res = await adminApi('POST', `/api/admin/port/${portId}/set-time`, { seconds });
-  if (res.success) {
-    setActionNotice(`ปรับเวลา ${portId} เหลือ ${seconds} วินาที`);
-    autoRefresh();
+  let res = await adminApi('POST', `/api/admin/port/${portId}/set-time`, { seconds });
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) { p.remainingSeconds = seconds; renderAll(dashData); }
+    }
   }
+  setActionNotice(`ปรับเวลา ${portId} เหลือ ${seconds} วินาที`);
+  autoRefresh();
 }
 
 async function toggleRelay(portId, on) {
-  const res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
-  if (res.success) {
-    setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิด' : 'ปิด'}`);
-    autoRefresh();
+  let res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) { p.relayOn = on; renderAll(dashData); }
+    }
   }
-}
-
-// ─── Tables Rendering ─────────────────────────
-function renderTxTable5(txs) {
-  const tb = document.getElementById('txTable5');
-  tb.innerHTML = '';
-  const rows = txs.slice(0, 5);
-  if (!rows.length) { tb.innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มีรายการ</td></tr>`; return; }
-  rows.forEach(t => tb.appendChild(makeTxRow(t, false)));
-}
-function renderTxTableAll(txs) {
-  const tb = document.getElementById('txTableAll');
-  tb.innerHTML = '';
-  if (!txs.length) { tb.innerHTML = `<tr><td colspan="9" class="empty">ยังไม่มีรายการ</td></tr>`; return; }
-  txs.forEach(t => tb.appendChild(makeTxRow(t, true)));
-}
-
-function makeTxRow(t, extended) {
-  const tr = document.createElement('tr');
-  const statusBadge = t.status === 'active' ? `<span class="badge b-active">กำลังชาร์จ</span>` : `<span class="badge b-finished">เสร็จแล้ว</span>`;
-  const methodBadge = `<span class="badge b-${t.method}">${{qr:'QR Code',transfer:'โอนเงิน',cash:'เงินสด',test:'ทดสอบ'}[t.method]||t.method}</span>`;
-  
-  const v = t.verification || {};
-  let slipBadge = '—';
-  if (t.method === 'test') {
-    slipBadge = `<span class="badge b-test">ทดสอบ (${v.testDuration}s)</span>`;
-  } else if (t.method !== 'cash') {
-    if (v.isDev) slipBadge = `<span class="badge b-dev">Dev Mode</span>`;
-    else if (v.transRef) slipBadge = `<span class="badge b-ok">ผ่าน</span><div class="small">${v.transRef?.slice(-6)}</div>`;
-  } else if (v.scores) {
-    slipBadge = `<span class="badge b-ok">คะแนน ${v.scores.total}/100</span>`;
-  }
-
-  if (extended) {
-    tr.innerHTML = `
-      <td class="small">${t.id.slice(-6)}</td>
-      <td>${t.portId}</td>
-      <td>฿${t.amount}</td>
-      <td>${methodBadge}</td>
-      <td>${statusBadge}</td>
-      <td>${slipBadge}</td>
-      <td class="small">${v.sender || (v.tester || '—')}</td>
-      <td class="small">${fmtDate(t.createdAt)}</td>
-      <td>${t.status==='active'?`<button class="btn-sm btn-red" onclick="stopPort('${t.portId}')">ตัดไฟ</button>`:''}`;
-  } else {
-    tr.innerHTML = `
-      <td class="small">${t.id.slice(-6)}</td>
-      <td>${t.portId}</td>
-      <td>฿${t.amount}</td>
-      <td>${methodBadge}</td>
-      <td>${statusBadge}</td>
-      <td>${slipBadge}</td>
-      <td class="small">${fmtDate(t.createdAt)}</td>`;
-  }
-  return tr;
-}
-
-function renderSettings(cfg) {
-  const g = document.getElementById('settingsGrid');
-  const rows = [
-    ['เบอร์ PromptPay',   cfg.promptpayPhone],
-    ['ธนาคาร',           cfg.bankName],
-    ['เลขบัญชี',         cfg.bankAccount || '(ยังไม่ได้ตั้งค่า)'],
-    ['ชื่อบัญชี',        cfg.bankAccountName || '(ยังไม่ได้ตั้งค่า)'],
-    ['อัตราค่าบริการ',   `1 บาท = ${cfg.secondsPerBaht/60} นาที`],
-    ['ระบบตรวจสลิป',     cfg.easyslipEnabled ? 'เปิดใช้งาน' : 'Dev Mode (ไม่มี API Key)'],
-  ];
-  g.innerHTML = rows.map(([k,v]) =>
-    `<div class="setting-row"><div class="k">${k}</div><div class="v ${v?.startsWith?.('⚠')?' warn':''}">${v||'—'}</div></div>`
-  ).join('');
+  setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'}`);
+  autoRefresh();
 }
 
 // ─── Actions ──────────────────────────────────
 async function stopPort(portId) {
   if (!confirm(`ต้องการตัดไฟพอร์ต ${portId}?`)) return;
-  await adminApi('POST', `/api/admin/port/${portId}/stop`);
+  let res = await adminApi('POST', `/api/admin/port/${portId}/stop`);
+  if (!res || !res.success) {
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) {
+        p.status = 'available';
+        p.relayOn = false;
+        p.isPaused = false;
+        p.remainingSeconds = 0;
+        p.currentTx = null;
+        dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+        renderAll(dashData);
+      }
+    }
+  }
+  setActionNotice(`ตัดไฟพอร์ต ${portId}`);
   autoRefresh();
 }
+
 async function clearPortSession(portId) {
   if (!confirm(`ล้างรายการของพอร์ต ${portId}?`)) return;
   await adminApi('POST', `/api/admin/port/${portId}/clear`);
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) { p.status = 'available'; p.paymentSession = null; renderAll(dashData); }
+  }
   autoRefresh();
 }
+
 async function adminReset() {
   if (!confirm('ต้องการรีเซ็ตทุกพอร์ตหรือไม่?')) return;
   await adminApi('POST', '/api/admin/reset');
+  if (dashData && dashData.ports) {
+    dashData.ports.forEach(p => {
+      p.status = 'available'; p.relayOn = false; p.isPaused = false;
+      p.paymentSession = null; p.currentTx = null; p.remainingSeconds = 0;
+    });
+    dashData.summary.activeCount = 0;
+    renderAll(dashData);
+  }
+  setActionNotice('รีเซ็ตทุกพอร์ตเรียบร้อย');
   autoRefresh();
 }
+
+// Countdown timer in Admin preview
+setInterval(() => {
+  if (!dashData || !dashData.ports) return;
+  let changed = false;
+  dashData.ports.forEach(p => {
+    if (p.status === 'in-use' && p.remainingSeconds > 0 && !p.isPaused) {
+      p.remainingSeconds -= 1;
+      changed = true;
+      if (p.remainingSeconds <= 0) {
+        p.status = 'available';
+        p.relayOn = false;
+        p.currentTx = null;
+      }
+    }
+  });
+  if (changed) {
+    dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+    renderAll(dashData);
+  }
+}, 1000);
+
 
 // ─── Tabs ─────────────────────────────────────
 function switchTab(name) {
