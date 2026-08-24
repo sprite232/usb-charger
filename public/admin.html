@@ -2,41 +2,48 @@
 <html lang="th" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>ระบบจัดการตู้ชาร์จ USB (Admin Portal)</title>
 <link rel="icon" type="image/png" href="assets/icon-settings.png"/>
 <link rel="apple-touch-icon" href="assets/icon-settings.png"/>
+
+<!-- Google Fonts (Plus Jakarta Sans & Prompt for Crystal-Clear Thai Typography) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 /* ─── THEME VARIABLES ─────────────────────────── */
 :root, [data-theme="dark"] {
-  --bg: #0b0f19;
-  --card: #131b2e;
-  --card2: #1c263d;
-  --card-hover: #23304d;
-  --border: #263352;
-  --border-subtle: #192238;
+  --bg: #090d16;
+  --card: #111827;
+  --card2: #182235;
+  --card-hover: #1f2d47;
+  --border: #233048;
+  --border-subtle: #192336;
   --text: #f8fafc;
   --muted: #94a3b8;
   --muted2: #64748b;
   --green: #10b981;
-  --green-bg: rgba(16, 185, 129, 0.12);
+  --green-bg: rgba(16, 185, 129, 0.14);
   --yellow: #f59e0b;
-  --yellow-bg: rgba(245, 158, 11, 0.12);
+  --yellow-bg: rgba(245, 158, 11, 0.14);
   --red: #ef4444;
-  --red-bg: rgba(239, 68, 68, 0.12);
+  --red-bg: rgba(239, 68, 68, 0.14);
   --blue: #3b82f6;
-  --blue-bg: rgba(59, 130, 246, 0.12);
+  --blue-bg: rgba(59, 130, 246, 0.14);
   --purple: #8b5cf6;
-  --purple-bg: rgba(139, 92, 246, 0.12);
+  --purple-bg: rgba(139, 92, 246, 0.14);
   --cyan: #06b6d4;
-  --cyan-bg: rgba(6, 182, 212, 0.12);
-  --r: 0.65rem;
+  --cyan-bg: rgba(6, 182, 212, 0.14);
+  --r: 0.75rem;
+  --r-sm: 0.5rem;
   --icon-invert: 1;
 }
 
 [data-theme="light"] {
-  --bg: #f8fafc;
+  --bg: #f4f6fa;
   --card: #ffffff;
   --card2: #f1f5f9;
   --card-hover: #e2e8f0;
@@ -57,271 +64,295 @@
   --purple-bg: rgba(124, 58, 237, 0.1);
   --cyan: #0891b2;
   --cyan-bg: rgba(8, 145, 178, 0.1);
-  --r: 0.65rem;
+  --r: 0.75rem;
+  --r-sm: 0.5rem;
   --icon-invert: 0;
 }
 
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{
   background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif;
+  font-family:'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
   transition:background .2s ease, color .2s ease;
+  line-height: 1.5;
 }
 
 /* ─── Login Screen ────────────────────────────── */
-#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.25rem}
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
 .login-box{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:2.25rem 2rem;width:100%;max-width:380px;text-align:center;
-  box-shadow:0 10px 30px -10px rgba(0,0,0,0.3);
+  padding:2rem 1.5rem;width:100%;max-width:390px;text-align:center;
+  box-shadow:0 12px 36px -8px rgba(0,0,0,0.4);
 }
-.login-brand-icon{width:48px;height:48px;margin:0 auto .75rem;display:block;filter:invert(var(--icon-invert))}
-.login-box h1{font-size:1.25rem;font-weight:700;margin-bottom:.25rem;letter-spacing:-0.2px}
-.login-box p{color:var(--muted);font-size:.82rem;margin-bottom:1.5rem}
+.login-brand-icon{width:44px;height:44px;margin:0 auto .75rem;display:block;filter:invert(var(--icon-invert))}
+.login-box h1{font-size:1.2rem;font-weight:700;margin-bottom:.25rem;letter-spacing:-0.3px}
+.login-box p{color:var(--muted);font-size:.8rem;margin-bottom:1.4rem}
 
 .form-group{margin-bottom:1rem;text-align:left}
-.form-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+.form-label{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-bottom:.35rem}
 .input-wrap{position:relative;display:flex;align-items:center}
 .form-input{
   width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);
-  padding:.75rem 2.5rem .75rem .85rem;border-radius:.5rem;font-size:.9rem;outline:none;
-  transition:border-color .15s ease;
+  padding:.75rem 2.5rem .75rem .85rem;border-radius:var(--r-sm);font-size:.88rem;outline:none;
+  font-family:inherit;transition:border-color .15s ease;
 }
 .form-input:focus{border-color:var(--blue)}
 .eye-btn{
   position:absolute;right:10px;background:none;border:none;color:var(--muted);
-  cursor:pointer;padding:4px;font-size:.85rem;font-weight:600;
+  cursor:pointer;padding:4px;font-size:.8rem;font-weight:600;font-family:inherit;
 }
 
 .login-err{
   color:var(--red);background:var(--red-bg);border:1px solid var(--red);
-  padding:.5rem .75rem;border-radius:.4rem;font-size:.78rem;margin-top:.75rem;
+  padding:.55rem .75rem;border-radius:var(--r-sm);font-size:.76rem;margin-top:.75rem;
   display:none;text-align:left;
 }
 
-/* ─── App Layout ──────────────────────────────── */
+/* ─── App Layout & Mobile Topbar ─────────────── */
 #appScreen{display:none;flex-direction:column;min-height:100vh}
 .topbar{
   background:var(--card);border-bottom:1px solid var(--border);
-  padding:.75rem 1.25rem;display:flex;align-items:center;gap:.75rem;
+  padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;
   position:sticky;top:0;z-index:30;
 }
-.topbar h1{font-size:.95rem;font-weight:700;flex:1;display:flex;align-items:center;gap:.5rem}
-.topbar-icon{width:20px;height:20px;filter:invert(var(--icon-invert))}
-.topbar .chip{
-  background:var(--green-bg);color:var(--green);border-radius:.35rem;
-  padding:.25rem .6rem;font-size:.72rem;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:.35rem;
+.topbar-brand{display:flex;align-items:center;gap:.45rem;flex:1;min-width:0}
+.topbar-icon{width:18px;height:18px;flex-shrink:0;filter:invert(var(--icon-invert))}
+.topbar-title{
+  font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  letter-spacing:-0.2px;
 }
-.topbar .chip.warn{background:var(--yellow-bg);color:var(--yellow)}
+.topbar-sub{display:inline-block;font-size:.72rem;font-weight:400;color:var(--muted);margin-left:.35rem}
+
+.topbar-actions{display:flex;align-items:center;gap:.4rem;flex-shrink:0}
+.topbar .chip{
+  background:var(--green-bg);color:var(--green);border-radius:var(--r-sm);
+  padding:.22rem .55rem;font-size:.68rem;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:.3rem;
+  border:1px solid rgba(16,185,129,0.25);
+}
+.topbar .chip.warn{background:var(--yellow-bg);color:var(--yellow);border-color:rgba(245,158,11,0.25)}
 
 .btn-theme{
   background:var(--card2);border:1px solid var(--border);color:var(--muted);
-  width:32px;height:32px;border-radius:.4rem;display:grid;place-items:center;cursor:pointer;
+  width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;cursor:pointer;
   transition:all .15s ease;
 }
 .btn-theme:hover{color:var(--text)}
-.btn-theme svg{width:16px;height:16px;fill:currentColor}
+.btn-theme svg{width:15px;height:15px;fill:currentColor}
 
 .btn-logout{
   background:transparent;border:1px solid var(--border);color:var(--muted);
-  padding:.35rem .75rem;border-radius:.4rem;cursor:pointer;font-size:.75rem;font-weight:600;
-  transition:all .15s ease;
+  padding:.32rem .65rem;border-radius:var(--r-sm);cursor:pointer;font-size:.72rem;font-weight:600;
+  font-family:inherit;transition:all .15s ease;
 }
 .btn-logout:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
 
-/* ─── Tabs ────────────────────────────────────── */
+/* ─── Mobile Scrollable Tabs ──────────────────── */
 .tabs{
   display:flex;border-bottom:1px solid var(--border);background:var(--card);
-  overflow-x:auto;padding:0 .75rem;gap:.25rem;
+  overflow-x:auto;padding:0 .5rem;gap:.2rem;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
+.tabs::-webkit-scrollbar{display:none}
+
 .tab{
-  padding:.75rem 1rem;font-size:.82rem;font-weight:600;color:var(--muted);
+  padding:.65rem .85rem;font-size:.78rem;font-weight:600;color:var(--muted);
   cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
-  display:flex;align-items:center;gap:.45rem;transition:all .15s ease;
+  display:flex;align-items:center;gap:.4rem;transition:all .15s ease;
+  user-select:none;
 }
-.tab-icon{width:16px;height:16px;filter:invert(var(--icon-invert));opacity:.75}
+.tab-icon{width:15px;height:15px;filter:invert(var(--icon-invert));opacity:.75}
 .tab:hover{color:var(--text)}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
 .tab.active .tab-icon{opacity:1;filter:none}
 
-/* ─── Content ─────────────────────────────────── */
-.content{padding:1.25rem;max-width:960px;margin:0 auto;width:100%}
+/* ─── Content Container ───────────────────────── */
+.content{padding:1rem .85rem;max-width:960px;margin:0 auto;width:100%}
+@media(min-width:768px){.content{padding:1.25rem}}
 
-/* ─── KPI Stats Grid ──────────────────────────── */
-.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.65rem;margin-bottom:1.25rem}
-@media(max-width:900px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+/* ─── Responsive KPI Stats Grid ───────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.55rem;margin-bottom:1rem}
+@media(min-width:600px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:920px){.stats-grid{grid-template-columns:repeat(6,1fr);gap:.65rem;margin-bottom:1.25rem}}
+
 .stat-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:.9rem .85rem;position:relative;overflow:hidden;
+  padding:.75rem .75rem;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;
 }
-.stat-card .lbl{font-size:.7rem;font-weight:600;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.3px}
-.stat-card .val{font-size:1.35rem;font-weight:700;letter-spacing:-0.5px}
+.stat-card .lbl{font-size:.66rem;font-weight:700;color:var(--muted);margin-bottom:.2rem;text-transform:uppercase;letter-spacing:.2px}
+.stat-card .val{font-size:1.2rem;font-weight:800;letter-spacing:-0.5px;line-height:1.2}
+@media(min-width:768px){.stat-card .val{font-size:1.35rem}}
 .stat-card.green .val{color:var(--green)}
 .stat-card.blue  .val{color:var(--blue)}
 .stat-card.yellow .val{color:var(--yellow)}
 .stat-card.purple .val{color:var(--purple)}
 .stat-card.cyan .val{color:var(--cyan)}
 
-/* ─── Day-over-day Comparison Badge ──────────── */
-.comp-flex {
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-  font-size: .68rem;
-  margin-top: .35rem;
+/* Day-over-day Comparison Badge */
+.comp-flex{
+  display:flex;align-items:center;gap:.25rem;
+  font-size:.64rem;margin-top:.35rem;white-space:nowrap;
 }
-.comp-flex svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-.comp-green { color: var(--green); }
-.comp-red { color: var(--red); }
-.comp-muted { color: var(--muted); }
-.comp-flex strong { font-weight: 700; }
+.comp-flex svg{width:12px;height:12px;flex-shrink:0}
+.comp-green{color:var(--green)}
+.comp-red{color:var(--red)}
+.comp-muted{color:var(--muted2)}
+.comp-flex strong{font-weight:700}
 
-/* ─── Chart Containers ────────────────────────── */
-.chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:.85rem;margin-bottom:1.25rem}
-@media(max-width:768px){.chart-grid{grid-template-columns:1fr}}
+/* ─── Responsive Chart Grid ───────────────────── */
+.chart-grid{display:grid;grid-template-columns:1fr;gap:.75rem;margin-bottom:1rem}
+@media(min-width:768px){.chart-grid{grid-template-columns:2fr 1fr;gap:.85rem;margin-bottom:1.25rem}}
+
 .chart-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:1.15rem;display:flex;flex-direction:column;
+  padding:.9rem;display:flex;flex-direction:column;
 }
-.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem}
-.chart-header h3{font-size:.88rem;font-weight:700}
-.chart-wrapper{position:relative;height:240px;width:100%}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem}
+.chart-header h3{font-size:.82rem;font-weight:700}
+.chart-wrapper{position:relative;height:200px;width:100%}
+@media(min-width:768px){.chart-wrapper{height:240px}}
 
-/* ─── Port Grid ───────────────────────────────── */
-.port-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.5rem}
-@media(max-width:580px){.port-grid{grid-template-columns:1fr}}
+/* ─── Port Grid (Mobile Ready) ────────────────── */
+.port-grid{display:grid;grid-template-columns:1fr;gap:.65rem;margin-bottom:1.25rem}
+@media(min-width:600px){.port-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}}
 
 .port-card-admin{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:1rem;position:relative;
+  padding:.9rem;position:relative;
 }
 .port-card-admin.available{border-left:4px solid var(--green)}
 .port-card-admin.pending_payment{border-left:4px solid var(--yellow)}
 .port-card-admin.in-use{border-left:4px solid var(--blue)}
 
-.port-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
-.port-head .name{font-weight:700;font-size:.9rem;display:flex;align-items:center}
-.port-badge{border-radius:.35rem;padding:.2rem .5rem;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
+.port-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
+.port-head .name{font-weight:700;font-size:.86rem;display:flex;align-items:center}
+.port-badge{border-radius:var(--r-sm);padding:.18rem .45rem;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;gap:.25rem}
 .pb-available{background:var(--green-bg);color:var(--green)}
 .pb-pending{background:var(--yellow-bg);color:var(--yellow)}
 .pb-inuse{background:var(--blue-bg);color:var(--blue)}
 .pb-paused{background:var(--yellow-bg);color:var(--yellow)}
 
-.port-timer-big{font-size:1.5rem;font-weight:800;color:var(--blue);letter-spacing:1px;margin:.35rem 0}
+.port-timer-big{font-size:1.35rem;font-weight:800;color:var(--blue);letter-spacing:.8px;margin:.3rem 0}
 .port-timer-big.paused{color:var(--yellow)}
-.port-actions{display:flex;gap:.4rem;margin-top:.75rem;flex-wrap:wrap}
+.port-actions{display:flex;gap:.35rem;margin-top:.65rem;flex-wrap:wrap}
 
 /* USB Icon */
 .admin-usb-icon{
-  display:inline-block;vertical-align:middle;margin-right:.45rem;
+  display:inline-block;vertical-align:middle;margin-right:.4rem;
   mask-size:contain;-webkit-mask-size:contain;mask-repeat:no-repeat;mask-position:center;
   background-color:var(--muted);
 }
-.admin-usb-icon.type-a{width:18px;height:20px;mask-image:url('assets/usb-a-icon.png');-webkit-mask-image:url('assets/usb-a-icon.png')}
-.admin-usb-icon.type-c{width:14px;height:20px;mask-image:url('assets/usb-c-icon.png');-webkit-mask-image:url('assets/usb-c-icon.png')}
+.admin-usb-icon.type-a{width:16px;height:18px;mask-image:url('assets/usb-a-icon.png');-webkit-mask-image:url('assets/usb-a-icon.png')}
+.admin-usb-icon.type-c{width:13px;height:18px;mask-image:url('assets/usb-c-icon.png');-webkit-mask-image:url('assets/usb-c-icon.png')}
 .port-card-admin.available .admin-usb-icon{background-color:var(--green)}
 .port-card-admin.pending_payment .admin-usb-icon{background-color:var(--yellow)}
 .port-card-admin.in-use .admin-usb-icon{background-color:var(--blue)}
 
-/* ─── Tables & Toolbars ───────────────────────── */
-.toolbar{display:flex;gap:.6rem;align-items:center;margin-bottom:.85rem;flex-wrap:wrap}
+/* ─── Responsive Tables ───────────────────────── */
+.toolbar{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap}
 .search-input{
-  flex:1;min-width:200px;background:var(--card2);border:1px solid var(--border);color:var(--text);
-  padding:.45rem .75rem;border-radius:.4rem;font-size:.8rem;outline:none;
+  flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border);color:var(--text);
+  padding:.45rem .75rem;border-radius:var(--r-sm);font-size:.78rem;outline:none;font-family:inherit;
 }
-.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:620px}
-th{color:var(--muted);font-weight:700;text-align:left;padding:.65rem .85rem;border-bottom:1px solid var(--border);font-size:.74rem;background:var(--card2)}
-td{padding:.65rem .85rem;border-bottom:1px solid var(--border-subtle)}
+.tbl-wrap{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;margin-bottom:1.25rem;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+table{width:100%;border-collapse:collapse;font-size:.76rem;min-width:580px}
+th{color:var(--muted);font-weight:700;text-align:left;padding:.55rem .75rem;border-bottom:1px solid var(--border);font-size:.72rem;background:var(--card2)}
+td{padding:.6rem .75rem;border-bottom:1px solid var(--border-subtle)}
 tr:last-child td{border-bottom:none}
 
-.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .5rem;border-radius:.3rem;font-size:.7rem;font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:.2rem;padding:.15rem .45rem;border-radius:var(--r-sm);font-size:.68rem;font-weight:700}
 .b-active{background:var(--blue-bg);color:var(--blue)}
 .b-finished{background:var(--green-bg);color:var(--green)}
 .b-qr{background:var(--card2);color:var(--text)}
 .b-transfer{background:var(--yellow-bg);color:var(--yellow)}
 .b-cash{background:var(--green-bg);color:var(--green)}
-.b-test{background:rgba(236,72,153,0.12);color:#ec4899}
+.b-test{background:rgba(236,72,153,0.14);color:#ec4899}
 
-/* ─── Testing Panel ───────────────────────────── */
-.test-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.15rem;margin-bottom:1rem}
-.test-panel-title{font-size:.9rem;font-weight:700;margin-bottom:.35rem}
-.test-panel-desc{font-size:.76rem;color:var(--muted);margin-bottom:.85rem}
-.test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.75rem;margin-bottom:.75rem}
-.test-box{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:.85rem}
-.test-box h4{font-size:.82rem;font-weight:700;margin-bottom:.25rem}
-.test-box p{font-size:.72rem;color:var(--muted);margin-bottom:.5rem}
+/* ─── Testing Panel & Hardware ────────────────── */
+.test-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.85rem}
+.test-panel-title{font-size:.86rem;font-weight:700;margin-bottom:.25rem}
+.test-panel-desc{font-size:.74rem;color:var(--muted);margin-bottom:.75rem}
+.test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.65rem;margin-bottom:.65rem}
+.test-box{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem}
+.test-box h4{font-size:.8rem;font-weight:700;margin-bottom:.2rem}
+.test-box p{font-size:.72rem;color:var(--muted);margin-bottom:.45rem}
 
-.field-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem}
-.field-row label{font-size:.76rem;color:var(--muted);width:85px;flex-shrink:0}
+.field-row{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.5rem}
+@media(min-width:480px){.field-row{flex-direction:row;align-items:center;gap:.5rem}}
+.field-row label{font-size:.74rem;color:var(--muted);width:85px;flex-shrink:0}
 .field-row select, .field-row input{
   flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);
-  padding:.45rem .6rem;border-radius:.4rem;font-size:.8rem;outline:none;
+  padding:.45rem .6rem;border-radius:var(--r-sm);font-size:.78rem;outline:none;font-family:inherit;
 }
-.btn-group{display:flex;gap:.35rem;flex-wrap:wrap}
+.btn-group{display:flex;gap:.3rem;flex-wrap:wrap}
 
-/* ─── Settings Form ───────────────────────────── */
+/* ─── Settings Form (Mobile Ergonomics) ──────── */
 .settings-box{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  padding:1.5rem;margin-bottom:1.5rem;
+  padding:1.15rem;margin-bottom:1.15rem;
 }
-.settings-box h3{font-size:.95rem;font-weight:700;margin-bottom:.35rem}
-.settings-box p{font-size:.78rem;color:var(--muted);margin-bottom:1.25rem}
-.settings-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-@media(max-width:640px){.settings-form-grid{grid-template-columns:1fr}}
+.settings-box h3{font-size:.9rem;font-weight:700;margin-bottom:.25rem}
+.settings-box p{font-size:.75rem;color:var(--muted);margin-bottom:1rem}
+.settings-form-grid{display:grid;grid-template-columns:1fr;gap:.85rem}
+@media(min-width:640px){.settings-form-grid{grid-template-columns:1fr 1fr;gap:1rem}}
 
-.cfg-item{display:flex;flex-direction:column;gap:.35rem}
-.cfg-item label{font-size:.78rem;font-weight:600;color:var(--muted)}
+.cfg-item{display:flex;flex-direction:column;gap:.3rem}
+.cfg-item label{font-size:.76rem;font-weight:600;color:var(--muted)}
 .cfg-input{
   background:var(--card2);border:1px solid var(--border);color:var(--text);
-  padding:.65rem .85rem;border-radius:.45rem;font-size:.85rem;outline:none;
-  transition:border-color .15s;
+  padding:.65rem .85rem;border-radius:var(--r-sm);font-size:.84rem;outline:none;
+  font-family:inherit;transition:border-color .15s;
 }
 .cfg-input:focus{border-color:var(--blue)}
 .save-toast{
   background:var(--green-bg);color:var(--green);border:1px solid var(--green);
-  padding:.65rem .9rem;border-radius:.45rem;font-size:.8rem;font-weight:600;
-  margin-top:1rem;display:none;align-items:center;gap:.4rem;
+  padding:.6rem .85rem;border-radius:var(--r-sm);font-size:.78rem;font-weight:600;
+  margin-top:1rem;display:none;align-items:center;gap:.35rem;
 }
 
-/* ─── Modal (Slip Information Detail) ────────── */
+/* ─── Modal (Mobile Responsive) ──────────────── */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;
   display:none;align-items:center;justify-content:center;padding:1rem;
-  backdrop-filter:blur(3px);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
 }
 .modal-card{
   background:var(--card);border:1px solid var(--border);border-radius:var(--r);
-  width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.5);
+  width:100%;max-width:390px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.6);
   animation:modalSlide .2s ease-out;
 }
 @keyframes modalSlide{from{transform:translateY(15px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-top{
-  background:var(--blue);color:#fff;padding:1.15rem 1.25rem;
+  background:var(--blue);color:#fff;padding:1rem 1.15rem;
   display:flex;justify-content:space-between;align-items:flex-start;
 }
-.modal-top h2{font-size:1.1rem;font-weight:700}
-.modal-top p{font-size:.75rem;opacity:.85;margin-top:.2rem}
-.btn-close-modal{background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;font-weight:700}
-.modal-body{padding:1.25rem}
+.modal-top h2{font-size:1rem;font-weight:700}
+.modal-top p{font-size:.72rem;opacity:.88;margin-top:.15rem}
+.btn-close-modal{background:rgba(255,255,255,0.2);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.9rem;font-weight:700}
+.modal-body{padding:1rem 1.15rem}
 .slip-verify-card{
-  background:var(--card2);border:1px solid var(--border);border-radius:.5rem;
-  padding:1.15rem;text-align:center;margin-bottom:1rem;
+  background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:1rem;text-align:center;margin-bottom:.85rem;
 }
-.slip-verify-icon{width:56px;height:56px;margin:0 auto .5rem;display:block}
-.slip-info-list{display:grid;gap:.6rem;text-align:left;font-size:.8rem}
-.slip-info-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:.4rem}
+.slip-verify-icon{width:48px;height:48px;margin:0 auto .4rem;display:block}
+.slip-info-list{display:grid;gap:.5rem;text-align:left;font-size:.78rem}
+.slip-info-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:.35rem}
 .slip-info-row .lbl{color:var(--muted)}
 .slip-info-row .val{font-weight:600}
 
-/* ─── Buttons ─────────────────────────────────── */
-.btn-sm{padding:.45rem .85rem;font-size:.76rem;border-radius:.35rem;cursor:pointer;border:none;font-weight:600;transition:all .15s ease}
+/* ─── Touch-Friendly Buttons ──────────────────── */
+.btn-sm{
+  padding:.42rem .75rem;font-size:.74rem;border-radius:var(--r-sm);cursor:pointer;
+  border:none;font-weight:600;font-family:inherit;transition:all .15s ease;
+  min-height:30px;display:inline-flex;align-items:center;justify-content:center;
+}
 .btn-primary{background:var(--blue);color:#fff}
 .btn-green{background:var(--green);color:#fff}
 .btn-yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow)}
@@ -358,22 +389,22 @@ tr:last-child td{border-bottom:none}
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.15rem;font-size:.76rem;color:var(--muted)">
-        <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.15rem;font-size:.74rem;color:var(--muted)">
+        <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer">
           <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
           <span>จดจำการเข้าสู่ระบบในอุปกรณ์นี้</span>
         </label>
       </div>
 
-      <button type="submit" class="btn-sm btn-primary" style="width:100%;padding:.8rem;font-size:.88rem;border-radius:.5rem">
+      <button type="submit" class="btn-sm btn-primary" style="width:100%;padding:.75rem;font-size:.86rem;border-radius:var(--r-sm)">
         เข้าสู่ระบบ
       </button>
     </form>
 
     <div class="login-err" id="loginErr"></div>
     
-    <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem">
-      <a href="/" style="color:var(--muted);font-size:.8rem;text-decoration:none">กลับไปยังหน้าตู้ชาร์จ</a>
+    <div style="margin-top:1.25rem;border-top:1px solid var(--border);padding-top:.85rem">
+      <a href="/" style="color:var(--muted);font-size:.76rem;text-decoration:none">กลับไปยังหน้าตู้ชาร์จ</a>
     </div>
   </div>
 </div>
@@ -382,35 +413,37 @@ tr:last-child td{border-bottom:none}
 <!-- ══════════════════════════════════════ APP -->
 <div id="appScreen">
   <div class="topbar">
-    <h1>
+    <div class="topbar-brand">
       <img src="assets/icon-settings.png" class="topbar-icon" alt="Admin"/>
-      ระบบจัดการตู้ชาร์จ USB <span style="font-size:.75rem;font-weight:400;color:var(--muted)">| ผู้ดูแล: ศุภกฤต</span>
-    </h1>
-    <span class="chip" id="easyslipChip">
-      <img src="assets/icon-success.png" style="width:12px;height:12px"/> EasySlip พร้อมใช้งาน
-    </span>
-    <button class="btn-theme" onclick="toggleAdminTheme()" title="เปลี่ยนธีม">
-      <svg id="adminSunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
-      <svg id="adminMoonIcon" style="display:none" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-.19 20 10.04 10.04 0 0 0 9.95-8.51 1 1 0 0 0-1.21-1.12A8 8 0 0 1 10.63 3.4a1 1 0 0 0-1.12-1.21A10.2 10.2 0 0 0 12.3 2z"/></svg>
-    </button>
-    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+      <div class="topbar-title">ตู้ชาร์จ USB <span class="topbar-sub">| ศุภกฤต</span></div>
+    </div>
+    <div class="topbar-actions">
+      <span class="chip" id="easyslipChip">
+        <img src="assets/icon-success.png" style="width:11px;height:11px"/> EasySlip
+      </span>
+      <button class="btn-theme" onclick="toggleAdminTheme()" title="เปลี่ยนธีม">
+        <svg id="adminSunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
+        <svg id="adminMoonIcon" style="display:none" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-.19 20 10.04 10.04 0 0 0 9.95-8.51 1 1 0 0 0-1.21-1.12A8 8 0 0 1 10.63 3.4a1 1 0 0 0-1.12-1.21A10.2 10.2 0 0 0 12.3 2z"/></svg>
+      </button>
+      <button class="btn-logout" onclick="logout()">ออก</button>
+    </div>
   </div>
 
   <div class="tabs">
     <div class="tab active" onclick="switchTab('dashboard')">
-      <img src="assets/icon-battery.png" class="tab-icon" alt=""/> ภาพรวมระบบ
+      <img src="assets/icon-battery.png" class="tab-icon" alt=""/> ภาพรวม
     </div>
     <div class="tab" onclick="switchTab('analytics')">
-      <img src="assets/icon-invoice.png" class="tab-icon" alt=""/> สถิติและรายงาน
+      <img src="assets/icon-invoice.png" class="tab-icon" alt=""/> สถิติ & รายงาน
     </div>
     <div class="tab" onclick="switchTab('transactions')">
-      <img src="assets/icon-doc.png" class="tab-icon" alt=""/> รายการชำระเงิน
+      <img src="assets/icon-doc.png" class="tab-icon" alt=""/> รายการเงิน
     </div>
     <div class="tab" onclick="switchTab('testing')">
-      <img src="assets/icon-gear.png" class="tab-icon" alt=""/> ควบคุมอุปกรณ์
+      <img src="assets/icon-gear.png" class="tab-icon" alt=""/> ควบคุม
     </div>
     <div class="tab" onclick="switchTab('settings')">
-      <img src="assets/icon-settings.png" class="tab-icon" alt=""/> ตั้งค่าระบบ
+      <img src="assets/icon-settings.png" class="tab-icon" alt=""/> ตั้งค่า
     </div>
   </div>
 
@@ -420,32 +453,32 @@ tr:last-child td{border-bottom:none}
       <div class="stat-card green">
         <div class="lbl">รายได้รวมทั้งหมด</div>
         <div class="val" id="stRevenue">฿0.00</div>
-        <div class="comp-flex comp-muted"><span>สะสมตลอดอายุการใช้งาน</span></div>
+        <div class="comp-flex comp-muted"><span>สะสมทั้งหมด</span></div>
       </div>
       <div class="stat-card yellow">
         <div class="lbl">รายได้วันนี้</div>
         <div class="val" id="stToday">฿0.00</div>
-        <div id="stTodayComp"><div class="comp-flex comp-muted"><span>— เทียบกับเมื่อวาน</span></div></div>
+        <div id="stTodayComp"><div class="comp-flex comp-muted"><span>— เมื่อวาน</span></div></div>
       </div>
       <div class="stat-card cyan">
         <div class="lbl">ผู้เข้าชมวันนี้</div>
         <div class="val" id="stTodayVisits">0 ครั้ง</div>
-        <div id="stTodayVisitsComp"><div class="comp-flex comp-muted"><span>— เทียบกับเมื่อวาน</span></div></div>
+        <div id="stTodayVisitsComp"><div class="comp-flex comp-muted"><span>— เมื่อวาน</span></div></div>
       </div>
       <div class="stat-card purple">
         <div class="lbl">ผู้เข้าชมทั้งหมด</div>
         <div class="val" id="stTotalVisits">0 ครั้ง</div>
-        <div class="comp-flex comp-muted"><span>สถิติเข้าชมสะสม</span></div>
+        <div class="comp-flex comp-muted"><span>สะสมผู้เข้าชม</span></div>
       </div>
       <div class="stat-card blue">
         <div class="lbl">กำลังชาร์จอยู่</div>
         <div class="val" id="stActive">0 ช่อง</div>
-        <div class="comp-flex comp-muted"><span>สถานะรีเลย์จ่ายไฟ</span></div>
+        <div class="comp-flex comp-muted"><span>สถานะจ่ายไฟ</span></div>
       </div>
       <div class="stat-card purple">
         <div class="lbl">รายการทั้งหมด</div>
         <div class="val" id="stCount">0</div>
-        <div class="comp-flex comp-muted"><span>รายการชำระสำเร็จ</span></div>
+        <div class="comp-flex comp-muted"><span>สำเร็จทั้งหมด</span></div>
       </div>
     </div>
 
@@ -465,14 +498,14 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
-      <h2 style="font-size:.9rem;font-weight:700">สถานะพอร์ตชาร์จแบบเรียลไทม์</h2>
+    <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem">
+      <h2 style="font-size:.86rem;font-weight:700">สถานะพอร์ตแบบเรียลไทม์</h2>
       <button class="btn-sm btn-danger" onclick="adminReset()">รีเซ็ตทุกพอร์ต</button>
     </div>
     <div class="port-grid" id="adminPortGrid"></div>
 
-    <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin:1.25rem 0 .75rem">
-      <h2 style="font-size:.9rem;font-weight:700">รายการล่าสุด 5 รายการ</h2>
+    <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0 .65rem">
+      <h2 style="font-size:.86rem;font-weight:700">รายการล่าสุด 5 รายการ</h2>
       <button class="btn-sm btn-gray" onclick="switchTab('transactions')">ดูทั้งหมด</button>
     </div>
     <div class="tbl-wrap"><table>
@@ -484,19 +517,19 @@ tr:last-child td{border-bottom:none}
   <!-- ─── TAB: Analytics ──────────────────────── -->
   <div id="tab-analytics" class="content" style="display:none">
     <div class="stats-grid">
-      <div class="stat-card green"><div class="lbl">รายได้เฉลี่ยต่อรายการ</div><div class="val" id="stAvgTx">฿0.00</div></div>
+      <div class="stat-card green"><div class="lbl">รายได้เฉลี่ย/รายการ</div><div class="val" id="stAvgTx">฿0.00</div></div>
       <div class="stat-card blue"><div class="lbl">เวลาชาร์จสะสมรวม</div><div class="val" id="stTotalHours">0 ชม.</div></div>
-      <div class="stat-card cyan"><div class="lbl">อัตราแปลงเป็นยอดชาร์จ</div><div class="val" id="stConversion">0%</div></div>
+      <div class="stat-card cyan"><div class="lbl">Conversion Rate</div><div class="val" id="stConversion">0%</div></div>
       <div class="stat-card yellow"><div class="lbl">พร้อมเพย์ & โอน</div><div class="val" id="stOnlineAmt">฿0.00</div></div>
       <div class="stat-card purple"><div class="lbl">เงินสด (เหรียญ/แบงค์)</div><div class="val" id="stCashAmt">฿0.00</div></div>
       <div class="stat-card green"><div class="lbl">ผู้เข้าชมเว็บรวม</div><div class="val" id="stVisitsCount">0 ครั้ง</div></div>
     </div>
 
-    <div class="chart-card" style="margin-bottom:1.25rem">
+    <div class="chart-card" style="margin-bottom:1rem">
       <div class="chart-header">
-        <h3>กราฟรายได้และจำนวนผู้เข้าชมเว็บไซต์รายวัน (7 วันย้อนหลัง)</h3>
+        <h3>กราฟรายได้และผู้เข้าชมเว็บไซต์รายวัน (7 วันย้อนหลัง)</h3>
       </div>
-      <div class="chart-wrapper" style="height:270px"><canvas id="analyticsBarChart"></canvas></div>
+      <div class="chart-wrapper" style="height:230px"><canvas id="analyticsBarChart"></canvas></div>
     </div>
 
     <div class="chart-grid">
@@ -518,9 +551,9 @@ tr:last-child td{border-bottom:none}
   <!-- ─── TAB: Transactions ───────────────────── -->
   <div id="tab-transactions" class="content" style="display:none">
     <div class="toolbar">
-      <input type="text" id="txSearchInput" class="search-input" placeholder="ค้นหาตาม ID, พอร์ต, ผู้โอน หรือวิธีชำระ..." oninput="filterTransactions()" />
-      <button class="btn-sm btn-green" onclick="exportTransactionsCSV()" title="ดาวน์โหลดรายงาน Excel">
-        ส่งออกรายงาน CSV (Excel)
+      <input type="text" id="txSearchInput" class="search-input" placeholder="ค้นหา ID, พอร์ต, ผู้โอน..." oninput="filterTransactions()" />
+      <button class="btn-sm btn-green" onclick="exportTransactionsCSV()" title="ดาวน์โหลด Excel">
+        ส่งออก CSV
       </button>
     </div>
     <div class="tbl-wrap"><table>
@@ -533,8 +566,8 @@ tr:last-child td{border-bottom:none}
   <div id="tab-testing" class="content" style="display:none">
     <div class="test-panel">
       <div class="test-panel-title">ทดสอบสั่งจ่ายไฟ & เริ่มชาร์จ</div>
-      <div class="test-panel-desc">สั่งเริ่มชาร์จเพื่อดูการทำงานของไฟและเวลานับถอยหลัง โดยไม่ต้องโอนเงินจริง</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem">
+      <div class="test-panel-desc">สั่งเริ่มชาร์จจำลองเพื่อดูการทำงานของไฟและเวลานับถอยหลัง</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.55rem">
         <div class="field-row">
           <label>เลือกพอร์ต:</label>
           <select id="testPortSelect">
@@ -555,7 +588,7 @@ tr:last-child td{border-bottom:none}
         </div>
       </div>
       <div style="margin-top:.6rem">
-        <button class="btn-sm btn-green" onclick="runTestStart()">เริ่มทดสอบชาร์จ</button>
+        <button class="btn-sm btn-green" style="width:100%" onclick="runTestStart()">เริ่มทดสอบชาร์จ</button>
       </div>
     </div>
 
@@ -602,7 +635,7 @@ tr:last-child td{border-bottom:none}
           </div>
         </div>
       </div>
-      <div style="font-size:.74rem;color:var(--muted);margin-top:.5rem" id="lastActionNotice">สถานะ: พร้อมทดสอบ</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.4rem" id="lastActionNotice">สถานะ: พร้อมทดสอบ</div>
     </div>
   </div>
 
@@ -615,7 +648,7 @@ tr:last-child td{border-bottom:none}
       <form onsubmit="event.preventDefault(); saveSettings();">
         <div class="settings-form-grid">
           <div class="cfg-item">
-            <label>เบอร์พร้อมเพย์รับเงิน (PromptPay Phone)</label>
+            <label>เบอร์พร้อมเพย์รับเงิน (PromptPay)</label>
             <input type="text" id="cfgPhone" class="cfg-input" placeholder="0969679951" required />
           </div>
 
@@ -625,21 +658,21 @@ tr:last-child td{border-bottom:none}
           </div>
 
           <div class="cfg-item">
-            <label>เลขที่บัญชีธนาคาร (Account Number)</label>
+            <label>เลขที่บัญชีธนาคาร (Account No.)</label>
             <input type="text" id="cfgAccount" class="cfg-input" placeholder="193-3-86131-3" required />
           </div>
 
           <div class="cfg-item">
-            <label>ชื่อบัญชีผู้รับเงิน (Account Holder Name)</label>
+            <label>ชื่อบัญชีผู้รับเงิน (Account Name)</label>
             <input type="text" id="cfgAccountName" class="cfg-input" placeholder="ศุภกฤต สอนบุญมา" required />
           </div>
 
           <div class="cfg-item">
-            <label>อัตราค่าบริการ (เวลาชาร์จต่อ 1 บาท)</label>
+            <label>อัตราค่าบริการ (เวลาต่อ 1 บาท)</label>
             <select id="cfgRate" class="cfg-input">
               <option value="60">1 บาท = 1 นาที (60 วินาที)</option>
               <option value="120">1 บาท = 2 นาที (120 วินาที)</option>
-              <option value="180" selected>1 บาท = 3 นาที (180 วินาที - ค่ามาตรฐาน)</option>
+              <option value="180" selected>1 บาท = 3 นาที (180 วินาที - มาตรฐาน)</option>
               <option value="300">1 บาท = 5 นาที (300 วินาที)</option>
               <option value="600">1 บาท = 10 นาที (600 วินาที)</option>
             </select>
@@ -652,15 +685,15 @@ tr:last-child td{border-bottom:none}
         </div>
 
         <div id="saveSettingsToast" class="save-toast">
-          <img src="assets/icon-success.png" style="width:16px;height:16px"/> บันทึกการตั้งค่าระบบเรียบร้อย ข้อมูลมีผลกับตู้ชาร์จทันที
+          <img src="assets/icon-success.png" style="width:15px;height:15px"/> บันทึกการตั้งค่าระบบเรียบร้อย ข้อมูลมีผลทันที
         </div>
 
-        <div style="margin-top:1.5rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-          <button type="submit" class="btn-sm btn-primary" style="padding:.75rem 1.5rem;font-size:.85rem">
+        <div style="margin-top:1.25rem;display:flex;gap:.55rem;align-items:center;flex-wrap:wrap">
+          <button type="submit" class="btn-sm btn-primary" style="padding:.75rem 1.25rem;font-size:.82rem;flex:1">
             บันทึกการตั้งค่าระบบ
           </button>
-          <a href="https://developer.easyslip.com/dashboard/10283/transaction" target="_blank" rel="noopener noreferrer" class="btn-sm btn-gray" style="padding:.75rem 1.25rem;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;font-size:.82rem">
-            ตรวจสอบสลิปใน EasySlip Dashboard ↗
+          <a href="https://developer.easyslip.com/dashboard/10283/transaction" target="_blank" rel="noopener noreferrer" class="btn-sm btn-gray" style="padding:.75rem 1rem;display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;font-size:.78rem">
+            EasySlip Dashboard ↗
           </a>
         </div>
       </form>
@@ -668,26 +701,26 @@ tr:last-child td{border-bottom:none}
 
     <!-- Health Check & Ping Monitor Box -->
     <div class="settings-box">
-      <h3>ระบบตรวจจับสถานะตู้ (Health Check & Keep-Alive URL)</h3>
-      <p>นำ URL นี้ไปตั้งค่าใน UptimeRobot เพื่อส่งคำขอตรวจสอบตู้ชาร์จทุก 5 นาที ป้องกันเซิร์ฟเวอร์หลับ และแจ้งเตือนเมื่อระบบมีปัญหา</p>
+      <h3>ระบบตรวจจับสถานะตู้ (Keep-Alive & Ping)</h3>
+      <p>นำ URL นี้ไปตั้งค่าใน UptimeRobot เพื่อส่งคำขอตรวจสอบตู้ชาร์จทุก 5 นาที ป้องกันเซิร์ฟเวอร์หลับ</p>
       
-      <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-        <input type="text" id="pingUrlInput" class="cfg-input" style="flex:1;min-width:280px" readonly value="https://usb-charger-project.web.app/api/ping" />
-        <button class="btn-sm btn-green" onclick="testHealthPing()">ทดสอบยิง Ping เดี๋ยวนี้</button>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.85rem;flex-wrap:wrap">
+        <input type="text" id="pingUrlInput" class="cfg-input" style="flex:1;min-width:220px" readonly value="https://usb-charger-project.web.app/api/ping" />
+        <button class="btn-sm btn-green" onclick="testHealthPing()">ทดสอบ Ping</button>
       </div>
 
-      <div id="pingTestResult" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:.45rem;padding:.85rem 1rem;font-size:.82rem;margin-bottom:1rem"></div>
+      <div id="pingTestResult" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem .85rem;font-size:.78rem;margin-bottom:.85rem"></div>
 
-      <div style="font-size:.78rem;color:var(--muted);line-height:1.6">
+      <div style="font-size:.74rem;color:var(--muted);line-height:1.5">
         💡 <strong>วิธีตั้งค่า Ping อัตโนมัติทุก 5 นาที (ฟรี):</strong><br>
         1. สมัครใช้งานฟรีที่ <a href="https://uptimerobot.com" target="_blank" style="color:var(--blue);text-decoration:none">UptimeRobot.com</a><br>
-        2. กด <strong>+ Add New Monitor</strong> เลือก Monitor Type: <strong>HTTP(s)</strong><br>
-        3. วาง URL ด้านบนลงในช่อง URL แล้วตั้งค่า Monitoring Interval: <strong>Every 5 minutes</strong>
+        2. กดเมนู <strong>Monitoring</strong> ด้านบนซ้าย แล้วเลือก <strong>+ Add New Monitor</strong><br>
+        3. เลือก HTTP(s) วาง URL ด้านบน แล้วตั้งเวลา <strong>Every 5 minutes</strong>
       </div>
     </div>
 
-    <div style="margin-top:1.5rem;text-align:center">
-      <a href="/" style="color:var(--muted);font-size:.8rem;text-decoration:none">กลับหน้าหลัก</a>
+    <div style="margin-top:1.25rem;text-align:center">
+      <a href="/" style="color:var(--muted);font-size:.78rem;text-decoration:none">กลับหน้าหลัก</a>
     </div>
   </div>
 </div>
@@ -705,9 +738,9 @@ tr:last-child td{border-bottom:none}
     <div class="modal-body">
       <div class="slip-verify-card">
         <img src="assets/icon-success.png" class="slip-verify-icon" alt="Verified"/>
-        <div style="font-size:1rem;font-weight:700;color:var(--green)">สลิปถูกต้อง</div>
-        <div style="font-size:.76rem;color:var(--muted);margin-top:2px">(ชื่อตรง ยอดเงินตรง)</div>
-        <div style="font-size:.74rem;color:var(--muted);margin-top:6px" id="modalTransRef">—</div>
+        <div style="font-size:.92rem;font-weight:700;color:var(--green)">สลิปถูกต้อง</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">(ชื่อตรง ยอดเงินตรง)</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px" id="modalTransRef">—</div>
       </div>
       <div class="slip-info-list">
         <div class="slip-info-row">
@@ -724,7 +757,7 @@ tr:last-child td{border-bottom:none}
         </div>
         <div class="slip-info-row">
           <span class="lbl">จำนวนเงิน:</span>
-          <span class="val" style="color:var(--green);font-size:.95rem" id="modalAmount">฿0.00</span>
+          <span class="val" style="color:var(--green);font-size:.9rem" id="modalAmount">฿0.00</span>
         </div>
         <div class="slip-info-row">
           <span class="lbl">พอร์ตที่เลือก:</span>
@@ -732,10 +765,10 @@ tr:last-child td{border-bottom:none}
         </div>
         <div class="slip-info-row">
           <span class="lbl">API Status:</span>
-          <span class="val" style="color:var(--green)">สำเร็จ (EasySlip Verified)</span>
+          <span class="val" style="color:var(--green)">สำเร็จ (EasySlip)</span>
         </div>
       </div>
-      <button class="btn-sm btn-primary" style="width:100%;margin-top:1.15rem;padding:.65rem" onclick="hideSlipModal()">
+      <button class="btn-sm btn-primary" style="width:100%;margin-top:1rem;padding:.65rem" onclick="hideSlipModal()">
         ปิดหน้าต่าง
       </button>
     </div>
@@ -948,8 +981,8 @@ function setActionNotice(msg) {
 function renderAll(d) {
   const chip = document.getElementById('easyslipChip');
   chip.innerHTML = d.config.easyslipEnabled 
-    ? '<img src="assets/icon-success.png" style="width:12px;height:12px"/> EasySlip พร้อมใช้งาน'
-    : 'EasySlip: ปิดใช้งาน';
+    ? '<img src="assets/icon-success.png" style="width:11px;height:11px"/> EasySlip'
+    : 'EasySlip: ปิด';
   chip.className = `chip ${d.config.easyslipEnabled ? '' : 'warn'}`;
 
   const txs = d.transactions || [];
@@ -977,24 +1010,24 @@ function renderAll(d) {
 
   function getCompHtml(todayVal, yestVal, label = 'เมื่อวาน') {
     if (yestVal === 0 && todayVal === 0) {
-      return `<div class="comp-flex comp-muted"><span>— เทียบกับ${label}</span></div>`;
+      return `<div class="comp-flex comp-muted"><span>— เทียบ${label}</span></div>`;
     }
     if (yestVal === 0 && todayVal > 0) {
       return `<div class="comp-flex comp-green">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-        <span><strong>+100%</strong> ยอดใหม่วันนี้</span>
+        <span><strong>+100%</strong> ยอดใหม่</span>
       </div>`;
     }
     const diffPct = Math.round(((todayVal - yestVal) / yestVal) * 100);
     if (diffPct >= 0) {
       return `<div class="comp-flex comp-green">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-        <span><strong>+${diffPct}%</strong> เทียบกับ${label}</span>
+        <span><strong>+${diffPct}%</strong> เทียบ${label}</span>
       </div>`;
     } else {
       return `<div class="comp-flex comp-red">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
-        <span><strong>${diffPct}%</strong> เทียบกับ${label}</span>
+        <span><strong>${diffPct}%</strong> เทียบ${label}</span>
       </div>`;
     }
   }
@@ -1066,7 +1099,7 @@ function renderPortGrid(ports) {
     d.className = `port-card-admin ${st}`;
     
     let badgeHtml = '';
-    if (st === 'available') badgeHtml = `<span class="port-badge pb-available"><img src="assets/icon-success.png" style="width:12px;height:12px"/> ว่าง</span>`;
+    if (st === 'available') badgeHtml = `<span class="port-badge pb-available"><img src="assets/icon-success.png" style="width:11px;height:11px"/> ว่าง</span>`;
     else if (st === 'pending_payment') badgeHtml = `<span class="port-badge pb-pending">รอชำระ</span>`;
     else if (p.isPaused) badgeHtml = `<span class="port-badge pb-paused">พักชั่วคราว</span>`;
     else badgeHtml = `<span class="port-badge pb-inuse">กำลังชาร์จ</span>`;
@@ -1075,14 +1108,14 @@ function renderPortGrid(ports) {
     if (st === 'in-use') {
       timerHtml = `<div class="port-timer-big ${p.isPaused ? 'paused' : ''}">${fmtSecs(p.remainingSeconds)} ${p.isPaused ? '(พัก)' : ''}</div>`;
     }
-    const methodHtml = p.paymentSession ? `<div style="font-size:.74rem;color:var(--muted);margin-top:.2rem">วิธี: <strong>${p.paymentSession.method || '—'}</strong></div>` : '';
+    const methodHtml = p.paymentSession ? `<div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">วิธี: <strong>${p.paymentSession.method || '—'}</strong></div>` : '';
 
     let actions = '';
     if (st === 'in-use') {
       if (p.isPaused) {
         actions += `<button class="btn-sm btn-green" onclick="resumePort('${p.id}')">ชาร์จต่อ</button>`;
       } else {
-        actions += `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')">พักชั่วคราว</button>`;
+        actions += `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')">พัก</button>`;
       }
       actions += `<button class="btn-sm btn-red" onclick="stopPort('${p.id}')">ตัดไฟ</button>`;
     } else if (st === 'pending_payment') {
@@ -1095,11 +1128,11 @@ function renderPortGrid(ports) {
       <div class="port-head">
         <div class="name">
           <span class="admin-usb-icon ${typeClass}"></span>
-          ${p.label} <span style="font-size:.72rem;color:var(--muted);margin-left:.25rem">(${p.type})</span>
+          ${p.label} <span style="font-size:.7rem;color:var(--muted);margin-left:.25rem">(${p.type})</span>
         </div>
         ${badgeHtml}
       </div>
-      <div style="font-size:.74rem;color:var(--muted)">GPIO ${p.relayGpio} · ไฟ: <strong style="color:${p.relayOn?'var(--green)':'var(--red)'}">${p.relayOn?'เปิดจ่ายไฟ':'ตัดไฟ'}</strong></div>
+      <div style="font-size:.72rem;color:var(--muted)">GPIO ${p.relayGpio} · ไฟ: <strong style="color:${p.relayOn?'var(--green)':'var(--red)'}">${p.relayOn?'เปิด':'ตัดไฟ'}</strong></div>
       ${timerHtml}${methodHtml}
       ${actions ? `<div class="port-actions">${actions}</div>` : ''}`;
     g.appendChild(d);
@@ -1109,19 +1142,19 @@ function renderPortGrid(ports) {
 // ─── Render Tables ────────────────────────────
 function renderTxTable5(txs) {
   const tb = document.getElementById('txTable5');
-  if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
+  if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.25rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
   tb.innerHTML = txs.slice(0, 5).map(t => txRowHtml(t, true)).join('');
 }
 
 function renderTxTableAll(txs) {
   const tb = document.getElementById('txTableAll');
-  if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
+  if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
   tb.innerHTML = txs.map(t => txRowHtml(t, true)).join('');
 }
 
 function txRowHtml(t, withActions=false) {
   const mBadge = t.method==='qr'?'<span class="badge b-qr">พร้อมเพย์</span>':t.method==='transfer'?'<span class="badge b-transfer">โอนเงิน</span>':t.method==='cash'?'<span class="badge b-cash">เงินสด</span>':'<span class="badge b-test">ทดสอบ</span>';
-  const stBadge = t.status==='active'?'<span class="badge b-active">กำลังชาร์จ</span>':'<span class="badge b-finished"><img src="assets/icon-success.png" style="width:11px;height:11px"/> สำเร็จ</span>';
+  const stBadge = t.status==='active'?'<span class="badge b-active">กำลังชาร์จ</span>':'<span class="badge b-finished"><img src="assets/icon-success.png" style="width:10px;height:10px"/> สำเร็จ</span>';
   const sender = t.verification?.sender || (t.method==='cash'?'เงินสด':'ผู้ใช้');
   
   return `<tr>
@@ -1131,8 +1164,8 @@ function txRowHtml(t, withActions=false) {
     <td>${mBadge}</td>
     <td>${stBadge}</td>
     <td>${sender}</td>
-    <td style="color:var(--muted);font-size:.74rem">${fmtDate(t.createdAt)}</td>
-    ${withActions ? `<td><button class="btn-sm btn-gray" onclick="viewTxDetail('${t.id}')">ข้อมูลสลิป</button></td>` : ''}
+    <td style="color:var(--muted);font-size:.72rem">${fmtDate(t.createdAt)}</td>
+    ${withActions ? `<td><button class="btn-sm btn-gray" onclick="viewTxDetail('${t.id}')">ดูสลิป</button></td>` : ''}
   </tr>`;
 }
 
@@ -1243,7 +1276,7 @@ function updateCharts(txs, visits = []) {
     datasets: [{
       label: 'รายได้ (บาท)',
       data: dayRevenues,
-      backgroundColor: 'rgba(59, 130, 246, 0.8)',
+      backgroundColor: 'rgba(59, 130, 246, 0.85)',
       borderRadius: 4
     }]
   }, { textColor, gridColor });
@@ -1282,7 +1315,7 @@ function updateCharts(txs, visits = []) {
         type: 'bar',
         label: 'รายได้ (บาท)',
         data: dayRevenues,
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+        backgroundColor: 'rgba(16, 185, 129, 0.85)',
         borderRadius: 4,
         yAxisID: 'y'
       }
@@ -1322,7 +1355,7 @@ function createOrUpdateChart(canvasId, type, data, opts={}) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // ALWAYS Destroy previous chart instance before creating to prevent memory leaks and glitchy sizing
+  // Destroy previous chart instance before creating to prevent memory leaks and glitchy sizing
   if (charts[canvasId]) {
     try { charts[canvasId].destroy(); } catch(e){}
     charts[canvasId] = null;
@@ -1336,24 +1369,24 @@ function createOrUpdateChart(canvasId, type, data, opts={}) {
     plugins: {
       legend: {
         display: !!opts.legend,
-        labels: { color: opts.textColor, font: { size: 11, weight: '600' } }
+        labels: { color: opts.textColor, font: { size: 10, weight: '600', family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } }
       }
     },
     scales: type === 'doughnut' || type === 'pie' ? {} : {
       x: {
         grid: { color: opts.gridColor },
-        ticks: { color: opts.textColor, font: { size: 11 } }
+        ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } }
       },
       y: {
         grid: { color: opts.gridColor },
-        ticks: { color: opts.textColor, font: { size: 11 } },
+        ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } },
         beginAtZero: true
       },
       ...(opts.dualY ? {
         y1: {
           position: 'right',
           grid: { drawOnChartArea: false },
-          ticks: { color: opts.textColor, font: { size: 11 } },
+          ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } },
           beginAtZero: true
         }
       } : {})
@@ -1378,24 +1411,24 @@ function renderTestingTab(ports) {
   
   const inUsePorts = ports.filter(p => p.status === 'in-use');
   if (!inUsePorts.length) {
-    activeList.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--muted);font-size:.8rem">ยังไม่มีพอร์ตที่กำลังชาร์จ</div>`;
+    activeList.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:.85rem;color:var(--muted);font-size:.76rem">ยังไม่มีพอร์ตที่กำลังชาร์จ</div>`;
     return;
   }
 
   activeList.innerHTML = inUsePorts.map(p => `
     <div class="test-box">
       <h4>${p.label} (${p.type})</h4>
-      <div style="font-size:1.3rem;font-weight:800;color:${p.isPaused?'var(--yellow)':'var(--blue)'};margin:.25rem 0">
+      <div style="font-size:1.2rem;font-weight:800;color:${p.isPaused?'var(--yellow)':'var(--blue)'};margin:.2rem 0">
         ${fmtSecs(p.remainingSeconds)} ${p.isPaused?'(พักอยู่)':''}
       </div>
       <p>ไฟ: ${p.relayOn?'เปิด':'ปิด'} · ยอด: ฿${p.currentTx?.amount||'—'}</p>
       <div class="btn-group">
         ${p.isPaused 
           ? `<button class="btn-sm btn-green" onclick="resumePort('${p.id}')">ชาร์จต่อ</button>`
-          : `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')">พักชั่วคราว</button>`
+          : `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')">พัก</button>`
         }
         <button class="btn-sm btn-primary" onclick="setTimeRemaining('${p.id}', 5)">เหลือ 5 วิ</button>
-        <button class="btn-sm btn-red" onclick="stopPort('${p.id}')">ตัดไฟทันที</button>
+        <button class="btn-sm btn-red" onclick="stopPort('${p.id}')">ตัดไฟ</button>
       </div>
     </div>
   `).join('');
@@ -1473,18 +1506,18 @@ async function testHealthPing() {
     const data = await res.json();
     const ms = Math.round(t1 - t0);
     resultEl.innerHTML = `
-      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เซิร์ฟเวอร์ออนไลน์สมบูรณ์ (HTTP 200 OK — ${ms} ms)</div>
-      <div style="font-size:.76rem;color:var(--muted)">
-        ทำงานต่อเนื่อง: ${Math.floor(data.uptimeSeconds/60)} นาที | ช่องที่กำลังชาร์จ: ${data.activePorts} ช่อง | เข้าชมสะสม: ${data.totalVisits} ครั้ง | EasySlip: ${data.easyslip?'เปิดใช้งาน':'ปิด'}
+      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เซิร์ฟเวอร์ออนไลน์ (HTTP 200 OK — ${ms} ms)</div>
+      <div style="font-size:.74rem;color:var(--muted)">
+        ทำงานต่อเนื่อง: ${Math.floor(data.uptimeSeconds/60)} นาที | ช่องชาร์จ: ${data.activePorts} | เข้าชมสะสม: ${data.totalVisits} ครั้ง
       </div>
     `;
   } catch(e) {
     const t1 = performance.now();
     const ms = Math.round(t1 - t0);
     resultEl.innerHTML = `
-      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เว็บไซต์ Firebase CDN ออนไลน์ (ความเร็ว ${ms} ms)</div>
-      <div style="font-size:.76rem;color:var(--muted)">
-        ระบบหน้าเว็บและฐานข้อมูลแคชในตัวพร้อมให้บริการตลอด 24 ชั่วโมง
+      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เว็บไซต์ Firebase CDN ออนไลน์ (${ms} ms)</div>
+      <div style="font-size:.74rem;color:var(--muted)">
+        ระบบพร้อมให้บริการตลอด 24 ชั่วโมง
       </div>
     `;
   }

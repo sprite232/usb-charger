@@ -676,8 +676,10 @@ body{
 
     <!-- เลือกวิธีชำระเงิน -->
     <div class="page" id="pg-method">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.85rem;text-align:center">ยอดชำระ: <strong style="color:var(--green)">฿<span id="mAmt">—</span></strong> (<span id="mTime">—</span>)</p>
       <div class="method-list" id="methodList">
-        <button class="method-item" id="mItemQR" onclick="createSession('qr')">
+        <button class="method-item" id="btnMethodQR" onclick="createSession('qr')">
+          <img src="assets/promptpay-logo.png" alt="PromptPay" style="width:36px;height:36px;object-fit:contain;border-radius:.4rem;flex-shrink:0">
           <div>
             <div class="ml">พร้อมเพย์ QR Code</div>
             <div class="ms">สแกนจ่ายผ่านแอปธนาคารทุกธนาคาร</div>
@@ -685,18 +687,22 @@ body{
           <span class="method-badge">แนะนำ</span>
         </button>
 
-        <button class="method-item" id="mItemTR" onclick="createSession('transfer')">
+        <button class="method-item" id="btnMethodTR" onclick="createSession('transfer')">
+          <img src="assets/bank.png" alt="โอนธนาคาร" class="img-invert-dark" style="width:32px;height:32px;object-fit:contain;opacity:.85;flex-shrink:0">
           <div>
             <div class="ml">โอนเงินเข้าบัญชีธนาคาร</div>
             <div class="ms">โอนผ่านเลขที่บัญชีหรือเบอร์พร้อมเพย์</div>
           </div>
+          <span class="method-badge">ตรวจสลิป</span>
         </button>
 
-        <button class="method-item" id="mItemCash" onclick="createSession('cash')">
+        <button class="method-item" id="btnMethodCash" onclick="handleCashMethodClick()">
+          <img src="assets/banknote.png" alt="เงินสด" class="img-invert-dark" style="width:36px;height:36px;object-fit:contain;opacity:.85;flex-shrink:0">
           <div>
             <div class="ml">หยอดเงินสดที่ตู้</div>
-            <div class="ms">เหรียญ 5, 10 บาท / ธนบัตร 20, 50, 100 บาท</div>
+            <div class="ms" id="cashMethodSub">ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100</div>
           </div>
+          <span class="method-badge" id="cashMethodBadge">รับเหรียญ & แบงค์</span>
         </button>
       </div>
       <div id="cashOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:.45rem;display:none;text-align:center">
@@ -1290,27 +1296,28 @@ function goConfirm(){
 }
 
 function goMethod(){
-  $('mAmt').textContent = S.amount;
-  $('mTime').textContent = fmtTime(S.amount * SPB);
+  if ($('mAmt')) $('mAmt').textContent = S.amount;
+  if ($('mTime')) $('mTime').textContent = fmtTime(S.amount * SPB);
   
   const isCashAllowed = S.amount >= 5 && S.amount % 5 === 0;
   const btnCash = $('btnMethodCash');
   const subCash = $('cashMethodSub');
   const badgeCash = $('cashMethodBadge');
+  const warn = $('cashOnlyWarn');
 
-  if (isCashAllowed) {
-    btnCash.style.opacity = '1';
-    btnCash.style.cursor = 'pointer';
-    subCash.textContent = 'ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100';
-    subCash.style.color = '';
-    badgeCash.textContent = 'รับเหรียญ & แบงค์';
-    badgeCash.className = 'method-badge';
-  } else {
-    btnCash.style.opacity = '0.6';
-    subCash.textContent = `ยอด ฿${S.amount} มีเศษ (ตู้ไม่มีช่องรับเหรียญ 1-2฿)`;
-    subCash.style.color = 'var(--amber)';
-    badgeCash.textContent = 'เงินโอนเท่านั้น';
-    badgeCash.className = 'method-badge warn';
+  if (btnCash) {
+    if (isCashAllowed) {
+      btnCash.style.opacity = '1';
+      btnCash.style.cursor = 'pointer';
+      if (subCash) { subCash.textContent = 'ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100'; subCash.style.color = ''; }
+      if (badgeCash) { badgeCash.textContent = 'รับเหรียญ & แบงค์'; badgeCash.className = 'method-badge'; }
+      if (warn) warn.style.display = 'none';
+    } else {
+      btnCash.style.opacity = '0.6';
+      if (subCash) { subCash.textContent = `ยอด ฿${S.amount} มีเศษ (ตู้ไม่มีช่องรับเหรียญ 1-2฿)`; subCash.style.color = 'var(--amber)'; }
+      if (badgeCash) { badgeCash.textContent = 'เงินโอนเท่านั้น'; badgeCash.className = 'method-badge warn'; }
+      if (warn) warn.style.display = 'block';
+    }
   }
 
   $('sheetTitle').textContent = 'วิธีชำระเงิน';
