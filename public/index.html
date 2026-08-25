@@ -923,34 +923,43 @@ let _expTimer=null,_cashPoll=null;
 const EASYSLIP_KEY = 'REDACTED_EASYSLIP_KEY';
 
 const DEFAULT_PORTS = [
-  { id: "usb-a-1", label: "USB-A 1", type: "USB-A", status: "available" },
-  { id: "usb-a-2", label: "USB-A 2", type: "USB-A", status: "available" },
-  { id: "usb-c-1", label: "USB-C 1", type: "USB-C", status: "available" },
-  { id: "usb-c-2", label: "USB-C 2", type: "USB-C", status: "available" },
+  { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: 26, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0, currentTx: null },
+  { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: 27, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0, currentTx: null },
+  { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: 25, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0, currentTx: null },
+  { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: 33, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0, currentTx: null },
 ];
 
 function loadPersistentPorts() {
   try {
     const saved = localStorage.getItem('usb_charger_ports_state');
     const lastTime = Number(localStorage.getItem('usb_charger_last_time') || 0);
-    if (saved && lastTime) {
+    if (saved) {
       const ports = JSON.parse(saved);
-      const passedSeconds = Math.max(0, Math.floor((Date.now() - lastTime) / 1000));
+      const passedSeconds = lastTime ? Math.max(0, Math.floor((Date.now() - lastTime) / 1000)) : 0;
       
       ports.forEach(p => {
-        if (p.status === 'in-use' && p.remainingSeconds > 0) {
+        if (p.status === 'in-use' && p.remainingSeconds > 0 && !p.isPaused) {
           p.remainingSeconds = Math.max(0, p.remainingSeconds - passedSeconds);
           if (p.remainingSeconds <= 0) {
             p.status = 'available';
+            p.relayOn = false;
             p.remainingSeconds = 0;
             p.currentTx = null;
           }
+        } else if (p.status !== 'in-use') {
+          p.status = 'available';
+          p.relayOn = false;
+          p.remainingSeconds = 0;
+          p.currentTx = null;
         }
       });
+      savePersistentPorts(ports);
       return ports;
     }
   } catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT_PORTS));
+  const def = JSON.parse(JSON.stringify(DEFAULT_PORTS));
+  savePersistentPorts(def);
+  return def;
 }
 
 function savePersistentPorts(ports) {

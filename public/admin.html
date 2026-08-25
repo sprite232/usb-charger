@@ -917,6 +917,50 @@ async function adminApi(method, path, body) {
   }
 }
 
+function loadAdminPersistentPorts() {
+  try {
+    const saved = localStorage.getItem('usb_charger_ports_state');
+    const lastTime = Number(localStorage.getItem('usb_charger_last_time') || 0);
+    if (saved) {
+      const ports = JSON.parse(saved);
+      const passedSeconds = lastTime ? Math.max(0, Math.floor((Date.now() - lastTime) / 1000)) : 0;
+      ports.forEach(p => {
+        if (p.status === 'in-use' && p.remainingSeconds > 0 && !p.isPaused) {
+          p.remainingSeconds = Math.max(0, p.remainingSeconds - passedSeconds);
+          if (p.remainingSeconds <= 0) {
+            p.status = 'available';
+            p.relayOn = false;
+            p.remainingSeconds = 0;
+            p.currentTx = null;
+          }
+        } else if (p.status !== 'in-use') {
+          p.status = 'available';
+          p.relayOn = false;
+          p.remainingSeconds = 0;
+          p.currentTx = null;
+        }
+      });
+      saveAdminPersistentPorts(ports);
+      return ports;
+    }
+  } catch(e){}
+  const def = [
+    { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: 26, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: 27, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: 25, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
+    { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: 33, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 }
+  ];
+  saveAdminPersistentPorts(def);
+  return def;
+}
+
+function saveAdminPersistentPorts(ports) {
+  try {
+    localStorage.setItem('usb_charger_ports_state', JSON.stringify(ports));
+    localStorage.setItem('usb_charger_last_time', String(Date.now()));
+  } catch(e){}
+}
+
 // ─── Load & Refresh (100% Real Data) ──────────
 let refreshInterval = null;
 
@@ -927,7 +971,7 @@ async function tryLoadDashboard() {
     const realTxs = getLocalRealTransactions();
     const realVisits = getLocalVisits();
     const realRev = realTxs.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const savedPorts = JSON.parse(localStorage.getItem('usb_charger_ports_state') || '[]');
+    const savedPorts = loadAdminPersistentPorts();
     const cfg = getLocalSavedConfig();
     
     data = {
@@ -937,16 +981,13 @@ async function tryLoadDashboard() {
         activeCount: savedPorts.filter(p => p.status === 'in-use').length,
         finishedCount: realTxs.length
       },
-      ports: savedPorts.length ? savedPorts : [
-        { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: 26, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
-        { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: 27, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
-        { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: 25, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 },
-        { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: 33, status: "available", relayOn: false, isPaused: false, remainingSeconds: 0 }
-      ],
+      ports: savedPorts,
       transactions: realTxs,
       visits: realVisits,
       config: cfg
     };
+  } else {
+    saveAdminPersistentPorts(data.ports);
   }
   
   dashData = data;
@@ -968,7 +1009,12 @@ async function autoRefresh() {
   if (data && data.ports) { 
     dashData = data; 
     allTransactions = data.transactions || [];
+    saveAdminPersistentPorts(data.ports);
     renderAll(data); 
+  } else if (dashData) {
+    dashData.ports = loadAdminPersistentPorts();
+    dashData.summary.activeCount = dashData.ports.filter(p => p.status === 'in-use').length;
+    renderAll(dashData);
   }
 }
 
@@ -1541,6 +1587,7 @@ async function runTestStart() {
         p.totalSeconds = durationSeconds;
         p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
         dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+        saveAdminPersistentPorts(dashData.ports);
         renderAll(dashData);
       }
     }
@@ -1555,7 +1602,12 @@ async function pausePort(portId) {
   if (!res || !res.success) {
     if (dashData && dashData.ports) {
       const p = dashData.ports.find(x => x.id === portId);
-      if (p) { p.isPaused = true; p.relayOn = false; renderAll(dashData); }
+      if (p) { 
+        p.isPaused = true; 
+        p.relayOn = false; 
+        saveAdminPersistentPorts(dashData.ports);
+        renderAll(dashData); 
+      }
     }
   }
   setActionNotice(`พักชาร์จ ${portId}`);
@@ -1567,7 +1619,12 @@ async function resumePort(portId) {
   if (!res || !res.success) {
     if (dashData && dashData.ports) {
       const p = dashData.ports.find(x => x.id === portId);
-      if (p) { p.isPaused = false; p.relayOn = true; renderAll(dashData); }
+      if (p) { 
+        p.isPaused = false; 
+        p.relayOn = true; 
+        saveAdminPersistentPorts(dashData.ports);
+        renderAll(dashData); 
+      }
     }
   }
   setActionNotice(`ชาร์จต่อ ${portId}`);
@@ -1579,7 +1636,11 @@ async function setTimeRemaining(portId, seconds) {
   if (!res || !res.success) {
     if (dashData && dashData.ports) {
       const p = dashData.ports.find(x => x.id === portId);
-      if (p) { p.remainingSeconds = seconds; renderAll(dashData); }
+      if (p) { 
+        p.remainingSeconds = seconds; 
+        saveAdminPersistentPorts(dashData.ports);
+        renderAll(dashData); 
+      }
     }
   }
   setActionNotice(`ปรับเวลา ${portId} เหลือ ${seconds} วินาที`);
@@ -1591,7 +1652,11 @@ async function toggleRelay(portId, on) {
   if (!res || !res.success) {
     if (dashData && dashData.ports) {
       const p = dashData.ports.find(x => x.id === portId);
-      if (p) { p.relayOn = on; renderAll(dashData); }
+      if (p) { 
+        p.relayOn = on; 
+        saveAdminPersistentPorts(dashData.ports);
+        renderAll(dashData); 
+      }
     }
   }
   setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'}`);
@@ -1611,6 +1676,7 @@ async function stopPort(portId) {
         p.remainingSeconds = 0;
         p.currentTx = null;
         dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+        saveAdminPersistentPorts(dashData.ports);
         renderAll(dashData);
       }
     }
@@ -1624,7 +1690,12 @@ async function clearPortSession(portId) {
   await adminApi('POST', `/api/admin/port/${portId}/clear`);
   if (dashData && dashData.ports) {
     const p = dashData.ports.find(x => x.id === portId);
-    if (p) { p.status = 'available'; p.paymentSession = null; renderAll(dashData); }
+    if (p) { 
+      p.status = 'available'; 
+      p.paymentSession = null; 
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData); 
+    }
   }
   autoRefresh();
 }
@@ -1638,6 +1709,7 @@ async function adminReset() {
       p.paymentSession = null; p.currentTx = null; p.remainingSeconds = 0;
     });
     dashData.summary.activeCount = 0;
+    saveAdminPersistentPorts(dashData.ports);
     renderAll(dashData);
   }
   setActionNotice('รีเซ็ตทุกพอร์ตเรียบร้อย');
@@ -1661,6 +1733,7 @@ setInterval(() => {
   });
   if (changed) {
     dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+    saveAdminPersistentPorts(dashData.ports);
     renderAll(dashData);
   }
 }, 1000);

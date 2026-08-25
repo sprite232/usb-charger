@@ -120,6 +120,8 @@ function loadState() {
       if (data.config.easyslipKey) CFG.easyslipKey = data.config.easyslipKey;
     }
     if (data.ports && Array.isArray(data.ports)) {
+      const lastTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+      const passedSeconds = lastTime ? Math.max(0, Math.floor((Date.now() - lastTime) / 1000)) : 0;
       data.ports.forEach(saved => {
         const p = state.ports[saved.id];
         if (p) {
@@ -128,6 +130,20 @@ function loadState() {
           p.isPaused = !!saved.isPaused;
           p.remainingSeconds = Number(saved.remainingSeconds) || 0;
           p.currentTx = saved.currentTx || null;
+          if (p.status === "in-use" && p.remainingSeconds > 0 && !p.isPaused) {
+            p.remainingSeconds = Math.max(0, p.remainingSeconds - passedSeconds);
+            if (p.remainingSeconds <= 0) {
+              p.status = "available";
+              p.relayOn = false;
+              p.remainingSeconds = 0;
+              p.currentTx = null;
+            }
+          } else if (p.status !== "in-use") {
+            p.status = "available";
+            p.relayOn = false;
+            p.remainingSeconds = 0;
+            p.currentTx = null;
+          }
         }
       });
     }
