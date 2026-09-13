@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>ระบบจัดการตู้ชาร์จ USB (Admin Portal)</title>
-<link rel="icon" type="image/png" href="assets/icon-settings.png"/>
-<link rel="apple-touch-icon" href="assets/icon-settings.png"/>
+<link rel="icon" type="image/jpeg" href="assets/logo.jpg"/>
+<link rel="apple-touch-icon" href="assets/logo.jpg"/>
 
 <!-- Google Fonts (Plus Jakarta Sans & Prompt for Crystal-Clear Thai Typography) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +87,7 @@ body{
   padding:2rem 1.5rem;width:100%;max-width:390px;text-align:center;
   box-shadow:0 12px 36px -8px rgba(0,0,0,0.4);
 }
-.login-brand-icon{width:44px;height:44px;margin:0 auto .75rem;display:block;filter:invert(var(--icon-invert))}
+.login-brand-icon{width:56px;height:56px;margin:0 auto .75rem;display:block;border-radius:12px;box-shadow:0 0 16px rgba(0,242,254,0.35);border:1px solid rgba(0,242,254,0.3);object-fit:cover}
 .login-box h1{font-size:1.2rem;font-weight:700;margin-bottom:.25rem;letter-spacing:-0.3px}
 .login-box p{color:var(--muted);font-size:.8rem;margin-bottom:1.4rem}
 
@@ -119,7 +119,7 @@ body{
   position:sticky;top:0;z-index:30;
 }
 .topbar-brand{display:flex;align-items:center;gap:.45rem;flex:1;min-width:0}
-.topbar-icon{width:18px;height:18px;flex-shrink:0;filter:invert(var(--icon-invert))}
+.topbar-icon{width:28px;height:28px;flex-shrink:0;border-radius:7px;object-fit:cover;box-shadow:0 0 10px rgba(0,242,254,0.3);border:1px solid rgba(0,242,254,0.3)}
 .topbar-title{
   font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   letter-spacing:-0.2px;
@@ -367,9 +367,9 @@ tr:last-child td{border-bottom:none}
 <!-- ══════════════════════════════════════ LOGIN -->
 <div id="loginScreen">
   <div class="login-box">
-    <img src="assets/icon-settings.png" class="login-brand-icon" alt="Portal"/>
+    <img src="assets/logo.jpg" class="login-brand-icon" alt="Portal"/>
     <h1>ระบบจัดการตู้ชาร์จ</h1>
-    <p>กรุณาลงชื่อเข้าใช้ผู้ดูแลระบบ</p>
+    <p>Smart Charger Admin Portal</p>
     
     <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
       <div class="form-group">
@@ -414,8 +414,8 @@ tr:last-child td{border-bottom:none}
 <div id="appScreen">
   <div class="topbar">
     <div class="topbar-brand">
-      <img src="assets/icon-settings.png" class="topbar-icon" alt="Admin"/>
-      <div class="topbar-title">ตู้ชาร์จ USB <span class="topbar-sub">| ศุภกฤต</span></div>
+      <img src="assets/logo.jpg" class="topbar-icon" alt="Admin"/>
+      <div class="topbar-title">ตู้ชาร์จ USB <span class="topbar-sub">| Admin Portal</span></div>
     </div>
     <div class="topbar-actions">
       <span class="chip" id="easyslipChip">
