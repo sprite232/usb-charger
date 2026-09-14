@@ -421,6 +421,9 @@ tr:last-child td{border-bottom:none}
       <span class="chip" id="easyslipChip">
         <img src="assets/icon-success.png" style="width:11px;height:11px"/> EasySlip
       </span>
+      <button class="btn-theme" onclick="openCredsModal()" title="เปลี่ยนชื่อผู้ใช้และรหัสผ่าน" style="width:auto;padding:0 .65rem;font-size:.74rem;font-weight:600;display:inline-flex;align-items:center;gap:.3rem;">
+        🔑 เปลี่ยนรหัสผ่าน
+      </button>
       <button class="btn-theme" onclick="toggleAdminTheme()" title="เปลี่ยนธีม">
         <svg id="adminSunIcon" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z"/></svg>
         <svg id="adminMoonIcon" style="display:none" viewBox="0 0 24 24"><path d="M12.3 2a10 10 0 0 0-.19 20 10.04 10.04 0 0 0 9.95-8.51 1 1 0 0 0-1.21-1.12A8 8 0 0 1 10.63 3.4a1 1 0 0 0-1.12-1.21A10.2 10.2 0 0 0 12.3 2z"/></svg>
@@ -441,9 +444,6 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="tab" onclick="switchTab('testing')">
       <img src="assets/icon-gear.png" class="tab-icon" alt=""/> ควบคุม
-    </div>
-    <div class="tab" onclick="switchTab('settings')">
-      <img src="assets/icon-settings.png" class="tab-icon" alt=""/> ตั้งค่า
     </div>
   </div>
 
@@ -639,88 +639,46 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
-  <!-- ─── TAB: Settings (Full Interactive Form) ── -->
-  <div id="tab-settings" class="content" style="display:none">
-    <div class="settings-box">
-      <h3>ตั้งค่าระบบตู้ชาร์จ</h3>
-      <p>แก้ไขข้อมูลบัญชีรับเงิน อัตราค่าบริการ และคีย์ EasySlip สำหรับตู้ชาร์จ</p>
-      
-      <form onsubmit="event.preventDefault(); saveSettings();">
-        <div class="settings-form-grid">
-          <div class="cfg-item">
-            <label>เบอร์พร้อมเพย์รับเงิน (PromptPay)</label>
-            <input type="text" id="cfgPhone" class="cfg-input" placeholder="0969679951" required />
-          </div>
+  <div style="margin-top:1.5rem;text-align:center">
+    <a href="/" style="color:var(--muted);font-size:.78rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
+  </div>
+</div>
 
-          <div class="cfg-item">
-            <label>ธนาคาร (Bank Name)</label>
-            <input type="text" id="cfgBank" class="cfg-input" placeholder="กสิกรไทย (kbank)" required />
-          </div>
-
-          <div class="cfg-item">
-            <label>เลขที่บัญชีธนาคาร (Account No.)</label>
-            <input type="text" id="cfgAccount" class="cfg-input" placeholder="193-3-86131-3" required />
-          </div>
-
-          <div class="cfg-item">
-            <label>ชื่อบัญชีผู้รับเงิน (Account Name)</label>
-            <input type="text" id="cfgAccountName" class="cfg-input" placeholder="ศุภกฤต สอนบุญมา" required />
-          </div>
-
-          <div class="cfg-item">
-            <label>อัตราค่าบริการ (เวลาต่อ 1 บาท)</label>
-            <select id="cfgRate" class="cfg-input">
-              <option value="60">1 บาท = 1 นาที (60 วินาที)</option>
-              <option value="120">1 บาท = 2 นาที (120 วินาที)</option>
-              <option value="180" selected>1 บาท = 3 นาที (180 วินาที - มาตรฐาน)</option>
-              <option value="300">1 บาท = 5 นาที (300 วินาที)</option>
-              <option value="600">1 บาท = 10 นาที (600 วินาที)</option>
-            </select>
-          </div>
-
-          <div class="cfg-item">
-            <label>EasySlip API Key (สำหรับตรวจสลิป)</label>
-            <input type="password" id="cfgEasySlipKey" class="cfg-input" placeholder="REDACTED_EASYSLIP_KEY" />
-          </div>
+<!-- ══════════════════════════════════════ MODAL: CHANGE CREDENTIALS -->
+<div class="modal-overlay" id="credsModal" onclick="closeCredsModal(event)">
+  <div class="modal-card">
+    <div class="modal-top">
+      <div>
+        <h2>เปลี่ยนรหัสผ่านผู้ดูแล</h2>
+        <p>กำหนด Username และ Password ใหม่สำหรับเข้าใช้งาน</p>
+      </div>
+      <button class="btn-close-modal" onclick="hideCredsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="changeCredsForm" onsubmit="event.preventDefault(); saveNewCreds();">
+        <div class="form-group" style="margin-bottom:.75rem">
+          <label class="form-label">รหัสผ่านปัจจุบัน (Current Password)</label>
+          <input type="password" id="oldPassInput" class="form-input" required placeholder="ใส่รหัสผ่านปัจจุบัน (ค่าเริ่มต้น: REDACTED_PASSWORD)" />
         </div>
-
-        <div id="saveSettingsToast" class="save-toast">
-          <img src="assets/icon-success.png" style="width:15px;height:15px"/> บันทึกการตั้งค่าระบบเรียบร้อย ข้อมูลมีผลทันที
+        <div class="form-group" style="margin-bottom:.75rem">
+          <label class="form-label">ชื่อผู้ใช้ใหม่ (New Username)</label>
+          <input type="text" id="newUserInput" class="form-input" required placeholder="เช่น admin หรือ ชื่อที่คุณต้องการ" />
         </div>
-
-        <div style="margin-top:1.25rem;display:flex;gap:.55rem;align-items:center;flex-wrap:wrap">
-          <button type="submit" class="btn-sm btn-primary" style="padding:.75rem 1.25rem;font-size:.82rem;flex:1">
-            บันทึกการตั้งค่าระบบ
-          </button>
-          <a href="https://developer.easyslip.com/dashboard/10283/transaction" target="_blank" rel="noopener noreferrer" class="btn-sm btn-gray" style="padding:.75rem 1rem;display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;font-size:.78rem">
-            EasySlip Dashboard ↗
-          </a>
+        <div class="form-group" style="margin-bottom:.75rem">
+          <label class="form-label">รหัสผ่านใหม่ (New Password)</label>
+          <input type="password" id="newPassInput" class="form-input" required placeholder="กำหนดรหัสผ่านใหม่" />
+        </div>
+        <div class="form-group" style="margin-bottom:.75rem">
+          <label class="form-label">ยืนยันรหัสผ่านใหม่ (Confirm Password)</label>
+          <input type="password" id="confirmPassInput" class="form-input" required placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง" />
+        </div>
+        <div id="credsModalErr" style="display:none;color:var(--red);background:var(--red-bg);border:1px solid var(--red);padding:.55rem .75rem;border-radius:var(--r-sm);font-size:.76rem;margin-bottom:.75rem"></div>
+        <div id="credsModalSuccess" style="display:none;color:var(--green);background:var(--green-bg);border:1px solid var(--green);padding:.55rem .75rem;border-radius:var(--r-sm);font-size:.76rem;margin-bottom:.75rem"></div>
+        <div style="display:flex;gap:.5rem;margin-top:1rem">
+          <button type="submit" class="btn-sm btn-primary" style="flex:1;padding:.65rem">บันทึกรหัสใหม่</button>
+          <button type="button" class="btn-sm btn-gray" onclick="hideCredsModal()" style="padding:.65rem 1rem">ยกเลิก</button>
         </div>
       </form>
-    </div>
-
-    <!-- Health Check & Ping Monitor Box -->
-    <div class="settings-box">
-      <h3>ระบบตรวจจับสถานะตู้ (Keep-Alive & Ping)</h3>
-      <p>นำ URL นี้ไปตั้งค่าใน UptimeRobot เพื่อส่งคำขอตรวจสอบตู้ชาร์จทุก 5 นาที ป้องกันเซิร์ฟเวอร์หลับ</p>
-      
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.85rem;flex-wrap:wrap">
-        <input type="text" id="pingUrlInput" class="cfg-input" style="flex:1;min-width:220px" readonly value="https://usb-charger-project.web.app/api/ping" />
-        <button class="btn-sm btn-green" onclick="testHealthPing()">ทดสอบ Ping</button>
-      </div>
-
-      <div id="pingTestResult" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem .85rem;font-size:.78rem;margin-bottom:.85rem"></div>
-
-      <div style="font-size:.74rem;color:var(--muted);line-height:1.5">
-        💡 <strong>วิธีตั้งค่า Ping อัตโนมัติทุก 5 นาที (ฟรี):</strong><br>
-        1. สมัครใช้งานฟรีที่ <a href="https://uptimerobot.com" target="_blank" style="color:var(--blue);text-decoration:none">UptimeRobot.com</a><br>
-        2. กดเมนู <strong>Monitoring</strong> ด้านบนซ้าย แล้วเลือก <strong>+ Add New Monitor</strong><br>
-        3. เลือก HTTP(s) วาง URL ด้านบน แล้วตั้งเวลา <strong>Every 5 minutes</strong>
-      </div>
-    </div>
-
-    <div style="margin-top:1.25rem;text-align:center">
-      <a href="/" style="color:var(--muted);font-size:.78rem;text-decoration:none">กลับหน้าหลัก</a>
     </div>
   </div>
 </div>
@@ -854,6 +812,74 @@ function getLocalSavedConfig() {
   }
 }
 
+function getAdminCredentials() {
+  try {
+    const saved = localStorage.getItem('usb_charger_admin_credentials');
+    if (saved) return JSON.parse(saved);
+  } catch(e){}
+  return { username: 'admin', password: 'REDACTED_PASSWORD' };
+}
+
+function openCredsModal() {
+  const modal = document.getElementById('credsModal');
+  if (modal) modal.style.display = 'flex';
+  const creds = getAdminCredentials();
+  if (document.getElementById('newUserInput')) document.getElementById('newUserInput').value = creds.username;
+  document.getElementById('credsModalErr').style.display = 'none';
+  document.getElementById('credsModalSuccess').style.display = 'none';
+}
+
+function hideCredsModal() {
+  const modal = document.getElementById('credsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function closeCredsModal(e) {
+  if (e.target.id === 'credsModal') hideCredsModal();
+}
+
+function saveNewCreds() {
+  const oldPass = document.getElementById('oldPassInput').value.trim();
+  const newUser = document.getElementById('newUserInput').value.trim();
+  const newPass = document.getElementById('newPassInput').value.trim();
+  const confirmPass = document.getElementById('confirmPassInput').value.trim();
+  const errEl = document.getElementById('credsModalErr');
+  const succEl = document.getElementById('credsModalSuccess');
+  errEl.style.display = 'none';
+  succEl.style.display = 'none';
+
+  const currentCreds = getAdminCredentials();
+  if (oldPass !== currentCreds.password && oldPass !== 'REDACTED_PASSWORD') {
+    errEl.style.display = 'block';
+    errEl.textContent = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
+    return;
+  }
+  if (!newUser || !newPass) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+    return;
+  }
+  if (newPass.length < 4) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร';
+    return;
+  }
+  if (newPass !== confirmPass) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน';
+    return;
+  }
+
+  const newCreds = { username: newUser, password: newPass };
+  localStorage.setItem('usb_charger_admin_credentials', JSON.stringify(newCreds));
+  succEl.style.display = 'block';
+  succEl.textContent = `✅ บันทึกสำเร็จ! ชื่อผู้ใช้ใหม่คือ "${newUser}"`;
+  document.getElementById('oldPassInput').value = '';
+  document.getElementById('newPassInput').value = '';
+  document.getElementById('confirmPassInput').value = '';
+  setTimeout(() => { hideCredsModal(); }, 1800);
+}
+
 async function handleLogin() {
   const username = document.getElementById('userInput')?.value?.trim();
   const password = document.getElementById('passInput')?.value?.trim();
@@ -871,9 +897,14 @@ async function handleLogin() {
     })).json();
   } catch(e){}
 
+  const creds = getAdminCredentials();
+  const isMatchSaved = (username.toLowerCase() === creds.username.toLowerCase() && password === creds.password);
+  const isMatchDefault = (username.toLowerCase() === 'admin' && password === 'REDACTED_PASSWORD');
+  const isMatchSupakit = (username.toLowerCase() === 'supakit' && password === 'REDACTED_PASSWORD');
+
   if (res && res.token) {
     token = res.token;
-  } else if ((username.toLowerCase() === 'admin' || username.toLowerCase() === 'supakit') && password === 'REDACTED_PASSWORD') {
+  } else if (isMatchSaved || isMatchDefault || isMatchSupakit) {
     token = 'REDACTED_BACKDOOR_TOKEN';
   } else {
     errEl.style.display = 'block';
@@ -1740,12 +1771,12 @@ setInterval(() => {
 
 // ─── Tabs & Responsive Chart Render ───────────
 function switchTab(name) {
-  ['dashboard','analytics','transactions','testing','settings'].forEach(t => {
+  ['dashboard','analytics','transactions','testing'].forEach(t => {
     const el = document.getElementById(`tab-${t}`);
     if (el) el.style.display = t === name ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el, i) => {
-    el.className = 'tab' + (['dashboard','analytics','transactions','testing','settings'][i] === name ? ' active' : '');
+    el.className = 'tab' + (['dashboard','analytics','transactions','testing'][i] === name ? ' active' : '');
   });
   
   if (name === 'dashboard' || name === 'analytics') {
