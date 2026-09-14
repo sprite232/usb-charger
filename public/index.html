@@ -550,150 +550,6 @@ body{
 /* ─── SCROLLBAR ───────────────────────────────── */
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px}
-
-/* ─── 3D Rotating Logo & Interactive Showcase ── */
-.logo-3d-wrap {
-  perspective: 600px;
-  display: inline-flex;
-  cursor: pointer;
-}
-.header-logo-3d {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  object-fit: cover;
-  box-shadow: 0 0 14px rgba(0, 242, 254, 0.4);
-  border: 1.5px solid rgba(0, 242, 254, 0.5);
-  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transform-style: preserve-3d;
-}
-.header-logo-3d:hover, .header-logo-3d.active-spin {
-  transform: rotateY(360deg) scale(1.1);
-}
-
-.how-section {
-  max-width: 480px;
-  margin: 1.25rem auto 0;
-  padding: 0 .75rem;
-}
-.how-box {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 1.25rem 1rem;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-.hero-3d-showcase {
-  margin-bottom: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.badge-3d-stage {
-  perspective: 900px;
-  cursor: pointer;
-  padding: 6px;
-  display: inline-block;
-}
-.badge-3d-card {
-  width: 72px;
-  height: 72px;
-  position: relative;
-  border-radius: 16px;
-  transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  animation: floatSpin3D 8s infinite linear;
-}
-.badge-3d-card:hover {
-  animation-play-state: paused;
-  transform: rotateY(180deg) scale(1.08);
-}
-.badge-3d-card.spin-fast {
-  animation: fastSpin3D 1s cubic-bezier(0.25, 1, 0.5, 1) !important;
-}
-@keyframes floatSpin3D {
-  0% { transform: rotateY(0deg) rotateX(4deg); }
-  50% { transform: rotateY(180deg) rotateX(-4deg); }
-  100% { transform: rotateY(360deg) rotateX(4deg); }
-}
-@keyframes fastSpin3D {
-  0% { transform: rotateY(0deg) scale(1); }
-  50% { transform: rotateY(360deg) scale(1.15); }
-  100% { transform: rotateY(720deg) scale(1); }
-}
-.badge-3d-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  object-fit: cover;
-  box-shadow: 0 0 25px rgba(0, 242, 254, 0.45);
-  border: 2px solid rgba(0, 242, 254, 0.6);
-  display: block;
-}
-.badge-3d-hint {
-  font-size: 0.68rem;
-  color: var(--muted2);
-  margin-top: 6px;
-}
-.how-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.2px;
-}
-.how-desc {
-  font-size: 0.74rem;
-  color: var(--muted);
-  margin-top: 2px;
-  margin-bottom: 1rem;
-}
-.how-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  text-align: left;
-}
-.how-card {
-  background: var(--card2);
-  border: 1px solid var(--line-subtle);
-  border-radius: 10px;
-  padding: 0.75rem 0.85rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  position: relative;
-}
-.how-card.highlight {
-  border-color: rgba(16, 185, 129, 0.35);
-  background: rgba(16, 185, 129, 0.05);
-}
-.how-badge-num {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  color: var(--muted2);
-  opacity: 0.6;
-}
-.how-card-icon {
-  font-size: 1.3rem;
-  line-height: 1;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.how-card-content h4 {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 0.15rem;
-}
-.how-card-content p {
-  font-size: 0.72rem;
-  color: var(--muted);
-  line-height: 1.45;
-}
 </style>
 </head>
 <body>
@@ -701,9 +557,7 @@ body{
 <!-- ══ HEADER ══════════════════════════════════════ -->
 <header class="header">
   <div class="header-brand" id="adminSecretTrigger" style="display:flex;align-items:center;gap:.65rem;">
-    <div class="logo-3d-wrap" onclick="spinLogo3D(this)" title="แตะหรือคลิกเพื่อหมุน 3D!">
-      <img src="assets/logo.jpg" class="header-logo-3d" alt="Smart Charger">
-    </div>
+    <img src="assets/logo.jpg" alt="Smart Charger" style="width:36px;height:36px;border-radius:9px;object-fit:cover;box-shadow:0 0 12px rgba(0,242,254,0.3);border:1px solid rgba(0,242,254,0.35);flex-shrink:0;">
     <div>
       <div class="header-title">ตู้ชาร์จ USB <span style="font-size:0.75rem;font-weight:600;color:var(--green);margin-left:4px;">Smart Charger</span></div>
       <div class="header-sub" id="headerSub">เลือกช่องชาร์จที่ต้องการ</div>
@@ -726,64 +580,6 @@ body{
   <p class="section-label">เลือกพอร์ตที่ต้องการชาร์จ</p>
   <div class="port-grid" id="portGrid"></div>
 </main>
-
-<!-- ══ HOW IT WORKS & TRANSPARENCY ═══════════════ -->
-<section class="how-section">
-  <div class="how-box">
-    <!-- 3D Interactive Rotating Logo Badge -->
-    <div class="hero-3d-showcase">
-      <div class="badge-3d-stage" onclick="interactiveSpin3D(this)" title="แตะหรือคลิกเพื่อหมุน 3D!">
-        <div class="badge-3d-card" id="spinning3dCard">
-          <img src="assets/logo.jpg" alt="Smart Charger 3D Emblem" class="badge-3d-img"/>
-        </div>
-      </div>
-      <div class="badge-3d-hint">👆 แตะที่โลโก้เพื่อหมุน 3D</div>
-    </div>
-
-    <div class="how-header-text">
-      <h3 class="how-title">ตู้ชาร์จทำงานอย่างไร? (ระบบการเงิน & เทคโนโลยี) ⚡</h3>
-      <p class="how-desc">โปร่งใส ปลอดภัย ตรวจสอบได้จริงทุกขั้นตอน</p>
-    </div>
-
-    <div class="how-grid">
-      <div class="how-card">
-        <div class="how-badge-num">1</div>
-        <div class="how-card-icon">📱</div>
-        <div class="how-card-content">
-          <h4>สร้าง Dynamic QR พร้อมเพย์ (EMVCo)</h4>
-          <p>ระบบสร้าง QR Code ตามยอดเงินที่เลือก (1 บาท = 3 นาที) ตามมาตรฐาน <strong>EMVCo ของธปท.</strong> สแกนได้ด้วยแอปทุกธนาคารโดยไม่ต้องพิมพ์ยอดเงินเอง</p>
-        </div>
-      </div>
-
-      <div class="how-card highlight">
-        <div class="how-badge-num">2</div>
-        <div class="how-card-icon">🏦</div>
-        <div class="how-card-content">
-          <h4>เงินโอนเข้าใคร? (ตรงเข้าบัญชี 100%)</h4>
-          <p>เงินค่าบริการจะ<strong>โอนตรงเข้าบัญชีผู้ให้บริการ (โรงเรียนศรีสงครามวิทยา / ผู้ดูแลตู้ชาร์จ)</strong> ทันที ไม่ผ่านตัวกลาง ไม่มีการหักหัวคิว มีหลักฐานสลิปบันทึกทุกรายการ</p>
-        </div>
-      </div>
-
-      <div class="how-card">
-        <div class="how-badge-num">3</div>
-        <div class="how-card-icon">🔍</div>
-        <div class="how-card-content">
-          <h4>ตรวจสลิปด้วย EasySlip API</h4>
-          <p>เมื่อแนบสลิป ระบบจะเชื่อมต่อฐานข้อมูลธนาคารเพื่อตรวจยอดเงิน วันที่ และ<strong>ป้องกันการใช้สลิปซ้ำ (Anti-Replay)</strong> อัตโนมัติภายใน 2 วินาที</p>
-        </div>
-      </div>
-
-      <div class="how-card">
-        <div class="how-badge-num">4</div>
-        <div class="how-card-icon">⚡</div>
-        <div class="how-card-content">
-          <h4>ESP32 สั่งจ่ายไฟชาร์จเร็วทันที</h4>
-          <p>เซิร์ฟเวอร์ส่งคำสั่งผ่าน REST API สั่งบอร์ด <strong>ESP32</strong> ให้เปิด <strong>Relay 12V</strong> จ่ายไฟเข้าพอร์ตชาร์จเร็ว (QC 3.0 / USB-PD 20W) และตัดไฟอัตโนมัติเมื่อหมดเวลา</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section class="faq-section">
   <div class="faq-title">ข้อสงสัยที่พบบ่อย (FAQ)</div>
@@ -1893,25 +1689,6 @@ async function cancelSession(){
   stopTimers();
   if(S.portId&&S.session) await apiFetch('POST','/api/payment/cancel',{portId:S.portId}).catch(()=>{});
   S.session=null;closeSheet();
-}
-
-// ─── 3D Rotating Logo Controls ────────────────
-function spinLogo3D(el) {
-  const img = el.querySelector('.header-logo-3d') || el;
-  img.classList.remove('active-spin');
-  void img.offsetWidth; // trigger reflow
-  img.classList.add('active-spin');
-  setTimeout(() => img.classList.remove('active-spin'), 900);
-}
-
-function interactiveSpin3D(el) {
-  const card = document.getElementById('spinning3dCard');
-  if (card) {
-    card.classList.remove('spin-fast');
-    void card.offsetWidth; // trigger reflow
-    card.classList.add('spin-fast');
-    setTimeout(() => card.classList.remove('spin-fast'), 1100);
-  }
 }
 </script>
 </body>
