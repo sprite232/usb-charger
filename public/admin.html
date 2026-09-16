@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>ระบบจัดการตู้ชาร์จ USB (Admin Portal)</title>
 <link rel="icon" type="image/jpeg" href="assets/logo.jpg"/>
 <link rel="apple-touch-icon" href="assets/logo.jpg"/>
@@ -1074,6 +1077,11 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
 
 <script>
 
+// ─── Global State & Variables ─────────────────
+let token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+let dashData = null;
+let allTransactions = [];
+
 // ─── Theme Management ─────────────────────────
 function applyAdminTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -1083,7 +1091,7 @@ function applyAdminTheme(theme) {
   if (sunIcon) sunIcon.style.display = isDark ? 'block' : 'none';
   if (moonIcon) moonIcon.style.display = isDark ? 'none' : 'block';
   localStorage.setItem('sc_admin_theme', theme);
-  if (dashData && typeof updateCharts === 'function') {
+  if (typeof dashData !== 'undefined' && dashData && typeof updateCharts === 'function') {
     const visits = dashData.visits || getLocalVisits();
     updateCharts(dashData.transactions || [], visits);
   }
@@ -1100,9 +1108,6 @@ function toggleAdminTheme() {
 })();
 
 // ─── Auth ──────────────────────────────────────
-let token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
-let dashData = null;
-let allTransactions = [];
 
 function togglePassVisibility() {
   const inp = document.getElementById('passInput');
@@ -2479,8 +2484,37 @@ function verifyBotCheck(isAuto = false) {
   }
 }
 
-// Auto verify on page load after a brief moment
-setTimeout(() => { verifyBotCheck(true); }, 300);
+// Expose functions globally to window
+window.verifyBotCheck = verifyBotCheck;
+window.handleLogin = handleLogin;
+window.quickFillDefaultCreds = quickFillDefaultCreds;
+window.resetToDefaultAdmin = resetToDefaultAdmin;
+window.unlockAdmin = unlockAdmin;
+window.togglePassVisibility = togglePassVisibility;
+
+// Bind direct DOM listeners & Auto-verify
+function initLoginEvents() {
+  verifyBotCheck(true);
+  const card = document.getElementById('botCheckCard');
+  if (card) {
+    card.onclick = () => verifyBotCheck(false);
+    card.addEventListener('click', () => verifyBotCheck(false));
+  }
+  const form = document.getElementById('loginFormContainer');
+  if (form) {
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      handleLogin();
+    };
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLoginEvents);
+} else {
+  initLoginEvents();
+}
+setTimeout(initLoginEvents, 200);
 
 // ─── Session Timer ─────────────────────────────
 setInterval(() => {
