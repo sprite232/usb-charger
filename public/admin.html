@@ -511,8 +511,9 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
     <!-- Admin Credential Helper Card -->
     <div style="margin-top:1.25rem;padding:0.85rem 1rem;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:0.8rem;text-align:left">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
-        <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px">
-          🔑 รหัสผ่านเริ่มต้นสำหรับผู้ดูแล
+        <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px">
+          <svg style="width:15px;height:15px;stroke:var(--cyan)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M12 11l9-9m-4 0l4 4m-7 1l4 4"/></svg>
+          <span>รหัสผ่านเริ่มต้นสำหรับผู้ดูแล</span>
         </span>
         <span style="font-size:0.68rem;background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:4px;font-weight:600">Admin Access</span>
       </div>
@@ -524,18 +525,21 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
       </div>
       
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button type="button" onclick="quickFillDefaultCreds(false)" class="btn-sm" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer">
-          ⚡ กรอกรหัสอัตโนมัติ
+        <button type="button" onclick="quickFillDefaultCreds(false)" class="btn-sm" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px">
+          <svg style="width:13px;height:13px;color:var(--amber)" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>กรอกรหัสอัตโนมัติ</span>
         </button>
-        <button type="button" onclick="quickFillDefaultCreds(true)" class="btn-sm btn-primary" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;border-radius:6px;cursor:pointer">
-          🚀 เข้าสู่ระบบทันที
+        <button type="button" onclick="quickFillDefaultCreds(true)" class="btn-sm btn-primary" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px">
+          <svg style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>เข้าสู่ระบบทันที</span>
         </button>
       </div>
 
       <div style="margin-top:0.6rem;padding-top:0.5rem;border-top:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:0.72rem;color:var(--muted)">ติดล็อกหรือต้องการรีเซ็ต?</span>
-        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--yellow);font-size:0.72rem;text-decoration:underline;cursor:pointer;padding:0;font-weight:600">
-          🔄 ปลดล็อก & คืนค่าเริ่มต้น
+        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--yellow);font-size:0.72rem;text-decoration:underline;cursor:pointer;padding:0;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+          <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          <span>ปลดล็อก & คืนค่าเริ่มต้น</span>
         </button>
       </div>
     </div>
@@ -744,18 +748,21 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
     <div class="toolbar" style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap">
       <select id="issueCatFilter" class="form-input" style="width:auto;min-width:160px;padding:.5rem .8rem" onchange="filterAdminIssues()">
         <option value="all">ทุกหมวดหมู่</option>
-        <option value="power">⚡ ระบบจ่ายไฟ</option>
-        <option value="coin">🪙 หยอดเหรียญ</option>
-        <option value="transfer">📱 โอนเงิน / QR</option>
-        <option value="other">❓ ข้อสงสัยทั่วไป</option>
+        <option value="power">ระบบจ่ายไฟ</option>
+        <option value="coin">หยอดเหรียญ</option>
+        <option value="transfer">โอนเงิน / QR</option>
+        <option value="other">ข้อสงสัยทั่วไป</option>
       </select>
       <select id="issueStatusFilter" class="form-input" style="width:auto;min-width:160px;padding:.5rem .8rem" onchange="filterAdminIssues()">
         <option value="all">ทุกสถานะ</option>
-        <option value="pending">⏳ รอดำเนินการ (Pending)</option>
-        <option value="in_progress">🔍 กำลังตรวจสอบ (In Progress)</option>
-        <option value="resolved">✅ แก้ไขเสร็จสิ้น (Resolved)</option>
+        <option value="pending">รอดำเนินการ (Pending)</option>
+        <option value="in_progress">กำลังตรวจสอบ (In Progress)</option>
+        <option value="resolved">แก้ไขเสร็จสิ้น (Resolved)</option>
       </select>
-      <button class="btn-sm btn-primary" onclick="renderAdminIssues()" style="margin-left:auto">🔄 รีเฟรชรายการ</button>
+      <button class="btn-sm btn-primary" onclick="renderAdminIssues()" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px">
+        <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span>รีเฟรชรายการ</span>
+      </button>
     </div>
 
     <!-- Issues Table -->
@@ -788,7 +795,10 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
   <!-- ─── TAB: Testing ────────────────────────── -->
   <div id="tab-testing" class="content" style="display:none">
     <div class="test-panel" style="border-left:4px solid var(--cyan)">
-      <div class="test-panel-title">📞 ข้อมูลช่องทางติดต่อฉุกเฉิน (Emergency Support)</div>
+      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
+        <svg style="width:18px;height:18px;stroke:var(--cyan)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>ข้อมูลช่องทางติดต่อฉุกเฉิน (Emergency Support)</span>
+      </div>
       <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ศูนย์ช่วยเหลือมุมล่างของหน้าเว็บ เพื่อให้ผู้ใช้งานโทรออกหรือติดต่อทาง Line ได้ทันที</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
         <div class="field-row">
@@ -933,14 +943,17 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
 
         <!-- Admin Reply Form -->
         <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem">
-          <h3 style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text)">💬 ตอบกลับและดำเนินการ (Admin Response)</h3>
+          <h3 style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text);display:flex;align-items:center;gap:6px">
+            <svg style="width:16px;height:16px;stroke:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>ตอบกลับและดำเนินการ (Admin Response)</span>
+          </h3>
           
           <div class="form-group" style="margin-bottom:.75rem">
             <label class="form-label">สถานะการแก้ไข:</label>
             <select id="admReplyStatus" class="form-input">
-              <option value="pending">⏳ รอดำเนินการ (Pending)</option>
-              <option value="in_progress">🔍 กำลังตรวจสอบ / ประสานงาน (In Progress)</option>
-              <option value="resolved">✅ แก้ไขเสร็จสิ้น / คืนเงินเรียบร้อย (Resolved)</option>
+              <option value="pending">รอดำเนินการ (Pending)</option>
+              <option value="in_progress">กำลังตรวจสอบ / ประสานงาน (In Progress)</option>
+              <option value="resolved">แก้ไขเสร็จสิ้น / คืนเงินเรียบร้อย (Resolved)</option>
             </select>
           </div>
 
@@ -952,7 +965,10 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
           <!-- Public Toggle -->
           <div style="background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
             <div>
-              <strong style="font-size:.85rem;display:block">🌐 แสดงเป็นสาธารณะ (Public Q&A)</strong>
+              <strong style="font-size:.85rem;display:flex;align-items:center;gap:6px">
+                <svg style="width:14px;height:14px;stroke:var(--cyan)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>แสดงเป็นสาธารณะ (Public Q&A)</span>
+              </strong>
               <small style="font-size:.72rem;color:var(--muted)">อนุญาตให้ผู้ใช้คนอื่นเห็นปัญหานี้และคำตอบของแอดมินบนหน้าเว็บหลัก</small>
             </div>
             <label style="display:flex;align-items:center;cursor:pointer">
@@ -1214,7 +1230,7 @@ function saveNewCreds() {
   const newCreds = { username: newUser, password: newPass };
   localStorage.setItem('usb_charger_admin_credentials', JSON.stringify(newCreds));
   succEl.style.display = 'block';
-  succEl.textContent = `✅ บันทึกสำเร็จ! ชื่อผู้ใช้ใหม่คือ "${newUser}"`;
+  succEl.textContent = `บันทึกสำเร็จ! ชื่อผู้ใช้ใหม่คือ "${newUser}"`;
   document.getElementById('oldPassInput').value = '';
   document.getElementById('newPassInput').value = '';
   document.getElementById('confirmPassInput').value = '';
@@ -1264,7 +1280,7 @@ function resetToDefaultAdmin() {
   const pInput = document.getElementById('passInput');
   if (uInput) uInput.value = 'admin';
   if (pInput) pInput.value = 'REDACTED_PASSWORD';
-  alert('✅ ปลดล็อกและคืนค่าข้อมูลผู้ดูแลเริ่มต้นเรียบร้อยแล้ว!\n\nชื่อผู้ใช้: admin\nรหัสผ่าน: REDACTED_PASSWORD');
+  alert('ปลดล็อกและคืนค่าข้อมูลผู้ดูแลเริ่มต้นเรียบร้อยแล้ว!\n\nชื่อผู้ใช้: admin\nรหัสผ่าน: REDACTED_PASSWORD');
 }
 
 async function handleLogin() {
@@ -1982,7 +1998,10 @@ async function testHealthPing() {
     const data = await res.json();
     const ms = Math.round(t1 - t0);
     resultEl.innerHTML = `
-      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เซิร์ฟเวอร์ออนไลน์ (HTTP 200 OK — ${ms} ms)</div>
+      <div style="color:var(--green);font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:6px">
+        <svg style="width:16px;height:16px;stroke:var(--green)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>เซิร์ฟเวอร์ออนไลน์ (HTTP 200 OK — ${ms} ms)</span>
+      </div>
       <div style="font-size:.74rem;color:var(--muted)">
         ทำงานต่อเนื่อง: ${Math.floor(data.uptimeSeconds/60)} นาที | ช่องชาร์จ: ${data.activePorts} | เข้าชมสะสม: ${data.totalVisits} ครั้ง
       </div>
@@ -1991,7 +2010,10 @@ async function testHealthPing() {
     const t1 = performance.now();
     const ms = Math.round(t1 - t0);
     resultEl.innerHTML = `
-      <div style="color:var(--green);font-weight:700;margin-bottom:3px">✅ เว็บไซต์ Firebase CDN ออนไลน์ (${ms} ms)</div>
+      <div style="color:var(--green);font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:6px">
+        <svg style="width:16px;height:16px;stroke:var(--green)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>เว็บไซต์ Firebase CDN ออนไลน์ (${ms} ms)</span>
+      </div>
       <div style="font-size:.74rem;color:var(--muted)">
         ระบบพร้อมให้บริการตลอด 24 ชั่วโมง
       </div>
@@ -2004,22 +2026,30 @@ async function runTestStart() {
   const portId = document.getElementById('testPortSelect').value;
   const durationSeconds = Number(document.getElementById('testDurationSelect').value) || 30;
   
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) {
+      p.status = 'in-use';
+      p.relayOn = true;
+      p.isPaused = false;
+      p.remainingSeconds = durationSeconds;
+      p.totalSeconds = durationSeconds;
+      p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
+      dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
+    }
+  }
+
   let res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
-  
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) {
-        p.status = 'in-use';
-        p.relayOn = true;
-        p.isPaused = false;
-        p.remainingSeconds = durationSeconds;
-        p.totalSeconds = durationSeconds;
-        p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
-        dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData);
-      }
+  if (res && res.success && res.port && dashData && dashData.ports) {
+    const idx = dashData.ports.findIndex(x => x.id === portId);
+    if (idx !== -1) {
+      dashData.ports[idx] = res.port;
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
 
@@ -2028,105 +2058,104 @@ async function runTestStart() {
 }
 
 async function pausePort(portId) {
-  let res = await adminApi('POST', `/api/admin/port/${portId}/pause`);
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) { 
-        p.isPaused = true; 
-        p.relayOn = false; 
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData); 
-      }
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) { 
+      p.isPaused = true; 
+      p.relayOn = false; 
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  await adminApi('POST', `/api/admin/port/${portId}/pause`);
   setActionNotice(`พักชาร์จ ${portId}`);
   autoRefresh();
 }
 
 async function resumePort(portId) {
-  let res = await adminApi('POST', `/api/admin/port/${portId}/resume`);
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) { 
-        p.isPaused = false; 
-        p.relayOn = true; 
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData); 
-      }
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) { 
+      p.isPaused = false; 
+      p.relayOn = true; 
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  await adminApi('POST', `/api/admin/port/${portId}/resume`);
   setActionNotice(`ชาร์จต่อ ${portId}`);
   autoRefresh();
 }
 
 async function setTimeRemaining(portId, seconds) {
-  let res = await adminApi('POST', `/api/admin/port/${portId}/set-time`, { seconds });
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) { 
-        p.remainingSeconds = seconds; 
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData); 
-      }
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) { 
+      p.remainingSeconds = seconds; 
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  await adminApi('POST', `/api/admin/port/${portId}/set-time`, { seconds });
   setActionNotice(`ปรับเวลา ${portId} เหลือ ${seconds} วินาที`);
   autoRefresh();
 }
 
 async function toggleRelay(portId, on) {
-  let res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) { 
-        p.relayOn = on; 
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData); 
-      }
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) { 
+      p.relayOn = on; 
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
   setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'}`);
   autoRefresh();
 }
 
 async function stopPort(portId) {
   if (!confirm(`ต้องการตัดไฟพอร์ต ${portId}?`)) return;
-  let res = await adminApi('POST', `/api/admin/port/${portId}/stop`);
-  if (!res || !res.success) {
-    if (dashData && dashData.ports) {
-      const p = dashData.ports.find(x => x.id === portId);
-      if (p) {
-        p.status = 'available';
-        p.relayOn = false;
-        p.isPaused = false;
-        p.remainingSeconds = 0;
-        p.currentTx = null;
-        dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
-        saveAdminPersistentPorts(dashData.ports);
-        renderAll(dashData);
-      }
+  if (dashData && dashData.ports) {
+    const p = dashData.ports.find(x => x.id === portId);
+    if (p) {
+      p.status = 'available';
+      p.relayOn = false;
+      p.isPaused = false;
+      p.remainingSeconds = 0;
+      p.currentTx = null;
+      dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
+      saveAdminPersistentPorts(dashData.ports);
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  await adminApi('POST', `/api/admin/port/${portId}/stop`);
   setActionNotice(`ตัดไฟพอร์ต ${portId}`);
   autoRefresh();
 }
 
 async function clearPortSession(portId) {
-  if (!confirm(`ล้างรายการของพอร์ต ${portId}?`)) return;
-  await adminApi('POST', `/api/admin/port/${portId}/clear`);
+  if (!confirm(`ต้องการตัดการทำงานและล้างรายการของพอร์ต ${portId}?`)) return;
   if (dashData && dashData.ports) {
     const p = dashData.ports.find(x => x.id === portId);
     if (p) { 
       p.status = 'available'; 
       p.paymentSession = null; 
       saveAdminPersistentPorts(dashData.ports);
-      renderAll(dashData); 
+      renderAll(dashData);
+      renderTestingTab(dashData.ports);
     }
   }
+  try {
+    await adminApi('POST', `/api/admin/port/${portId}/clear`);
+  } catch(e) {}
+  setActionNotice(`ล้างรายการของพอร์ต ${portId}`);
   autoRefresh();
 }
 
@@ -2189,6 +2218,8 @@ function switchTab(name) {
     renderAdminIssues();
   } else if (name === 'testing') {
     loadSupportSettings();
+    const ports = (dashData && dashData.ports) ? dashData.ports : loadAdminPersistentPorts();
+    renderTestingTab(ports);
   }
 }
 
@@ -2270,15 +2301,15 @@ function renderAdminIssues() {
   }
 
   const statusBadges = {
-    pending: '<span style="background:var(--yellow-bg);color:var(--yellow);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">⏳ รอดำเนินการ</span>',
-    in_progress: '<span style="background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">🔍 กำลังตรวจสอบ</span>',
-    resolved: '<span style="background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">✅ แก้ไขเสร็จสิ้น</span>'
+    pending: '<span style="background:var(--yellow-bg);color:var(--yellow);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">รอดำเนินการ</span>',
+    in_progress: '<span style="background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">กำลังตรวจสอบ</span>',
+    resolved: '<span style="background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">แก้ไขเสร็จสิ้น</span>'
   };
 
   tbody.innerHTML = filtered.map(item => {
     const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const imgHtml = item.imageUrl ? `<img src="${item.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border)" onclick="previewImageFullscreen('${item.imageUrl}')" title="คลิกดูรูปเต็ม"/>` : '<span style="color:var(--muted);font-size:.75rem">—</span>';
-    const isPublicBadge = (item.reply && item.reply.isPublic) ? '<span style="color:var(--cyan);font-weight:700;font-size:.78rem">🌐 สาธารณะ</span>' : '<span style="color:var(--muted);font-size:.75rem">🔒 ส่วนตัว</span>';
+    const isPublicBadge = (item.reply && item.reply.isPublic) ? '<span style="color:var(--cyan);font-weight:700;font-size:.78rem">สาธารณะ</span>' : '<span style="color:var(--muted);font-size:.75rem">ส่วนตัว</span>';
     const shortDesc = item.description.length > 35 ? item.description.slice(0, 35) + '...' : item.description;
 
     return `
@@ -2294,7 +2325,7 @@ function renderAdminIssues() {
         <td>${isPublicBadge}</td>
         <td>
           <button class="btn-sm btn-primary" style="padding:.3rem .6rem;font-size:.75rem" onclick="openIssueReplyModal('${item.id}')">
-            ${item.reply ? '✏️ แก้ไขคำตอบ' : '💬 ตอบกลับ'}
+            ${item.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ'}
           </button>
         </td>
       </tr>
@@ -2385,7 +2416,7 @@ function loadSupportSettings() {
   if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
 }
 
-function saveSupportSettings() {
+async function saveSupportSettings() {
   const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '0969679951';
   const line = document.getElementById('cfgSupportLine')?.value?.trim() || '@smartcharger';
   const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || 'ห้องคอมพิวเตอร์ อาคาร 1';
@@ -2395,6 +2426,15 @@ function saveSupportSettings() {
   cfg.supportLine = line;
   cfg.supportLocation = loc;
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  // Sync to backend API if available
+  try {
+    await adminApi('POST', '/api/admin/config', {
+      supportPhone: phone,
+      supportLine: line,
+      supportLocation: loc
+    });
+  } catch(e) {}
 
   setActionNotice('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อย');
   alert('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อยแล้ว ข้อมูลจะอัปเดตบนหน้าเว็บหลักทันที');

@@ -934,7 +934,8 @@ footer{
 .btn-support-qa:hover{
   border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px);
 }
-.btn-icon{font-size:1.35rem;flex-shrink:0}
+.btn-icon{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.btn-icon svg{width:22px;height:22px}
 .btn-text-group{display:flex;flex-direction:column}
 .btn-text-group strong{font-size:.85rem;font-weight:700;line-height:1.25}
 .btn-text-group small{font-size:.68rem;opacity:.85;margin-top:2px}
@@ -953,10 +954,11 @@ footer{
 }
 .form-control:focus{border-color:var(--blue);background:var(--card-bg)}
 .cat-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.chip-ic{width:15px;height:15px;display:inline-block;vertical-align:-2px;margin-right:5px;flex-shrink:0}
 .cat-chip{
   border:1.5px solid var(--g2);background:var(--off);border-radius:10px;
-  padding:9px 10px;cursor:pointer;text-align:center;font-size:.78rem;font-weight:600;
-  color:var(--g3);transition:all .2s ease;user-select:none;
+  padding:9px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  font-size:.78rem;font-weight:600;color:var(--g3);transition:all .2s ease;user-select:none;
 }
 .cat-chip:hover{border-color:var(--blue);color:var(--dark)}
 .cat-chip.active{
@@ -1051,7 +1053,8 @@ footer{
 <div class="hero-hd">
   <div class="hero-badge">
     <span class="badge-dot"></span>
-    <span>⚡ SMART CHARGING STATION · 24/7</span>
+    <svg style="width:13px;height:13px;color:#10b981;display:inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <span>SMART CHARGING STATION · 24/7</span>
   </div>
   <h1><span class="title-primary">ชาร์จทันที</span><br/><span class="g title-secondary">จ่ายง่าย ปลอดภัย</span></h1>
   <p>เลือกพอร์ต เลือกจำนวน จ่ายเงิน — ระบบเปิดไฟให้อัตโนมัติ</p>
@@ -1137,7 +1140,9 @@ footer{
     <!-- Action Buttons -->
     <div class="support-actions">
       <button class="btn-support-report" onclick="openIssueModal()">
-        <span class="btn-icon">🚨</span>
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
         <div class="btn-text-group">
           <strong>แจ้งปัญหาการใช้งาน / ข้อสงสัย</strong>
           <small>แนบรูปหลักฐาน · ระบุอาการ · คืนเงิน</small>
@@ -1145,7 +1150,9 @@ footer{
       </button>
 
       <button class="btn-support-qa" onclick="openPublicQAModal()">
-        <span class="btn-icon">💬</span>
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
         <div class="btn-text-group">
           <strong>กระดานปัญหาที่ตอบแล้ว (Public Q&A)</strong>
           <small>ดูคำตอบจากแอดมิน <span id="qaPublicBadge" class="qa-badge">0</span></small>
@@ -1162,18 +1169,33 @@ footer{
 <div class="sheet" id="sheetIssue">
   <div class="sheet-drag"></div>
   <div class="sheet-top">
-    <h2>🚨 แจ้งปัญหาการใช้งาน - ข้อสงสัย</h2>
-    <button class="sheet-close" onclick="closeIssueModal()">&#x2715;</button>
+    <h2>
+      <svg style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;stroke:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      แจ้งปัญหาการใช้งาน - ข้อสงสัย
+    </h2>
+    <button class="sheet-close" onclick="closeIssueModal()">✕</button>
   </div>
   <div class="sheet-body">
     <div id="issueFormWrap">
       <div class="form-field">
         <label class="form-lbl">ประเภทปัญหา / ข้อสงสัย <span style="color:var(--red)">*</span></label>
         <div class="cat-chips" id="issueCatChips">
-          <div class="cat-chip active" data-cat="power" onclick="selectIssueCat('power', this)">⚡ ระบบจ่ายไฟ</div>
-          <div class="cat-chip" data-cat="coin" onclick="selectIssueCat('coin', this)">🪙 หยอดเหรียญ</div>
-          <div class="cat-chip" data-cat="transfer" onclick="selectIssueCat('transfer', this)">📱 โอนเงิน / QR</div>
-          <div class="cat-chip" data-cat="other" onclick="selectIssueCat('other', this)">❓ ข้อสงสัยทั่วไป</div>
+          <div class="cat-chip active" data-cat="power" onclick="selectIssueCat('power', this)">
+            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            ระบบจ่ายไฟ
+          </div>
+          <div class="cat-chip" data-cat="coin" onclick="selectIssueCat('coin', this)">
+            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 6v2m0 8v2"/></svg>
+            หยอดเหรียญ
+          </div>
+          <div class="cat-chip" data-cat="transfer" onclick="selectIssueCat('transfer', this)">
+            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            โอนเงิน / QR
+          </div>
+          <div class="cat-chip" data-cat="other" onclick="selectIssueCat('other', this)">
+            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            ข้อสงสัยทั่วไป
+          </div>
         </div>
       </div>
 
@@ -1190,7 +1212,7 @@ footer{
         </div>
         <div class="form-field">
           <label class="form-lbl" for="issueAmount">จำนวนเงิน (ถ้ามี)</label>
-          <input type="number" id="issueAmount" class="form-control" placeholder="เช่น 5, 10, 20" min="0"/>
+          <input type="number" id="issueAmount" class="form-control" placeholder="บาท เช่น 10, 20" min="0"/>
         </div>
       </div>
 
@@ -1207,7 +1229,9 @@ footer{
       <div class="form-field">
         <label class="form-lbl">แนบรูปภาพหลักฐาน (หน้าจอ / ตู้ / สลิป)</label>
         <div class="issue-upload-zone" id="issueUploadZone" onclick="document.getElementById('issueFileInput').click()">
-          <div style="font-size:1.8rem;margin-bottom:4px">📸</div>
+          <div style="margin-bottom:6px">
+            <svg style="width:36px;height:36px;stroke:var(--g3);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
           <p style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:2px">คลิกเพื่อถ่ายรูป หรือเลือกรูปหลักฐาน</p>
           <small style="color:var(--g3)">รองรับไฟล์ภาพ JPG, PNG (ย่อขนาดอัตโนมัติ)</small>
           <input type="file" id="issueFileInput" accept="image/*" style="display:none" onchange="onIssueImageSelected(event)"/>
@@ -1230,7 +1254,9 @@ footer{
 
     <!-- Success View -->
     <div id="issueSuccessWrap" style="display:none;text-align:center;padding:24px 0">
-      <div style="font-size:3rem;margin-bottom:12px">✅</div>
+      <div style="margin-bottom:12px">
+        <svg style="width:52px;height:52px;color:var(--green);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
       <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--dark);margin-bottom:6px">ส่งแจ้งปัญหาเรียบร้อยแล้ว</h3>
       <p style="font-size:.82rem;color:var(--g3);line-height:1.6;margin-bottom:14px">
         รหัสการแจ้ง: <strong style="color:var(--blue)" id="issueSuccessId">—</strong><br/>
@@ -1247,8 +1273,11 @@ footer{
 <div class="sheet" id="sheetPublicQA">
   <div class="sheet-drag"></div>
   <div class="sheet-top">
-    <h2>💬 กระดานปัญหาที่ตอบแล้ว (Public Q&A)</h2>
-    <button class="sheet-close" onclick="closePublicQAModal()">&#x2715;</button>
+    <h2>
+      <svg style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;stroke:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      กระดานปัญหาที่ตอบแล้ว (Public Q&A)
+    </h2>
+    <button class="sheet-close" onclick="closePublicQAModal()">✕</button>
   </div>
   <div class="sheet-body">
     <p style="font-size:.78rem;color:var(--g3);margin-bottom:14px">
@@ -1258,9 +1287,10 @@ footer{
     <!-- Category Filters -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;scrollbar-width:none">
       <button class="cat-chip active" id="qaFilterAll" onclick="filterQA('all', this)" style="padding:4px 10px;font-size:.74rem">ทั้งหมด</button>
-      <button class="cat-chip" onclick="filterQA('power', this)" style="padding:4px 10px;font-size:.74rem">⚡ จ่ายไฟ</button>
-      <button class="cat-chip" onclick="filterQA('coin', this)" style="padding:4px 10px;font-size:.74rem">🪙 หยอดเหรียญ</button>
-      <button class="cat-chip" onclick="filterQA('transfer', this)" style="padding:4px 10px;font-size:.74rem">📱 โอนเงิน</button>
+      <button class="cat-chip" onclick="filterQA('power', this)" style="padding:4px 10px;font-size:.74rem">จ่ายไฟ</button>
+      <button class="cat-chip" onclick="filterQA('coin', this)" style="padding:4px 10px;font-size:.74rem">หยอดเหรียญ</button>
+      <button class="cat-chip" onclick="filterQA('transfer', this)" style="padding:4px 10px;font-size:.74rem">โอนเงิน</button>
+      <button class="cat-chip" onclick="filterQA('other', this)" style="padding:4px 10px;font-size:.74rem">ทั่วไป</button>
     </div>
 
     <div id="qaListContainer">
@@ -1312,8 +1342,9 @@ footer{
           </div>
         </div>
       </div>
-      <div style="background:var(--off);border:1px solid var(--g1);border-radius:10px;padding:8px 12px;margin:6px 0 12px;text-align:center;font-size:.74rem;color:var(--g3)">
-        💡 <strong>คำแนะนำ:</strong> รูปธนบัตรเพื่อความสะดวกในการเลือกยอดเงิน · <u>ตู้ไม่ได้รับธนบัตรจริง</u> (ชำระผ่านพร้อมเพย์ QR, โอนเงิน หรือหยอดเหรียญ 5฿, 10฿)
+      <div style="background:var(--off);border:1px solid var(--g1);border-radius:10px;padding:8px 12px;margin:6px 0 12px;display:flex;align-items:center;gap:8px;font-size:.74rem;color:var(--g3)">
+        <svg style="width:16px;height:16px;flex-shrink:0;stroke:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+        <span><strong>คำแนะนำ:</strong> รูปธนบัตรเพื่อความสะดวกในการเลือกยอดเงิน · <u>ตู้ไม่ได้รับธนบัตรจริง</u> (ชำระผ่านพร้อมเพย์ QR, โอนเงิน หรือหยอดเหรียญ 5฿, 10฿)</span>
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
@@ -1375,8 +1406,9 @@ footer{
       <div id="coinOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
         ยอด 1-4 บาท ชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น
       </div>
-      <div style="font-size:.72rem;color:var(--g3);margin-top:8px;text-align:center;background:var(--off);border:1px solid var(--g1);border-radius:8px;padding:6px 10px">
-        ℹ️ ตู้รับเฉพาะเหรียญ 5฿, 10฿ และพร้อมเพย์ / โอนเงิน (ตู้ไม่ได้รับธนบัตรจริง)
+      <div style="font-size:.72rem;color:var(--g3);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--off);border:1px solid var(--g1);border-radius:8px;padding:6px 10px">
+        <svg style="width:14px;height:14px;flex-shrink:0;stroke:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>ตู้รับเฉพาะเหรียญ 5฿, 10฿ และพร้อมเพย์ / โอนเงิน (ตู้ไม่ได้รับธนบัตรจริง)</span>
       </div>
       <button class="btn btn-ghost" style="margin-top:10px" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
     </div>
@@ -2034,16 +2066,45 @@ const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/not
 
 async function refreshPorts(){
   const d=await apiFetch('GET','/api/state');
-  if(!d||!d.ports){currentPorts=loadPersistentPorts();renderPorts(currentPorts);return;}
+  if(!d||!d.ports){
+    currentPorts=loadPersistentPorts();
+    renderPorts(currentPorts);
+    updateSupportContactInfo();
+    return;
+  }
   SPB=d.secondsPerBaht||180;
   $('rateLabel').textContent=`1฿ = ${SPB/60} นาที`;
   document.querySelectorAll('[data-for]').forEach(el=>el.textContent=fmtTime(Number(el.dataset.for)*SPB));
+  if (d.supportLocation || d.supportPhone || d.supportLine) {
+    try {
+      const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
+      if (d.supportLocation) cfg.supportLocation = d.supportLocation;
+      if (d.supportPhone) cfg.supportPhone = d.supportPhone;
+      if (d.supportLine) cfg.supportLine = d.supportLine;
+      localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+    } catch(e) {}
+  }
   currentPorts=d.ports;savePersistentPorts(d.ports);renderPorts(d.ports);
+  updateSupportContactInfo();
   if(S.session&&_cashPoll)checkCash(d.ports);
 }
 renderPorts(currentPorts);
 setInterval(refreshPorts,3000);
 refreshPorts();
+
+window.addEventListener('storage', e => {
+  if (e.key === 'usb_charger_config') {
+    updateSupportContactInfo();
+  }
+  if (e.key === 'usb_charger_ports_state') {
+    currentPorts = loadPersistentPorts();
+    renderPorts(currentPorts);
+  }
+  if (e.key === 'usb_charger_issues') {
+    updateSupportContactInfo();
+    if (typeof renderPublicQA === 'function') renderPublicQA();
+  }
+});
 
 (function checkUrlPortParam(){
   const p=new URLSearchParams(location.search).get('port');
@@ -2293,8 +2354,33 @@ async function createSession(method){
 }
 
 function getAppConfig(){
-  try{const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');return{promptpayPhone:s.promptpayPhone||'0969679951',bankName:s.bankName||'กสิกรไทย (kbank)',bankAccount:s.bankAccount||'193-3-86131-3',bankAccountName:s.bankAccountName||'ศุภกฤต สอนบุญมา',secondsPerBaht:Number(s.secondsPerBaht)||180,easyslipKey:s.easyslipKey||EASYSLIP_KEY};}
-  catch(e){return{promptpayPhone:'0969679951',bankName:'กสิกรไทย (kbank)',bankAccount:'193-3-86131-3',bankAccountName:'ศุภกฤต สอนบุญมา',secondsPerBaht:180,easyslipKey:EASYSLIP_KEY};}
+  try{
+    const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');
+    return{
+      promptpayPhone:s.promptpayPhone||'0969679951',
+      bankName:s.bankName||'กสิกรไทย (kbank)',
+      bankAccount:s.bankAccount||'193-3-86131-3',
+      bankAccountName:s.bankAccountName||'ศุภกฤต สอนบุญมา',
+      secondsPerBaht:Number(s.secondsPerBaht)||180,
+      easyslipKey:s.easyslipKey||EASYSLIP_KEY,
+      supportPhone:s.supportPhone||'0969679951',
+      supportLine:s.supportLine||'@smartcharger',
+      supportLocation:s.supportLocation||'ห้องคอมพิวเตอร์ อาคาร 1'
+    };
+  }
+  catch(e){
+    return{
+      promptpayPhone:'0969679951',
+      bankName:'กสิกรไทย (kbank)',
+      bankAccount:'193-3-86131-3',
+      bankAccountName:'ศุภกฤต สอนบุญมา',
+      secondsPerBaht:180,
+      easyslipKey:EASYSLIP_KEY,
+      supportPhone:'0969679951',
+      supportLine:'@smartcharger',
+      supportLocation:'ห้องคอมพิวเตอร์ อาคาร 1'
+    };
+  }
 }
 
 function setupQR(s){
@@ -2344,7 +2430,7 @@ function updateCashUI(t){
     else if(t===50) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (10 เหรียญ)';
     else if(t===100) noteHtml='<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 10฿ หรือ 5฿ รวมกันให้ครบ 100฿';
     else noteHtml=`<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 5฿ หรือ 10฿ รวมกันให้ครบ ฿${t}`;
-    ex.innerHTML = noteHtml + '<br/><span style="color:var(--amber);font-size:.7rem">⚠️ ตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น (ไม่มีช่องรับธนบัตร)</span>';
+    ex.innerHTML = noteHtml + '<br/><span style="color:var(--amber);font-size:.7rem;display:inline-flex;align-items:center;gap:4px"><svg style="width:12px;height:12px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>ตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น (ไม่มีช่องรับธนบัตร)</span>';
   }
 }
 function checkCash(ports){
@@ -2444,7 +2530,7 @@ const DEFAULT_ISSUES = [
     id: "ISSUE-1001",
     createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
     category: "coin",
-    categoryLabel: "🪙 ระบบรับเงิน (หยอดเหรียญ)",
+    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
     portId: "usb-a-1",
     portLabel: "USB-A 1",
     amount: 10,
@@ -2463,7 +2549,7 @@ const DEFAULT_ISSUES = [
     id: "ISSUE-1002",
     createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
     category: "transfer",
-    categoryLabel: "📱 ระบบรับเงิน (โอนเงิน / QR)",
+    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
     portId: "usb-c-1",
     portLabel: "USB-C 1",
     amount: 5,
@@ -2612,10 +2698,10 @@ async function submitIssue() {
   alertEl.style.display = 'none';
 
   const catLabels = {
-    power: '⚡ ระบบจ่ายไฟ',
-    coin: '🪙 ระบบรับเงิน (หยอดเหรียญ)',
-    transfer: '📱 ระบบรับเงิน (โอนเงิน / QR)',
-    other: '❓ ข้อสงสัยทั่วไป'
+    power: 'ระบบจ่ายไฟ',
+    coin: 'ระบบรับเงิน (หยอดเหรียญ)',
+    transfer: 'ระบบรับเงิน (โอนเงิน / QR)',
+    other: 'ข้อสงสัยทั่วไป'
   };
 
   const portEl = $('issuePort');
@@ -2692,7 +2778,9 @@ function renderPublicQA() {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="qa-empty">
-        <div style="font-size:2.4rem;margin-bottom:8px">💬</div>
+        <div style="margin-bottom:8px">
+          <svg style="width:36px;height:36px;stroke:var(--g3);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
         <p>ยังไม่มีข้อสงสัยในหมวดหมู่นี้ที่เผยแพร่</p>
         <small style="color:var(--g3)">เมื่อผู้ดูแลระบบตอบกลับและอนุมัติ จะแสดงบนกระดานนี้ค่ะ</small>
       </div>`;
@@ -2718,7 +2806,7 @@ function renderPublicQA() {
         ${imgHtml}
         <div class="qa-reply-box">
           <div class="qa-reply-title">
-            <span>👑 ${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><svg style="width:13px;height:13px;stroke:#10b981;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
             <span style="font-size:.65rem;color:var(--g3);margin-left:auto">${replyTimeStr}</span>
           </div>
           <div class="qa-reply-text">${escapeHtml(item.reply?.message || '—')}</div>
