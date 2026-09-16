@@ -1292,12 +1292,27 @@ footer{
           <img src="assets/coin-10.png" alt="10฿"/>
           <div class="dc-foot"><div class="dc-amt">฿10</div><div class="dc-min" data-for="10">30 นาที</div></div>
         </div>
+        <div class="dc" onclick="pickDenom(20,this)">
+          <img src="assets/note-20.jpg" alt="20฿"/>
+          <div class="dc-foot"><div class="dc-amt">฿20</div><div class="dc-min" data-for="20">60 นาที</div></div>
+        </div>
+        <div class="dc" onclick="pickDenom(50,this)">
+          <img src="assets/note-50.jpg" alt="50฿"/>
+          <div class="dc-foot"><div class="dc-amt">฿50</div><div class="dc-min" data-for="50">150 นาที</div></div>
+        </div>
+        <div class="dc" onclick="pickDenom(100,this)">
+          <img src="assets/note-100.jpg" alt="100฿"/>
+          <div class="dc-foot"><div class="dc-amt">฿100</div><div class="dc-min" data-for="100">300 นาที</div></div>
+        </div>
         <div class="dc" id="dcCustom" onclick="focusCustom()">
           <div class="dc-custom-inner">
             <div class="lbl">กำหนดเอง</div>
             <div class="mini" id="customMinPreview"></div>
           </div>
         </div>
+      </div>
+      <div style="background:var(--off);border:1px solid var(--g1);border-radius:10px;padding:8px 12px;margin:6px 0 12px;text-align:center;font-size:.74rem;color:var(--g3)">
+        💡 <strong>คำแนะนำ:</strong> รูปธนบัตรเพื่อความสะดวกในการเลือกยอดเงิน · <u>ตู้ไม่ได้รับธนบัตรจริง</u> (ชำระผ่านพร้อมเพย์ QR, โอนเงิน หรือหยอดเหรียญ 5฿, 10฿)
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
@@ -1359,7 +1374,10 @@ footer{
       <div id="coinOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
         ยอด 1-4 บาท ชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น
       </div>
-      <button class="btn btn-ghost" style="margin-top:12px" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
+      <div style="font-size:.72rem;color:var(--g3);margin-top:8px;text-align:center;background:var(--off);border:1px solid var(--g1);border-radius:8px;padding:6px 10px">
+        ℹ️ ตู้รับเฉพาะเหรียญ 5฿, 10฿ และพร้อมเพย์ / โอนเงิน (ตู้ไม่ได้รับธนบัตรจริง)
+      </div>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
     </div>
 
     <!-- QR -->
@@ -1999,7 +2017,7 @@ const fmtTime=s=>{
   if(m)return `${m} นาที`;
   return `${sc} วิ`;
 };
-const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png'}[a]||null);
+const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);
 
 async function refreshPorts(){
   const d=await apiFetch('GET','/api/state');
@@ -2306,12 +2324,14 @@ function updateCashUI(t){
   const prEl=$('coin-progress')||$('cash-progress');if(prEl)prEl.style.width=`${pct}%`;
   const ex=$('coin-example-note')||$('cash-example-note');
   if(ex){
-    if(t===5)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
-    else if(t===10)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
-    else if(t===20)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (2 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (4 เหรียญ)';
-    else if(t===50)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (10 เหรียญ)';
-    else if(t===100)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 10฿ หรือ 5฿ ให้ครบ 100฿';
-    else ex.innerHTML=`<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 5฿ หรือ 10฿ รวมกันให้ครบ ฿${t}`;
+    let noteHtml = '';
+    if(t===5) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
+    else if(t===10) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
+    else if(t===20) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (2 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (4 เหรียญ)';
+    else if(t===50) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (10 เหรียญ)';
+    else if(t===100) noteHtml='<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 10฿ หรือ 5฿ รวมกันให้ครบ 100฿';
+    else noteHtml=`<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 5฿ หรือ 10฿ รวมกันให้ครบ ฿${t}`;
+    ex.innerHTML = noteHtml + '<br/><span style="color:var(--amber);font-size:.7rem">⚠️ ตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น (ไม่มีช่องรับธนบัตร)</span>';
   }
 }
 function checkCash(ports){
