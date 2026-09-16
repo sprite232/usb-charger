@@ -850,10 +850,161 @@ footer{
   .theme-switch-pill{width:56px;height:32px}
   .pill-thumb{width:24px;height:24px}
   .hero-hd{padding:38px 16px 28px}
-  .hero-hd h1{font-size:2.35rem}
-  .main,.faq{padding-left:16px;padding-right:16px}
   .port-grid{grid-template-columns:1fr;gap:12px}
 }
+
+/* ── SUPPORT & ISSUE REPORT SECTION ── */
+.support-sec{
+  max-width:540px;margin:0 auto 28px;padding:0 20px;
+}
+.support-card{
+  background:var(--card-bg);border:1px solid var(--g1);border-radius:20px;
+  padding:22px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  transition:border-color .3s,box-shadow .3s;
+}
+.support-hdr{text-align:center;margin-bottom:18px}
+.support-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:100px;
+  font-size:.72rem;font-weight:700;letter-spacing:.04em;
+  background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);
+  color:#ef4444;margin-bottom:10px;
+}
+.support-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:pdot 1.8s infinite}
+.support-hdr h3{
+  font-family:var(--display);font-size:1.15rem;font-weight:700;
+  color:var(--dark);letter-spacing:-.02em;margin-bottom:6px;
+}
+.support-hdr p{font-size:.8rem;color:var(--g3);line-height:1.55;max-width:400px;margin:0 auto}
+
+/* Contact Grid */
+.contact-grid{
+  display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:18px;
+}
+@media(min-width:480px){
+  .contact-grid{grid-template-columns:repeat(2,1fr)}
+  .contact-pill.loc{grid-column:span 2}
+}
+.contact-pill{
+  display:flex;align-items:center;gap:12px;
+  background:var(--off);border:1px solid var(--g1);border-radius:14px;
+  padding:10px 14px;text-decoration:none;color:inherit;
+  transition:all .2s ease;cursor:pointer;
+}
+.contact-pill:hover{
+  border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px);
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+}
+.contact-ic-box{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  flex-shrink:0;color:#fff;
+}
+.contact-ic-box svg{width:18px;height:18px;fill:currentColor}
+.contact-ic-box.phone{background:linear-gradient(135deg,#10b981,#059669)}
+.contact-ic-box.line{background:linear-gradient(135deg,#06c755,#00b347)}
+.contact-ic-box.loc{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.contact-info{display:flex;flex-direction:column;min-width:0}
+.contact-lbl{font-size:.68rem;color:var(--g3);font-weight:600}
+.contact-val{font-size:.86rem;color:var(--dark);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Support Action Buttons */
+.support-actions{
+  display:grid;grid-template-columns:1fr;gap:10px;
+}
+@media(min-width:480px){
+  .support-actions{grid-template-columns:repeat(2,1fr)}
+}
+.btn-support-report{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;
+  border:none;border-radius:14px;padding:12px 14px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(239,68,68,.25);
+  transition:all .2s ease;text-align:left;font-family:inherit;
+}
+.btn-support-report:hover{
+  transform:translateY(-2px);box-shadow:0 8px 24px rgba(239,68,68,.35);
+}
+.btn-support-qa{
+  display:flex;align-items:center;gap:10px;
+  background:var(--off);color:var(--dark);
+  border:1px solid var(--g2);border-radius:14px;padding:12px 14px;cursor:pointer;
+  transition:all .2s ease;text-align:left;font-family:inherit;
+}
+.btn-support-qa:hover{
+  border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px);
+}
+.btn-icon{font-size:1.35rem;flex-shrink:0}
+.btn-text-group{display:flex;flex-direction:column}
+.btn-text-group strong{font-size:.85rem;font-weight:700;line-height:1.25}
+.btn-text-group small{font-size:.68rem;opacity:.85;margin-top:2px}
+.qa-badge{
+  display:inline-block;background:var(--blue);color:#fff;
+  font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;
+}
+
+/* Modals for Issue & QA */
+.form-field{margin-bottom:14px}
+.form-lbl{display:block;font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:6px}
+.form-control{
+  width:100%;background:var(--off);border:1px solid var(--g2);color:var(--dark);
+  padding:10px 12px;border-radius:10px;font-size:.86rem;outline:none;font-family:inherit;
+  transition:border-color .2s;
+}
+.form-control:focus{border-color:var(--blue);background:var(--card-bg)}
+.cat-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.cat-chip{
+  border:1.5px solid var(--g2);background:var(--off);border-radius:10px;
+  padding:9px 10px;cursor:pointer;text-align:center;font-size:.78rem;font-weight:600;
+  color:var(--g3);transition:all .2s ease;user-select:none;
+}
+.cat-chip:hover{border-color:var(--blue);color:var(--dark)}
+.cat-chip.active{
+  border-color:var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:700;
+}
+.issue-upload-zone{
+  border:1.5px dashed var(--g3);border-radius:12px;padding:14px;
+  text-align:center;cursor:pointer;background:var(--off);transition:all .2s;
+}
+.issue-upload-zone:hover,.issue-upload-zone.drag{
+  border-color:var(--blue);background:var(--blue-bg);
+}
+.issue-img-preview-box{position:relative;margin-top:10px;display:none}
+.issue-img-preview{width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--g2)}
+.btn-del-preview{
+  position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;
+  border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-size:12px;
+}
+
+/* QA Items */
+.qa-card{
+  background:var(--off);border:1px solid var(--g1);border-radius:14px;
+  padding:14px;margin-bottom:12px;transition:all .2s ease;
+}
+.qa-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.qa-cat-badge{
+  font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:10px;
+  background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,.2);
+}
+.qa-port-badge{
+  font-size:.68rem;font-weight:600;padding:2px 6px;border-radius:6px;
+  background:var(--g1);color:var(--g3);
+}
+.qa-time{font-size:.68rem;color:var(--g3)}
+.qa-question{font-size:.84rem;color:var(--dark);line-height:1.5;margin-bottom:10px;font-weight:600}
+.qa-img-thumb{
+  width:64px;height:64px;object-fit:cover;border-radius:8px;
+  border:1px solid var(--g2);cursor:pointer;margin-bottom:10px;display:block;
+}
+.qa-reply-box{
+  background:var(--card-bg);border:1px solid rgba(16,185,129,.3);
+  border-left:3px solid #10b981;border-radius:10px;padding:10px 12px;
+}
+.qa-reply-title{
+  display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;
+  color:#10b981;margin-bottom:4px;
+}
+.qa-reply-text{font-size:.8rem;color:var(--dark);line-height:1.5}
+.qa-empty{text-align:center;padding:36px 16px;color:var(--g3);font-size:.85rem}
 </style>
 </head>
 <body>
@@ -937,7 +1088,188 @@ footer{
   </div>
 </section>
 
+<!-- SUPPORT & ISSUE REPORT SECTION -->
+<section class="support-sec reveal" id="supportSec">
+  <div class="support-card">
+    <div class="support-hdr">
+      <div class="support-tag">
+        <span class="support-dot"></span>
+        <span>ศูนย์ช่วยเหลือ & แจ้งปัญหา</span>
+      </div>
+      <h3>พบปัญหาการใช้งาน หรือมีข้อสงสัย?</h3>
+      <p>กรณีไฟไม่เข้า ตู้กินเหรียญ โอนเงินไม่ติด หรือต้องการความช่วยเหลือ ติดต่อผู้ดูแลได้ทันทีตลอด 24 ชม.</p>
+    </div>
+
+    <!-- Quick Contact Channels -->
+    <div class="contact-grid">
+      <a href="tel:0969679951" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก">
+        <div class="contact-ic-box phone">
+          <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        </div>
+        <div class="contact-info">
+          <span class="contact-lbl">โทรฉุกเฉิน (ผู้ดูแล)</span>
+          <strong class="contact-val" id="contactPhoneText">096-967-9951</strong>
+        </div>
+      </a>
+
+      <a href="https://line.me/ti/p/~@smartcharger" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Line">
+        <div class="contact-ic-box line">
+          <svg viewBox="0 0 24 24"><path d="M21.5 10.7c0-4.8-4.7-8.7-10.5-8.7S.5 5.9.5 10.7c0 4.3 3.7 7.9 8.7 8.6.3.1.8.2.9.6.1.3.1.8 0 1.1 0 0-.3 1.6-.3 1.9-.1.6.2.3 1.4-.8 1.1-1 4.7-3.9 6.4-5.3 2.5-1.5 3.9-3.7 3.9-6.1z"/></svg>
+        </div>
+        <div class="contact-info">
+          <span class="contact-lbl">Line ID ผู้ดูแล</span>
+          <strong class="contact-val" id="contactLineText">@smartcharger</strong>
+        </div>
+      </a>
+
+      <div class="contact-pill loc" id="contactLocPill">
+        <div class="contact-ic-box loc">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>
+        <div class="contact-info">
+          <span class="contact-lbl">จุดบริการช่วยเหลือ</span>
+          <strong class="contact-val" id="contactLocText">ห้องคอมพิวเตอร์ อาคาร 1</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="support-actions">
+      <button class="btn-support-report" onclick="openIssueModal()">
+        <span class="btn-icon">🚨</span>
+        <div class="btn-text-group">
+          <strong>แจ้งปัญหาการใช้งาน / ข้อสงสัย</strong>
+          <small>แนบรูปหลักฐาน · ระบุอาการ · คืนเงิน</small>
+        </div>
+      </button>
+
+      <button class="btn-support-qa" onclick="openPublicQAModal()">
+        <span class="btn-icon">💬</span>
+        <div class="btn-text-group">
+          <strong>กระดานปัญหาที่ตอบแล้ว (Public Q&A)</strong>
+          <small>ดูคำตอบจากแอดมิน <span id="qaPublicBadge" class="qa-badge">0</span></small>
+        </div>
+      </button>
+    </div>
+  </div>
+</section>
+
 <footer id="footerSecretTrigger">ตู้ชาร์จ USB · Smart Charger</footer>
+
+<!-- MODAL: REPORT ISSUE -->
+<div class="overlay" id="issueModalOverlay">
+<div class="sheet" id="sheetIssue">
+  <div class="sheet-drag"></div>
+  <div class="sheet-top">
+    <h2>🚨 แจ้งปัญหาการใช้งาน - ข้อสงสัย</h2>
+    <button class="sheet-close" onclick="closeIssueModal()">&#x2715;</button>
+  </div>
+  <div class="sheet-body">
+    <div id="issueFormWrap">
+      <div class="form-field">
+        <label class="form-lbl">ประเภทปัญหา / ข้อสงสัย <span style="color:var(--red)">*</span></label>
+        <div class="cat-chips" id="issueCatChips">
+          <div class="cat-chip active" data-cat="power" onclick="selectIssueCat('power', this)">⚡ ระบบจ่ายไฟ</div>
+          <div class="cat-chip" data-cat="coin" onclick="selectIssueCat('coin', this)">🪙 หยอดเหรียญ</div>
+          <div class="cat-chip" data-cat="transfer" onclick="selectIssueCat('transfer', this)">📱 โอนเงิน / QR</div>
+          <div class="cat-chip" data-cat="other" onclick="selectIssueCat('other', this)">❓ ข้อสงสัยทั่วไป</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-field">
+          <label class="form-lbl" for="issuePort">พอร์ตที่พบปัญหา</label>
+          <select id="issuePort" class="form-control">
+            <option value="all">ทั่วไป / ไม่ระบุ</option>
+            <option value="usb-a-1">USB-A 1</option>
+            <option value="usb-a-2">USB-A 2</option>
+            <option value="usb-c-1">USB-C 1</option>
+            <option value="usb-c-2">USB-C 2</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-lbl" for="issueAmount">จำนวนเงิน (ถ้ามี)</label>
+          <input type="number" id="issueAmount" class="form-control" placeholder="เช่น 5, 10, 20" min="0"/>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-lbl" for="issueContact">เบอร์โทรศัพท์ หรือ Line ID สำหรับติดต่อกลับ <span style="color:var(--red)">*</span></label>
+        <input type="text" id="issueContact" class="form-control" placeholder="เช่น 081-xxx-xxxx หรือ Line ID"/>
+      </div>
+
+      <div class="form-field">
+        <label class="form-lbl" for="issueDesc">รายละเอียดปัญหา / สิ่งที่เกิดขึ้น <span style="color:var(--red)">*</span></label>
+        <textarea id="issueDesc" class="form-control" rows="3" placeholder="ระบุสิ่งที่พบ เช่น ตู้กินเหรียญ 10 บาทแต่ไฟไม่ติด หรือ สลิปไม่ผ่าน"></textarea>
+      </div>
+
+      <div class="form-field">
+        <label class="form-lbl">แนบรูปภาพหลักฐาน (หน้าจอ / ตู้ / สลิป)</label>
+        <div class="issue-upload-zone" id="issueUploadZone" onclick="document.getElementById('issueFileInput').click()">
+          <div style="font-size:1.8rem;margin-bottom:4px">📸</div>
+          <p style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:2px">คลิกเพื่อถ่ายรูป หรือเลือกรูปหลักฐาน</p>
+          <small style="color:var(--g3)">รองรับไฟล์ภาพ JPG, PNG (ย่อขนาดอัตโนมัติ)</small>
+          <input type="file" id="issueFileInput" accept="image/*" style="display:none" onchange="onIssueImageSelected(event)"/>
+        </div>
+        <div class="issue-img-preview-box" id="issueImgPreviewBox">
+          <img id="issueImgPreview" class="issue-img-preview" src="" alt="หลักฐาน"/>
+          <button type="button" class="btn-del-preview" onclick="clearIssueImage()" title="ลบรูปภาพ">✕</button>
+        </div>
+      </div>
+
+      <div id="issueAlert" style="display:none" class="alert-err">
+        <span class="alert-ttl" id="issueAlertMsg"></span>
+      </div>
+
+      <button class="btn btn-primary" id="btnSubmitIssue" onclick="submitIssue()">
+        บันทึกแจ้งปัญหา
+      </button>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="closeIssueModal()">ยกเลิก</button>
+    </div>
+
+    <!-- Success View -->
+    <div id="issueSuccessWrap" style="display:none;text-align:center;padding:24px 0">
+      <div style="font-size:3rem;margin-bottom:12px">✅</div>
+      <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--dark);margin-bottom:6px">ส่งแจ้งปัญหาเรียบร้อยแล้ว</h3>
+      <p style="font-size:.82rem;color:var(--g3);line-height:1.6;margin-bottom:14px">
+        รหัสการแจ้ง: <strong style="color:var(--blue)" id="issueSuccessId">—</strong><br/>
+        ผู้ดูแลระบบจะตรวจสอบและประสานงานติดต่อกลับโดยเร็วที่สุดค่ะ
+      </p>
+      <button class="btn btn-primary" onclick="closeIssueModal()">รับทราบและปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL: PUBLIC Q&A -->
+<div class="overlay" id="publicQAModalOverlay">
+<div class="sheet" id="sheetPublicQA">
+  <div class="sheet-drag"></div>
+  <div class="sheet-top">
+    <h2>💬 กระดานปัญหาที่ตอบแล้ว (Public Q&A)</h2>
+    <button class="sheet-close" onclick="closePublicQAModal()">&#x2715;</button>
+  </div>
+  <div class="sheet-body">
+    <p style="font-size:.78rem;color:var(--g3);margin-bottom:14px">
+      รวมข้อสงสัยและปัญหาที่ได้รับการชี้แจงและแก้ไขแล้วจากผู้ดูแล เพื่อเป็นประโยชน์แก่ผู้ใช้งานทุกท่าน
+    </p>
+
+    <!-- Category Filters -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;scrollbar-width:none">
+      <button class="cat-chip active" id="qaFilterAll" onclick="filterQA('all', this)" style="padding:4px 10px;font-size:.74rem">ทั้งหมด</button>
+      <button class="cat-chip" onclick="filterQA('power', this)" style="padding:4px 10px;font-size:.74rem">⚡ จ่ายไฟ</button>
+      <button class="cat-chip" onclick="filterQA('coin', this)" style="padding:4px 10px;font-size:.74rem">🪙 หยอดเหรียญ</button>
+      <button class="cat-chip" onclick="filterQA('transfer', this)" style="padding:4px 10px;font-size:.74rem">📱 โอนเงิน</button>
+    </div>
+
+    <div id="qaListContainer">
+      <!-- Dynamically rendered -->
+    </div>
+
+    <button class="btn btn-ghost" style="margin-top:14px" onclick="closePublicQAModal()">ปิดหน้าต่าง</button>
+  </div>
+</div>
+</div>
 
 <!-- SHEET -->
 <div class="overlay" id="overlay">
@@ -2070,6 +2402,313 @@ function startExpire(spanId,isoStr){
 }
 function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
 async function cancelSession(){Sound.click();stopTimers();if(S.portId&&S.session)await apiFetch('POST','/api/payment/cancel',{portId:S.portId}).catch(()=>{});S.session=null;closeSheet();}
+
+/* ───────────────────────────────────────────────
+   SUPPORT & ISSUE REPORTING ENGINE
+─────────────────────────────────────────────── */
+const DEFAULT_ISSUES = [
+  {
+    id: "ISSUE-1001",
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    category: "coin",
+    categoryLabel: "🪙 ระบบรับเงิน (หยอดเหรียญ)",
+    portId: "usb-a-1",
+    portLabel: "USB-A 1",
+    amount: 10,
+    contact: "081-999-xxxx",
+    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+      isPublic: true
+    }
+  },
+  {
+    id: "ISSUE-1002",
+    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+    category: "transfer",
+    categoryLabel: "📱 ระบบรับเงิน (โอนเงิน / QR)",
+    portId: "usb-c-1",
+    portLabel: "USB-C 1",
+    amount: 5,
+    contact: "Line: student_test",
+    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
+      isPublic: true
+    }
+  }
+];
+
+function getStoredIssues() {
+  try {
+    const raw = localStorage.getItem('usb_charger_issues');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch(e){}
+  localStorage.setItem('usb_charger_issues', JSON.stringify(DEFAULT_ISSUES));
+  return DEFAULT_ISSUES;
+}
+
+function saveStoredIssues(issues) {
+  try {
+    localStorage.setItem('usb_charger_issues', JSON.stringify(issues));
+  } catch(e){}
+}
+
+let currentSelectedIssueCat = 'power';
+let currentIssueBase64Image = '';
+
+function updateSupportContactInfo() {
+  const cfg = getAppConfig();
+  const phone = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
+  const phoneFormatted = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const line = cfg.supportLine || '@smartcharger';
+  const loc = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
+
+  const pBtn = $('contactPhoneBtn');
+  const pTxt = $('contactPhoneText');
+  if (pBtn) pBtn.href = `tel:${phone.replace(/\D/g, '')}`;
+  if (pTxt) pTxt.textContent = phoneFormatted || phone;
+
+  const lBtn = $('contactLineBtn');
+  const lTxt = $('contactLineText');
+  if (lBtn) lBtn.href = line.startsWith('http') ? line : `https://line.me/ti/p/~${line.replace('@', '')}`;
+  if (lTxt) lTxt.textContent = line;
+
+  const locTxt = $('contactLocText');
+  if (locTxt) locTxt.textContent = loc;
+
+  // Update public QA badge count
+  const allIssues = getStoredIssues();
+  const publicCount = allIssues.filter(x => x.reply && x.reply.isPublic).length;
+  const badge = $('qaPublicBadge');
+  if (badge) badge.textContent = String(publicCount);
+}
+
+function openIssueModal() {
+  Sound.click();
+  $('issueFormWrap').style.display = 'block';
+  $('issueSuccessWrap').style.display = 'none';
+  $('issueAlert').style.display = 'none';
+  $('issueAmount').value = '';
+  $('issueDesc').value = '';
+  $('issueContact').value = '';
+  clearIssueImage();
+  $('issueModalOverlay').classList.add('open');
+  Voice.speak('แจ้งปัญหาการใช้งาน หรือข้อสงสัยได้เลยนะคะ');
+}
+
+function closeIssueModal() {
+  Sound.click();
+  $('issueModalOverlay').classList.remove('open');
+}
+
+function selectIssueCat(cat, el) {
+  Sound.click();
+  currentSelectedIssueCat = cat;
+  document.querySelectorAll('#issueCatChips .cat-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function onIssueImageSelected(ev) {
+  const file = ev.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 1024px to keep localStorage safe and fast
+      const maxDim = 1024;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else { w = Math.round((w * maxDim) / h); h = maxDim; }
+      }
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      currentIssueBase64Image = cvs.toDataURL('image/jpeg', 0.8);
+
+      $('issueImgPreview').src = currentIssueBase64Image;
+      $('issueImgPreviewBox').style.display = 'block';
+      $('issueUploadZone').style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearIssueImage() {
+  currentIssueBase64Image = '';
+  $('issueFileInput').value = '';
+  $('issueImgPreview').src = '';
+  $('issueImgPreviewBox').style.display = 'none';
+  $('issueUploadZone').style.display = 'block';
+}
+
+async function submitIssue() {
+  const contact = $('issueContact').value.trim();
+  const desc = $('issueDesc').value.trim();
+  const alertEl = $('issueAlert');
+  const alertMsg = $('issueAlertMsg');
+
+  if (!contact) {
+    alertEl.style.display = 'block';
+    alertMsg.textContent = 'กรุณากรอกเบอร์โทรศัพท์ หรือ Line ID สำหรับติดต่อกลับค่ะ';
+    Sound.error();
+    return;
+  }
+  if (!desc) {
+    alertEl.style.display = 'block';
+    alertMsg.textContent = 'กรุณาระบุรายละเอียดปัญหาที่เกิดขึ้นค่ะ';
+    Sound.error();
+    return;
+  }
+  alertEl.style.display = 'none';
+
+  const catLabels = {
+    power: '⚡ ระบบจ่ายไฟ',
+    coin: '🪙 ระบบรับเงิน (หยอดเหรียญ)',
+    transfer: '📱 ระบบรับเงิน (โอนเงิน / QR)',
+    other: '❓ ข้อสงสัยทั่วไป'
+  };
+
+  const portEl = $('issuePort');
+  const portId = portEl.value;
+  const portLabel = portEl.options[portEl.selectedIndex].text;
+  const amount = Number($('issueAmount').value) || 0;
+
+  const ticketId = `ISSUE-${Date.now().toString().slice(-4)}`;
+  const newIssue = {
+    id: ticketId,
+    createdAt: new Date().toISOString(),
+    category: currentSelectedIssueCat,
+    categoryLabel: catLabels[currentSelectedIssueCat] || 'ทั่วไป',
+    portId: portId,
+    portLabel: portLabel,
+    amount: amount,
+    contact: contact,
+    description: desc,
+    imageUrl: currentIssueBase64Image,
+    status: 'pending',
+    reply: null
+  };
+
+  // Save to localStorage
+  const all = getStoredIssues();
+  all.unshift(newIssue);
+  saveStoredIssues(all);
+
+  // Send to backend API if running
+  apiFetch('POST', '/api/issues', newIssue).catch(() => null);
+
+  Sound.success();
+  Voice.speak('บันทึกการแจ้งปัญหาเรียบร้อยแล้วค่ะ ผู้ดูแลระบบจะตรวจสอบและติดต่อกลับโดยเร็วค่ะ', true);
+
+  $('issueSuccessId').textContent = ticketId;
+  $('issueFormWrap').style.display = 'none';
+  $('issueSuccessWrap').style.display = 'block';
+  updateSupportContactInfo();
+}
+
+/* ── PUBLIC Q&A MODAL ── */
+let currentQAFilter = 'all';
+
+function openPublicQAModal() {
+  Sound.click();
+  currentQAFilter = 'all';
+  document.querySelectorAll('#sheetPublicQA .cat-chip').forEach(c => c.classList.remove('active'));
+  $('qaFilterAll')?.classList.add('active');
+  renderPublicQA();
+  $('publicQAModalOverlay').classList.add('open');
+}
+
+function closePublicQAModal() {
+  Sound.click();
+  $('publicQAModalOverlay').classList.remove('open');
+}
+
+function filterQA(cat, btn) {
+  Sound.click();
+  currentQAFilter = cat;
+  document.querySelectorAll('#sheetPublicQA .cat-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPublicQA();
+}
+
+function renderPublicQA() {
+  const container = $('qaListContainer');
+  if (!container) return;
+
+  const issues = getStoredIssues();
+  const publicIssues = issues.filter(x => x.reply && x.reply.isPublic);
+  const filtered = currentQAFilter === 'all' ? publicIssues : publicIssues.filter(x => x.category === currentQAFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="qa-empty">
+        <div style="font-size:2.4rem;margin-bottom:8px">💬</div>
+        <p>ยังไม่มีข้อสงสัยในหมวดหมู่นี้ที่เผยแพร่</p>
+        <small style="color:var(--g3)">เมื่อผู้ดูแลระบบตอบกลับและอนุมัติ จะแสดงบนกระดานนี้ค่ะ</small>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(item => {
+    const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const replyTimeStr = item.reply?.repliedAt ? new Date(item.reply.repliedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    const imgHtml = item.imageUrl ? `<img src="${item.imageUrl}" class="qa-img-thumb" alt="หลักฐาน" onclick="previewImageFullscreen('${item.imageUrl}')"/>` : '';
+
+    return `
+      <div class="qa-card">
+        <div class="qa-card-head">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="qa-cat-badge">${item.categoryLabel || item.category}</span>
+            <span class="qa-port-badge">${item.portLabel || item.portId}</span>
+            ${item.amount ? `<span style="font-size:.7rem;font-weight:700;color:var(--green)">฿${item.amount}</span>` : ''}
+          </div>
+          <span class="qa-time">${timeStr}</span>
+        </div>
+        <div class="qa-question"><strong>ปัญหาที่พบ:</strong> ${escapeHtml(item.description)}</div>
+        ${imgHtml}
+        <div class="qa-reply-box">
+          <div class="qa-reply-title">
+            <span>👑 ${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
+            <span style="font-size:.65rem;color:var(--g3);margin-left:auto">${replyTimeStr}</span>
+          </div>
+          <div class="qa-reply-text">${escapeHtml(item.reply?.message || '—')}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function previewImageFullscreen(src) {
+  if (!src) return;
+  const w = window.open('');
+  if (w) {
+    w.document.write(`<body style="margin:0;background:#090d16;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${src}" style="max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.8)"/><script>document.body.onclick=()=>window.close()<\/script></body>`);
+  }
+}
+
+// Initial setup for Support
+updateSupportContactInfo();
 
 /* ───────────────────────────────────────────────
    THEME TOGGLE (ขาว / ดำ แบบคลื่นวงกลมสมูทและสั่น haptic)

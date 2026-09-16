@@ -835,6 +835,96 @@ app.post("/api/esp32/report", (req, res) => {
   res.json({ success: true });
 });
 
+// ─── ISSUES & SUPPORT TICKETS ────────────────────────────────────────────────
+const ISSUES_FILE = path.join(DATA_DIR, "issues.json");
+
+function loadIssuesFile() {
+  try {
+    if (fs.existsSync(ISSUES_FILE)) {
+      return JSON.parse(fs.readFileSync(ISSUES_FILE, "utf8"));
+    }
+  } catch(_) {}
+  return [];
+}
+
+function saveIssuesFile(issues) {
+  try {
+    fs.writeFileSync(ISSUES_FILE, JSON.stringify(issues, null, 2), "utf8");
+  } catch(_) {}
+}
+
+app.get("/api/issues", (req, res) => {
+  const issues = loadIssuesFile();
+  const auth = req.headers.authorization;
+  let isAdmin = false;
+  if (auth && auth.startsWith("Bearer ")) {
+    try {
+      jwt.verify(auth.slice(7), CFG.jwtSecret);
+      isAdmin = true;
+    } catch(_) {}
+  }
+  if (isAdmin) {
+    return res.json({ issues });
+  }
+  const publicIssues = issues.filter(x => x.reply && x.reply.isPublic);
+  res.json({ issues: publicIssues });
+});
+
+app.post("/api/issues", (req, res) => {
+  const issue = req.body;
+  if (!issue || !issue.description) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+  const issues = loadIssuesFile();
+  const newIssue = {
+    id: issue.id || `ISSUE-${Date.now().toString().slice(-4)}`,
+    createdAt: issue.createdAt || new Date().toISOString(),
+    category: issue.category || "other",
+    categoryLabel: issue.categoryLabel || "ทั่วไป",
+    portId: issue.portId || "all",
+    portLabel: issue.portLabel || "ทั่วไป",
+    amount: Number(issue.amount) || 0,
+    contact: issue.contact || "—",
+    description: issue.description,
+    imageUrl: issue.imageUrl || "",
+    status: "pending",
+    reply: null
+  };
+  issues.unshift(newIssue);
+  if (issues.length > 300) issues.pop();
+  saveIssuesFile(issues);
+  console.log(`[💬 Issue] New issue created: ${newIssue.id} (${newIssue.category})`);
+  res.json({ success: true, issue: newIssue });
+});
+
+app.post("/api/issues/:id/reply", requireAdmin, (req, res) => {
+  const id = req.params.id;
+  const { status, message, isPublic } = req.body;
+  const issues = loadIssuesFile();
+  const target = issues.find(x => x.id === id);
+  if (!target) return res.status(404).json({ error: "Issue not found" });
+
+  target.status = status || target.status;
+  target.reply = {
+    adminName: "ผู้ดูแลระบบ (Admin)",
+    message: message || (status === "resolved" ? "ผู้ดูแลได้ตรวจสอบและดำเนินการแก้ไขเรียบร้อยแล้วครับ" : "กำลังดำเนินการตรวจสอบครับ"),
+    repliedAt: new Date().toISOString(),
+    isPublic: !!isPublic
+  };
+  saveIssuesFile(issues);
+  console.log(`[💬 Issue] Replied to ${id} (isPublic: ${isPublic})`);
+  res.json({ success: true, issue: target });
+});
+
+app.delete("/api/issues/:id", requireAdmin, (req, res) => {
+  const id = req.params.id;
+  let issues = loadIssuesFile();
+  issues = issues.filter(x => x.id !== id);
+  saveIssuesFile(issues);
+  console.log(`[💬 Issue] Deleted issue: ${id}`);
+  res.json({ success: true });
+});
+
 // ─── Error Handler ────────────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {

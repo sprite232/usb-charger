@@ -546,6 +546,9 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
     <div class="tab" onclick="switchTab('transactions')">
       <img src="assets/icon-doc.png" class="tab-icon" alt=""/> รายการเงิน
     </div>
+    <div class="tab" id="tabNavIssues" onclick="switchTab('issues')">
+      <img src="assets/icon-doc.png" class="tab-icon" alt=""/> แจ้งปัญหา & ช่วยเหลือ <span id="issuesCountBadge" style="display:none;background:#ef4444;color:#fff;font-size:0.68rem;padding:2px 6px;border-radius:10px;font-weight:bold;margin-left:4px">0</span>
+    </div>
     <div class="tab" onclick="switchTab('testing')">
       <img src="assets/icon-gear.png" class="tab-icon" alt=""/> ควบคุม
     </div>
@@ -672,8 +675,110 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
     </div>
   </div>
 
+  <!-- ─── TAB: Issues & Support ────────────────── -->
+  <div id="tab-issues" class="content" style="display:none">
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="lbl">ปัญหาทั้งหมด</div>
+        <div class="val" id="issueStatTotal">0</div>
+        <div class="comp-flex comp-muted"><span>เรื่องที่แจ้งเข้ามา</span></div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="lbl">รอดำเนินการ</div>
+        <div class="val" id="issueStatPending">0</div>
+        <div class="comp-flex comp-red"><span>ยังไม่ได้ตอบกลับ</span></div>
+      </div>
+      <div class="stat-card blue">
+        <div class="lbl">กำลังตรวจสอบ</div>
+        <div class="val" id="issueStatInProgress">0</div>
+        <div class="comp-flex comp-muted"><span>ประสานงาน</span></div>
+      </div>
+      <div class="stat-card green">
+        <div class="lbl">แก้ไขเสร็จสิ้น</div>
+        <div class="val" id="issueStatResolved">0</div>
+        <div class="comp-flex comp-green"><span>ได้รับการดูแลแล้ว</span></div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="lbl">เผยแพร่สาธารณะ</div>
+        <div class="val" id="issueStatPublic">0</div>
+        <div class="comp-flex comp-muted"><span>แสดงบนหน้าเว็บ (Q&A)</span></div>
+      </div>
+      <div class="stat-card purple">
+        <div class="lbl">มีรูปหลักฐาน</div>
+        <div class="val" id="issueStatWithImg">0</div>
+        <div class="comp-flex comp-muted"><span>แนบรูปมาด้วย</span></div>
+      </div>
+    </div>
+
+    <!-- Toolbar Filters -->
+    <div class="toolbar" style="margin-bottom:1rem;display:flex;gap:8px;flex-wrap:wrap">
+      <select id="issueCatFilter" class="form-input" style="width:auto;min-width:160px;padding:.5rem .8rem" onchange="filterAdminIssues()">
+        <option value="all">ทุกหมวดหมู่</option>
+        <option value="power">⚡ ระบบจ่ายไฟ</option>
+        <option value="coin">🪙 หยอดเหรียญ</option>
+        <option value="transfer">📱 โอนเงิน / QR</option>
+        <option value="other">❓ ข้อสงสัยทั่วไป</option>
+      </select>
+      <select id="issueStatusFilter" class="form-input" style="width:auto;min-width:160px;padding:.5rem .8rem" onchange="filterAdminIssues()">
+        <option value="all">ทุกสถานะ</option>
+        <option value="pending">⏳ รอดำเนินการ (Pending)</option>
+        <option value="in_progress">🔍 กำลังตรวจสอบ (In Progress)</option>
+        <option value="resolved">✅ แก้ไขเสร็จสิ้น (Resolved)</option>
+      </select>
+      <button class="btn-sm btn-primary" onclick="renderAdminIssues()" style="margin-left:auto">🔄 รีเฟรชรายการ</button>
+    </div>
+
+    <!-- Issues Table -->
+    <div class="tbl-wrap-container">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>รหัส Ticket</th>
+              <th>หมวดหมู่</th>
+              <th>พอร์ต</th>
+              <th>ยอดเงิน</th>
+              <th>ผู้แจ้ง / ติดต่อ</th>
+              <th>รายละเอียดปัญหา</th>
+              <th>หลักฐาน</th>
+              <th>สถานะ</th>
+              <th>สาธารณะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="issuesTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="tbl-fade-hint"></div>
+    </div>
+  </div>
+
   <!-- ─── TAB: Testing ────────────────────────── -->
   <div id="tab-testing" class="content" style="display:none">
+    <div class="test-panel" style="border-left:4px solid var(--cyan)">
+      <div class="test-panel-title">📞 ข้อมูลช่องทางติดต่อฉุกเฉิน (Emergency Support)</div>
+      <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ศูนย์ช่วยเหลือมุมล่างของหน้าเว็บ เพื่อให้ผู้ใช้งานโทรออกหรือติดต่อทาง Line ได้ทันที</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+        <div class="field-row">
+          <label>เบอร์โทรศัพท์ผู้ดูแล:</label>
+          <input type="text" id="cfgSupportPhone" class="form-input" placeholder="0969679951" />
+        </div>
+        <div class="field-row">
+          <label>Line ID ผู้ดูแล:</label>
+          <input type="text" id="cfgSupportLine" class="form-input" placeholder="@smartcharger" />
+        </div>
+        <div class="field-row">
+          <label>จุดบริการ / ห้องคอมพิวเตอร์:</label>
+          <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ห้องคอมพิวเตอร์ อาคาร 1" />
+        </div>
+      </div>
+      <div style="margin-top:1rem">
+        <button class="btn-sm btn-primary" onclick="saveSupportSettings()">บันทึกข้อมูลช่องทางติดต่อ</button>
+      </div>
+    </div>
+
     <div class="test-panel">
       <div class="test-panel-title">ทดสอบสั่งจ่ายไฟ & เริ่มชาร์จ</div>
       <div class="test-panel-desc">สั่งเริ่มชาร์จจำลองเพื่อดูการทำงานของไฟและเวลานับถอยหลัง</div>
@@ -751,6 +856,88 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
 
   <div style="margin-top:2rem;text-align:center">
     <a href="/" style="color:var(--muted);font-size:.9rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ MODAL: ISSUE DETAIL & REPLY -->
+<div class="modal-overlay" id="issueDetailModal" onclick="closeIssueDetailModal(event)">
+  <div class="modal-card" style="max-width:600px">
+    <div class="modal-top">
+      <div>
+        <h2 id="admModalIssueTitle">รายละเอียดการแจ้งปัญหา</h2>
+        <p id="admModalIssueSub">—</p>
+      </div>
+      <button class="btn-close-modal" onclick="hideIssueDetailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="admModalIssueBody">
+        <!-- Info Grid -->
+        <div style="background:var(--card2);padding:1rem;border-radius:var(--r-sm);margin-bottom:1rem;font-size:.85rem;line-height:1.6">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted)">หมวดหมู่:</span>
+            <strong id="admIssueCat" style="color:var(--cyan)">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted)">พอร์ต:</span>
+            <strong id="admIssuePort">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted)">จำนวนเงิน:</span>
+            <strong id="admIssueAmount" style="color:var(--green)">—</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="color:var(--muted)">ข้อมูลติดต่อกลับ:</span>
+            <strong id="admIssueContact" style="color:var(--yellow)">—</strong>
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+            <span style="color:var(--muted)">รายละเอียดปัญหาจากผู้ใช้:</span>
+            <p id="admIssueDesc" style="margin-top:4px;font-weight:600;color:var(--text);white-space:pre-wrap"></p>
+          </div>
+        </div>
+
+        <!-- Evidence Image -->
+        <div id="admIssueImgWrap" style="margin-bottom:1rem;display:none;text-align:center">
+          <span style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px">รูปภาพหลักฐาน (คลิกเพื่อดูรูปเต็ม):</span>
+          <img id="admIssueImg" src="" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="previewImageFullscreen(this.src)" alt="หลักฐาน" />
+        </div>
+
+        <!-- Admin Reply Form -->
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem">
+          <h3 style="font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text)">💬 ตอบกลับและดำเนินการ (Admin Response)</h3>
+          
+          <div class="form-group" style="margin-bottom:.75rem">
+            <label class="form-label">สถานะการแก้ไข:</label>
+            <select id="admReplyStatus" class="form-input">
+              <option value="pending">⏳ รอดำเนินการ (Pending)</option>
+              <option value="in_progress">🔍 กำลังตรวจสอบ / ประสานงาน (In Progress)</option>
+              <option value="resolved">✅ แก้ไขเสร็จสิ้น / คืนเงินเรียบร้อย (Resolved)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:.75rem">
+            <label class="form-label">ข้อความตอบกลับผู้ใช้งาน:</label>
+            <textarea id="admReplyMessage" class="form-input" rows="3" placeholder="พิมพ์ข้อความตอบกลับหรือคำชี้แจง เช่น คืนเงินแล้ว หรือเปิดชดเชยเวลาให้เรียบร้อยแล้ว"></textarea>
+          </div>
+
+          <!-- Public Toggle -->
+          <div style="background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <div>
+              <strong style="font-size:.85rem;display:block">🌐 แสดงเป็นสาธารณะ (Public Q&A)</strong>
+              <small style="font-size:.72rem;color:var(--muted)">อนุญาตให้ผู้ใช้คนอื่นเห็นปัญหานี้และคำตอบของแอดมินบนหน้าเว็บหลัก</small>
+            </div>
+            <label style="display:flex;align-items:center;cursor:pointer">
+              <input type="checkbox" id="admReplyIsPublic" style="width:20px;height:20px;accent-color:var(--cyan);cursor:pointer" />
+            </label>
+          </div>
+
+          <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap">
+            <button class="btn-sm btn-primary" onclick="saveAdminReply()" style="flex:1;padding:.65rem">บันทึกคำตอบและสถานะ</button>
+            <button class="btn-sm btn-danger" onclick="deleteCurrentIssue()" style="padding:.65rem 1rem">ลบเรื่องนี้</button>
+            <button class="btn-sm btn-gray" onclick="hideIssueDetailModal()" style="padding:.65rem 1rem">ปิด</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -908,6 +1095,9 @@ function getLocalSavedConfig() {
     const saved = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
     return {
       promptpayPhone: saved.promptpayPhone || '0969679951',
+      supportPhone: saved.supportPhone || saved.promptpayPhone || '0969679951',
+      supportLine: saved.supportLine || '@smartcharger',
+      supportLocation: saved.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1',
       bankName: saved.bankName || 'กสิกรไทย (kbank)',
       bankAccount: saved.bankAccount || '193-3-86131-3',
       bankAccountName: saved.bankAccountName || 'ศุภกฤต สอนบุญมา',
@@ -918,6 +1108,9 @@ function getLocalSavedConfig() {
   } catch(e) {
     return {
       promptpayPhone: '0969679951',
+      supportPhone: '0969679951',
+      supportLine: '@smartcharger',
+      supportLocation: 'ห้องคอมพิวเตอร์ อาคาร 1',
       bankName: 'กสิกรไทย (kbank)',
       bankAccount: '193-3-86131-3',
       bankAccountName: 'ศุภกฤต สอนบุญมา',
@@ -1928,12 +2121,12 @@ setInterval(() => {
 
 // ─── Tabs & Responsive Chart Render ───────────
 function switchTab(name) {
-  ['dashboard','analytics','transactions','testing'].forEach(t => {
+  ['dashboard','analytics','transactions','issues','testing'].forEach(t => {
     const el = document.getElementById(`tab-${t}`);
     if (el) el.style.display = t === name ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el, i) => {
-    el.className = 'tab' + (['dashboard','analytics','transactions','testing'][i] === name ? ' active' : '');
+    el.className = 'tab' + (['dashboard','analytics','transactions','issues','testing'][i] === name ? ' active' : '');
   });
   
   if (name === 'dashboard' || name === 'analytics') {
@@ -1943,8 +2136,223 @@ function switchTab(name) {
         updateCharts(dashData.transactions, visits);
       }
     }, 60);
+  } else if (name === 'issues') {
+    renderAdminIssues();
+  } else if (name === 'testing') {
+    loadSupportSettings();
   }
 }
+
+/* ───────────────────────────────────────────────
+   ISSUES & SUPPORT MANAGEMENT (Admin)
+─────────────────────────────────────────────── */
+let currentAdminIssues = [];
+let activeEditingIssueId = null;
+
+function loadAdminIssues() {
+  try {
+    const raw = localStorage.getItem('usb_charger_issues');
+    if (raw) {
+      currentAdminIssues = JSON.parse(raw);
+    } else {
+      currentAdminIssues = [];
+    }
+  } catch(e) {
+    currentAdminIssues = [];
+  }
+  updateAdminIssuesBadge();
+  return currentAdminIssues;
+}
+
+function saveAdminIssues() {
+  try {
+    localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues));
+  } catch(e){}
+  updateAdminIssuesBadge();
+}
+
+function updateAdminIssuesBadge() {
+  const pendingCount = currentAdminIssues.filter(x => x.status === 'pending').length;
+  const badge = document.getElementById('issuesCountBadge');
+  if (badge) {
+    if (pendingCount > 0) {
+      badge.textContent = String(pendingCount);
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function filterAdminIssues() {
+  renderAdminIssues();
+}
+
+function renderAdminIssues() {
+  loadAdminIssues();
+  const cat = document.getElementById('issueCatFilter')?.value || 'all';
+  const status = document.getElementById('issueStatusFilter')?.value || 'all';
+
+  // Stats
+  const total = currentAdminIssues.length;
+  const pending = currentAdminIssues.filter(x => x.status === 'pending').length;
+  const inProgress = currentAdminIssues.filter(x => x.status === 'in_progress').length;
+  const resolved = currentAdminIssues.filter(x => x.status === 'resolved').length;
+  const isPub = currentAdminIssues.filter(x => x.reply && x.reply.isPublic).length;
+  const withImg = currentAdminIssues.filter(x => !!x.imageUrl).length;
+
+  if (document.getElementById('issueStatTotal')) document.getElementById('issueStatTotal').textContent = String(total);
+  if (document.getElementById('issueStatPending')) document.getElementById('issueStatPending').textContent = String(pending);
+  if (document.getElementById('issueStatInProgress')) document.getElementById('issueStatInProgress').textContent = String(inProgress);
+  if (document.getElementById('issueStatResolved')) document.getElementById('issueStatResolved').textContent = String(resolved);
+  if (document.getElementById('issueStatPublic')) document.getElementById('issueStatPublic').textContent = String(isPub);
+  if (document.getElementById('issueStatWithImg')) document.getElementById('issueStatWithImg').textContent = String(withImg);
+
+  let filtered = currentAdminIssues;
+  if (cat !== 'all') filtered = filtered.filter(x => x.category === cat);
+  if (status !== 'all') filtered = filtered.filter(x => x.status === status);
+
+  const tbody = document.getElementById('issuesTableBody');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)">ไม่พบรายการแจ้งปัญหาตามเงื่อนไขที่เลือก</td></tr>';
+    return;
+  }
+
+  const statusBadges = {
+    pending: '<span style="background:var(--yellow-bg);color:var(--yellow);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">⏳ รอดำเนินการ</span>',
+    in_progress: '<span style="background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">🔍 กำลังตรวจสอบ</span>',
+    resolved: '<span style="background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">✅ แก้ไขเสร็จสิ้น</span>'
+  };
+
+  tbody.innerHTML = filtered.map(item => {
+    const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const imgHtml = item.imageUrl ? `<img src="${item.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border)" onclick="previewImageFullscreen('${item.imageUrl}')" title="คลิกดูรูปเต็ม"/>` : '<span style="color:var(--muted);font-size:.75rem">—</span>';
+    const isPublicBadge = (item.reply && item.reply.isPublic) ? '<span style="color:var(--cyan);font-weight:700;font-size:.78rem">🌐 สาธารณะ</span>' : '<span style="color:var(--muted);font-size:.75rem">🔒 ส่วนตัว</span>';
+    const shortDesc = item.description.length > 35 ? item.description.slice(0, 35) + '...' : item.description;
+
+    return `
+      <tr>
+        <td style="font-family:monospace;font-weight:700;color:var(--cyan)">${item.id}</td>
+        <td><span style="font-size:.75rem;font-weight:600">${item.categoryLabel || item.category}</span></td>
+        <td><strong>${item.portLabel || item.portId}</strong></td>
+        <td><span style="color:var(--green);font-weight:700">${item.amount ? `฿${item.amount}` : '—'}</span></td>
+        <td><span style="font-size:.78rem;color:var(--text)">${escapeHtml(item.contact)}</span></td>
+        <td title="${escapeHtml(item.description)}" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(shortDesc)}</td>
+        <td style="text-align:center">${imgHtml}</td>
+        <td>${statusBadges[item.status] || item.status}</td>
+        <td>${isPublicBadge}</td>
+        <td>
+          <button class="btn-sm btn-primary" style="padding:.3rem .6rem;font-size:.75rem" onclick="openIssueReplyModal('${item.id}')">
+            ${item.reply ? '✏️ แก้ไขคำตอบ' : '💬 ตอบกลับ'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openIssueReplyModal(id) {
+  loadAdminIssues();
+  const issue = currentAdminIssues.find(x => x.id === id);
+  if (!issue) return;
+
+  activeEditingIssueId = id;
+  document.getElementById('admModalIssueTitle').textContent = `แจ้งปัญหา: ${issue.id}`;
+  document.getElementById('admModalIssueSub').textContent = `วันที่แจ้ง: ${new Date(issue.createdAt).toLocaleString('th-TH')}`;
+  document.getElementById('admIssueCat').textContent = issue.categoryLabel || issue.category;
+  document.getElementById('admIssuePort').textContent = issue.portLabel || issue.portId;
+  document.getElementById('admIssueAmount').textContent = issue.amount ? `฿${issue.amount}` : 'ไม่ระบุ';
+  document.getElementById('admIssueContact').textContent = issue.contact;
+  document.getElementById('admIssueDesc').textContent = issue.description;
+
+  const imgWrap = document.getElementById('admIssueImgWrap');
+  const imgEl = document.getElementById('admIssueImg');
+  if (issue.imageUrl) {
+    imgEl.src = issue.imageUrl;
+    imgWrap.style.display = 'block';
+  } else {
+    imgWrap.style.display = 'none';
+  }
+
+  document.getElementById('admReplyStatus').value = issue.status || 'pending';
+  document.getElementById('admReplyMessage').value = issue.reply?.message || '';
+  document.getElementById('admReplyIsPublic').checked = !!(issue.reply && issue.reply.isPublic);
+
+  document.getElementById('issueDetailModal').classList.add('open');
+}
+
+function hideIssueDetailModal() {
+  document.getElementById('issueDetailModal').classList.remove('open');
+  activeEditingIssueId = null;
+}
+
+function closeIssueDetailModal(e) {
+  if (e.target.id === 'issueDetailModal') hideIssueDetailModal();
+}
+
+function saveAdminReply() {
+  if (!activeEditingIssueId) return;
+  loadAdminIssues();
+  const issue = currentAdminIssues.find(x => x.id === activeEditingIssueId);
+  if (!issue) return;
+
+  const status = document.getElementById('admReplyStatus').value;
+  const message = document.getElementById('admReplyMessage').value.trim();
+  const isPublic = document.getElementById('admReplyIsPublic').checked;
+
+  issue.status = status;
+  issue.reply = {
+    adminName: 'ผู้ดูแลระบบ (Admin)',
+    message: message || (status === 'resolved' ? 'ผู้ดูแลได้ตรวจสอบและดำเนินการแก้ไขเรียบร้อยแล้วครับ' : 'กำลังดำเนินการตรวจสอบครับ'),
+    repliedAt: new Date().toISOString(),
+    isPublic: isPublic
+  };
+
+  saveAdminIssues();
+  hideIssueDetailModal();
+  renderAdminIssues();
+  setActionNotice(`บันทึกคำตอบ Ticket ${issue.id} เรียบร้อย (${isPublic ? 'สาธารณะ' : 'ส่วนตัว'})`);
+}
+
+function deleteCurrentIssue() {
+  if (!activeEditingIssueId) return;
+  if (!confirm(`ต้องการลบ Ticket ${activeEditingIssueId} ออกจากระบบ?`)) return;
+
+  loadAdminIssues();
+  currentAdminIssues = currentAdminIssues.filter(x => x.id !== activeEditingIssueId);
+  saveAdminIssues();
+  hideIssueDetailModal();
+  renderAdminIssues();
+  setActionNotice('ลบรายการปัญหาเรียบร้อย');
+}
+
+/* ── Support Contact Settings in Admin ── */
+function loadSupportSettings() {
+  const cfg = getLocalSavedConfig();
+  if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
+  if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '@smartcharger';
+  if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
+}
+
+function saveSupportSettings() {
+  const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '0969679951';
+  const line = document.getElementById('cfgSupportLine')?.value?.trim() || '@smartcharger';
+  const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || 'ห้องคอมพิวเตอร์ อาคาร 1';
+
+  const cfg = getLocalSavedConfig();
+  cfg.supportPhone = phone;
+  cfg.supportLine = line;
+  cfg.supportLocation = loc;
+  localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  setActionNotice('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อย');
+  alert('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อยแล้ว ข้อมูลจะอัปเดตบนหน้าเว็บหลักทันที');
+}
+
+// Initial load for admin issues badge
+setTimeout(loadAdminIssues, 500);
 
 // Check saved token on page load
 if (token) {
