@@ -6,7 +6,38 @@
 <title>ตู้ชาร์จ USB · Smart Charger</title>
 <link rel="icon" type="image/jpeg" href="assets/logo.jpg"/>
 <link rel="apple-touch-icon" href="assets/logo.jpg"/>
+<!-- ⚡ Early theme init — ป้องกัน flash ก่อนโหลด JS -->
+<script>
+(function(){
+  var t=localStorage.getItem('sc_theme');
+  if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+  document.documentElement.setAttribute('data-theme',t);
+})();
+</script>
 <script src="config.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import{initializeApp}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import{getFirestore,doc,onSnapshot}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+  window._fbApp=initializeApp({
+    apiKey:"AIzaSyB_vTfWp4iygpGpqPWZzQmQzLM6zGdBtFI",
+    authDomain:"usb-charger-project.firebaseapp.com",
+    projectId:"usb-charger-project",
+    storageBucket:"usb-charger-project.firebasestorage.app",
+    messagingSenderId:"336947265559",
+    appId:"1:336947265559:web:3cfb492f857f1ef1021c52"
+  });
+  const fdb=getFirestore(window._fbApp);
+  // real-time listener — update port state ทันทีเมื่อ server เปลี่ยน
+  onSnapshot(doc(fdb,'charger','charger01'),snap=>{
+    if(!snap.exists())return;
+    const d=snap.data();
+    if(d&&d.ports&&Array.isArray(d.ports)){
+      window._fsData=d;
+      if(typeof window._onFsUpdate==='function')window._onFsUpdate(d);
+    }
+  });
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -16,11 +47,15 @@
 
 :root{
   --white:#ffffff;
-  --off:#f7f7f5;
-  --g1:#f0efec;
-  --g2:#e0dfdb;
-  --g3:#a8a8a0;
-  --dark:#111110;
+  --off:#f8fafc;
+  --g1:#f1f5f9;
+  --g2:#e2e8f0;
+  --g3:#64748b;
+  --dark:#0f172a;
+  --btn-primary-bg:#0f172a;
+  --btn-primary-text:#ffffff;
+  --card-bg:#ffffff;
+  --card-border:#e2e8f0;
   --green:#059669;
   --green-bg:rgba(5,150,105,.09);
   --amber:#d97706;
@@ -39,12 +74,16 @@
 }
 
 [data-theme="dark"]{
-  --white:#0c0c0c;
-  --off:#161616;
-  --g1:#1e1e1e;
-  --g2:#2a2a2a;
-  --g3:#6b7280;
+  --white:#090d16;
+  --off:#0f172a;
+  --g1:#182235;
+  --g2:#233048;
+  --g3:#94a3b8;
   --dark:#f8fafc;
+  --btn-primary-bg:#3b82f6;
+  --btn-primary-text:#ffffff;
+  --card-bg:#111827;
+  --card-border:#1f2d47;
   --green:#10b981;
   --green-bg:rgba(16,185,129,.12);
   --amber:#f59e0b;
@@ -62,11 +101,14 @@ body{
   background:var(--white);
   color:var(--dark);
   -webkit-font-smoothing:antialiased;
-  cursor:none;
-  transition:background .3s ease,color .3s ease;
+  cursor:default;
+  transition:background .35s ease,color .35s ease;
+}
+a,button,.port-card,.dc,.method-item,.acc-head,.slip-zone,.sheet-close,.theme-switch-pill,.icon-nav-btn{
+  cursor:pointer !important;
 }
 
-/* ── CURSOR ────────────────────────────── */
+/* ── AMBIENT CURSOR ────────────────────── */
 #cur{
   position:fixed;top:0;left:0;
   width:11px;height:11px;
@@ -85,9 +127,11 @@ body{
   transform:translate(-50%,-50%);
   transition:width .45s var(--ease-spring),height .45s var(--ease-spring),border-color .3s;
 }
+[data-theme="dark"] #curR{border-color:rgba(255,255,255,.3)}
 body.hov #cur{width:7px;height:7px}
-body.hov #curR{width:60px;height:60px;border-color:rgba(0,0,0,.1)}
+body.hov #curR{width:60px;height:60px;border-color:rgba(37,99,235,.4)}
 body.clk #cur{transform:translate(-50%,-50%) scale(.7)}
+@media(pointer:coarse){#cur,#curR{display:none !important;}}
 
 /* ── NOISE ─────────────────────────────── */
 .noise{
@@ -104,15 +148,15 @@ body.clk #cur{transform:translate(-50%,-50%) scale(.7)}
 nav{
   position:sticky;top:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:16px 24px;
+  padding:14px 20px;
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
-  background:rgba(255,255,255,.82);
+  background:rgba(255,255,255,.85);
   border-bottom:1px solid rgba(0,0,0,.06);
   transition:box-shadow .4s,background .3s;
 }
-[data-theme="dark"] nav{background:rgba(10,10,10,.85);border-color:rgba(255,255,255,.07)}
-nav.scrolled{box-shadow:0 1px 32px rgba(0,0,0,.1)}
+[data-theme="dark"] nav{background:rgba(9,13,22,.88);border-color:rgba(255,255,255,.08)}
+nav.scrolled{box-shadow:0 2px 28px rgba(0,0,0,.08)}
 
 .nav-brand{
   display:flex;align-items:center;gap:10px;
@@ -128,8 +172,8 @@ nav.scrolled{box-shadow:0 1px 32px rgba(0,0,0,.1)}
 .rate-pill{
   display:inline-flex;align-items:center;gap:6px;
   background:var(--g1);border:1px solid var(--g2);
-  padding:7px 14px;border-radius:100px;
-  font-size:.8125rem;font-weight:600;color:var(--green);
+  padding:6px 12px;border-radius:100px;
+  font-size:.8rem;font-weight:600;color:var(--green);
   letter-spacing:.01em;
   animation:ratePulse 3s ease-in-out infinite alternate;
   transition:background .3s,border-color .3s;
@@ -141,19 +185,83 @@ nav.scrolled{box-shadow:0 1px 32px rgba(0,0,0,.1)}
 .rate-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ── THEME BUTTON ──────────────────────── */
-.theme-btn{
-  width:44px;height:44px;border-radius:10px;
-  border:1.5px solid var(--g2);
+/* ── VOICE BUTTON ──────────────────────── */
+.icon-nav-btn{
+  width:36px;height:34px;border-radius:10px;
+  border:1px solid var(--g2);
   background:var(--g1);
   display:flex;align-items:center;justify-content:center;
-  cursor:none;color:var(--g3);
-  transition:background .25s,border-color .25s,color .25s,transform .3s var(--ease-spring);
-  flex-shrink:0;
+  cursor:pointer;color:var(--green);
+  transition:background .25s,border-color .25s,color .25s,transform .2s var(--ease-spring);
+  flex-shrink:0;position:relative;
 }
-.theme-btn:hover{background:var(--g2);color:var(--dark);transform:scale(1.1)}
-.theme-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s var(--ease-spring)}
-.theme-btn:hover svg{transform:rotate(20deg)}
+.icon-nav-btn:hover{border-color:var(--g3);transform:scale(1.06)}
+.icon-nav-btn:active{transform:scale(.94)}
+.icon-nav-btn.muted{color:var(--g3);opacity:.65}
+.icon-nav-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── THEME SWITCH PILL (โหมดกลางวัน/กลางคืน) ─ */
+.theme-switch-pill{
+  width:64px;height:34px;border-radius:999px;
+  border:1.5px solid var(--g2);
+  background:var(--g1);
+  display:inline-flex;align-items:center;
+  cursor:pointer;position:relative;
+  transition:background .3s,border-color .3s,box-shadow .3s,transform .2s var(--ease-spring);
+  flex-shrink:0;padding:2px;
+  user-select:none;-webkit-user-select:none;
+}
+.theme-switch-pill:hover{
+  border-color:var(--g3);
+  transform:scale(1.04);
+}
+.theme-switch-pill:active{transform:scale(.96)}
+.pill-track{
+  width:100%;height:100%;position:relative;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5px;
+}
+.pill-icon{
+  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  z-index:2;color:var(--g3);
+  transition:color .3s,transform .3s var(--ease-spring);
+}
+.pill-icon svg{
+  width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.pill-thumb{
+  position:absolute;top:2px;left:2px;
+  width:26px;height:26px;border-radius:50%;
+  background:#ffffff;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+  transition:transform .32s var(--ease-spring),background .3s;
+  z-index:1;
+}
+html[data-theme="light"] .pill-thumb,
+html:not([data-theme="dark"]) .pill-thumb{
+  transform:translateX(0);
+  background:#ffffff;
+  box-shadow:0 2px 8px rgba(217,119,6,.28);
+}
+html[data-theme="light"] .sun-icon,
+html:not([data-theme="dark"]) .sun-icon{
+  color:#d97706;
+  transform:scale(1.18) rotate(15deg);
+}
+[data-theme="dark"] .pill-thumb{
+  transform:translateX(30px);
+  background:#1e293b;
+  box-shadow:0 2px 8px rgba(59,130,246,.35);
+}
+[data-theme="dark"] .moon-icon{
+  color:#60a5fa;
+  transform:scale(1.18) rotate(-15deg);
+}
+[data-theme="dark"] .sun-icon{
+  color:#64748b;
+  transform:scale(.85);
+}
 
 /* ── HERO HEADER ───────────────────────── */
 .hero-hd{
@@ -591,14 +699,14 @@ footer{
 .btn{
   display:block;width:100%;margin-top:8px;
   padding:14px;border-radius:12px;border:none; min-height:44px;
-  font-size:.9rem;font-weight:600;cursor:none;
+  font-size:.9rem;font-weight:600;cursor:pointer;
   -webkit-appearance:none;font-family:var(--sans);
   transition:transform .2s var(--ease-spring),box-shadow .2s,opacity .2s;
 }
 .btn:active{transform:scale(.98);opacity:.88}
-.btn:disabled{opacity:.35;cursor:default;transform:none}
-.btn-primary{background:var(--dark);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.14)}
-.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--btn-primary-bg);color:var(--btn-primary-text);box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,.28)}
 .btn-green{background:var(--green);color:#fff;box-shadow:0 4px 14px rgba(5,150,105,.25)}
 .btn-green:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(5,150,105,.35)}
 .btn-amber{background:var(--amber);color:#000}
@@ -629,11 +737,22 @@ footer{
       <div class="rate-dot"></div>
       <span id="rateLabel">1฿ = 3 นาที</span>
     </div>
-    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="เปลี่ยนธีม" aria-label="toggle theme">
-      <!-- Sun icon (shown in dark mode) -->
-      <svg id="iconSun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      <!-- Moon icon (shown in light mode) -->
-      <svg id="iconMoon" style="display:none" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <!-- 🔊 Voice & Sound Toggle -->
+    <button class="icon-nav-btn" id="voiceToggleBtn" onclick="Voice.toggle()" title="เปิด/ปิดเสียงพูดและเอฟเฟกต์ (เสียงภาษาไทย)" aria-label="toggle voice">
+      <svg id="iconVoiceOn" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      <svg id="iconVoiceOff" style="display:none" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    </button>
+    <!-- ☀️/🌙 Day / Night Theme Switch Pill -->
+    <button class="theme-switch-pill" id="themeToggle" onclick="toggleTheme()" title="สลับโหมดมืด / โหมดสว่าง" aria-label="toggle theme">
+      <div class="pill-track">
+        <span class="pill-icon sun-icon" title="โหมดสว่าง">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </span>
+        <span class="pill-icon moon-icon" title="โหมดมืด">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+        <div class="pill-thumb"></div>
+      </div>
     </button>
   </div>
 </nav>
@@ -884,6 +1003,177 @@ footer{
 </div>
 
 <script>
+/* ───────────────────────────────────────────────
+   🔊 AUDIO & VOICE SYNTHESIS ENGINE (ฟีลตู้เต่าบิน)
+─────────────────────────────────────────────── */
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) _audioCtx = new AC();
+  }
+  if (_audioCtx && _audioCtx.state === 'suspended') {
+    _audioCtx.resume().catch(()=>{});
+  }
+  return _audioCtx;
+}
+['click','touchstart','keydown'].forEach(evt => {
+  window.addEventListener(evt, () => getAudioCtx(), { once: true, passive: true });
+});
+
+const Sound = {
+  beep(freq = 880, dur = 0.08, type = 'sine') {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    } catch(e) {}
+  },
+  click() {
+    this.beep(960, 0.06);
+  },
+  coin() {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      [1800, 3200].forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, ctx.currentTime + idx * 0.03);
+        gain.gain.setValueAtTime(0.14, ctx.currentTime + idx * 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.03 + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.03);
+        osc.stop(ctx.currentTime + idx * 0.03 + 0.15);
+      });
+    } catch(e) {}
+  },
+  success() {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
+        gain.gain.setValueAtTime(0.16, ctx.currentTime + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.38);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.09);
+        osc.stop(ctx.currentTime + i * 0.09 + 0.42);
+      });
+    } catch(e) {}
+  },
+  warning() {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      [0, 0.14].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(740, ctx.currentTime + offset);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.12);
+      });
+    } catch(e) {}
+  },
+  error() {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      [240, 180].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.13);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.12);
+        osc.stop(ctx.currentTime + idx * 0.12 + 0.15);
+      });
+    } catch(e) {}
+  }
+};
+
+const Voice = {
+  voiceEnabled: true,
+  soundEnabled: true,
+  init() {
+    const saved = localStorage.getItem('sc_voice_enabled');
+    this.voiceEnabled = saved !== '0';
+    this.soundEnabled = this.voiceEnabled;
+    this.updateBtn();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => { try { window.speechSynthesis.getVoices(); } catch(e){} };
+    }
+  },
+  speak(text) {
+    if (!this.voiceEnabled || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'th-TH';
+      utter.rate = 1.05;
+      utter.pitch = 1.08;
+      const voices = window.speechSynthesis.getVoices();
+      const thVoice = voices.find(v => (v.lang && v.lang.toLowerCase().includes('th')) || (v.name && v.name.includes('Thai')));
+      if (thVoice) utter.voice = thVoice;
+      window.speechSynthesis.speak(utter);
+    } catch(e) {
+      console.warn('Speech error:', e);
+    }
+  },
+  toggle() {
+    this.voiceEnabled = !this.voiceEnabled;
+    this.soundEnabled = this.voiceEnabled;
+    localStorage.setItem('sc_voice_enabled', this.voiceEnabled ? '1' : '0');
+    this.updateBtn();
+    if (this.voiceEnabled) {
+      Sound.success();
+      this.speak('เปิดระบบเสียงเรียบร้อยค่ะ');
+    }
+  },
+  updateBtn() {
+    const btn = document.getElementById('voiceToggleBtn');
+    const onIcon = document.getElementById('iconVoiceOn');
+    const offIcon = document.getElementById('iconVoiceOff');
+    if (!btn) return;
+    if (this.voiceEnabled) {
+      btn.classList.remove('muted');
+      btn.title = 'เสียง: เปิดอยู่ (แตะเพื่อปิดเสียง)';
+      if (onIcon) onIcon.style.display = 'block';
+      if (offIcon) offIcon.style.display = 'none';
+    } else {
+      btn.classList.add('muted');
+      btn.title = 'เสียง: ปิดอยู่ (แตะเพื่อเปิดเสียง)';
+      if (onIcon) onIcon.style.display = 'none';
+      if (offIcon) offIcon.style.display = 'block';
+    }
+  }
+};
+Voice.init();
+
 /* ───────────────────────────────────────────────
    CUSTOM CURSOR
 ─────────────────────────────────────────────── */
@@ -1244,7 +1534,20 @@ setInterval(()=>{
     const localP=currentPorts.find(x=>x.id===id);
     if(localP&&localP.status==='in-use'){
       hasInUse=true;localP.remainingSeconds=rem;
-      if(rem<=0){localP.status='available';localP.remainingSeconds=0;localP.currentTx=null;renderPorts(currentPorts);savePersistentPorts(currentPorts);return;}
+      // 🔊 แจ้งเตือน 1 นาทีสุดท้าย (60 วินาที)
+      if(rem===60 && card.dataset.warn60!=='1'){
+        card.dataset.warn60='1';
+        Sound.warning();
+        Voice.speak('แจ้งเตือน อีก 1 นาทีจะหมดเวลาชาร์จค่ะ');
+      }
+      if(rem<=0){
+        if(card.dataset.warn60==='1'){
+          card.dataset.warn60='0';
+          Sound.beep(523,0.2);
+          Voice.speak(`พอร์ต ${localP.label} หมดเวลาชาร์จแล้วค่ะ ขอบคุณที่ใช้บริการค่ะ`);
+        }
+        localP.status='available';localP.remainingSeconds=0;localP.currentTx=null;renderPorts(currentPorts);savePersistentPorts(currentPorts);return;
+      }
     }
     const tEl=$(`t-${id}`),bpEl=$(`bp-${id}`),bfEl=$(`bf-${id}`),wEl=$(`w1m-${id}`);
     
@@ -1266,10 +1569,12 @@ setInterval(()=>{
 },1000);
 
 /* ── FAQ ── */
-function toggleAcc(btn){btn.parentElement?.classList.toggle('open');}
+function toggleAcc(btn){Sound.click();btn.parentElement?.classList.toggle('open');}
 
 /* ── Sheet ── */
 function openSheet(portId,label){
+  Sound.click();
+  Voice.speak(`คุณเลือกพอร์ต ${label} ค่ะ`);
   Object.assign(S,{portId,portLabel:label,amount:null,method:null,session:null});
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
   $('btnNext').disabled=true;$('customIn').value='';$('customRow').style.display='none';$('customMinPreview').textContent='';
@@ -1282,11 +1587,13 @@ function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.re
 
 /* ── Amount Selection ── */
 function pickDenom(amt,el){
+  Sound.click();
   S.amount=amt;
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');$('customRow').style.display='none';$('btnNext').disabled=false;
 }
 function focusCustom(){
+  Sound.click();
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
   $('dcCustom').classList.add('sel');$('customRow').style.display='flex';$('customIn').focus();
 }
@@ -1301,6 +1608,7 @@ function onCustomIn(){
 /* ── Confirm ── */
 function goConfirm(){
   if(!S.amount)return;
+  Sound.click();
   const imgUrl=denomImg(S.amount);
   if(imgUrl){$('confImgWrap').style.display='block';$('customAmtBox').style.display='none';$('confImg').src=imgUrl;$('confImgWrap').className='conf-img'+(S.amount<=10?' coin':'');}
   else{$('confImgWrap').style.display='none';$('customAmtBox').style.display='block';$('customAmtVal').textContent=`฿${S.amount}`;$('customAmtTime').textContent=`${fmtTime(S.amount*SPB)} · กำหนดเอง`;}
@@ -1309,11 +1617,12 @@ function goConfirm(){
 }
 
 function goMethod(){
+  Sound.click();
   if($('mAmt'))$('mAmt').textContent=S.amount;if($('mTime'))$('mTime').textContent=fmtTime(S.amount*SPB);
   const isCashOk=S.amount>=5&&S.amount%5===0;
   const btnC=$('btnMethodCash'),subC=$('cashMethodSub'),badgeC=$('cashMethodBadge'),warn=$('cashOnlyWarn');
   if(btnC){
-    if(isCashOk){btnC.style.opacity='1';btnC.style.cursor='none';if(subC){subC.textContent='ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100';subC.style.color='';}if(badgeC){badgeC.textContent='รับเหรียญ & แบงค์';badgeC.className='method-badge';}if(warn)warn.style.display='none';}
+    if(isCashOk){btnC.style.opacity='1';btnC.style.cursor='pointer';if(subC){subC.textContent='ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100';subC.style.color='';}if(badgeC){badgeC.textContent='รับเหรียญ & แบงค์';badgeC.className='method-badge';}if(warn)warn.style.display='none';}
     else{btnC.style.opacity='.5';if(subC){subC.textContent=`ยอด ฿${S.amount} มีเศษ (ตู้ไม่มีช่องรับเหรียญ 1-2฿)`;subC.style.color='var(--amber)';}if(badgeC){badgeC.textContent='เงินโอนเท่านั้น';}if(warn)warn.style.display='block';}
   }
   $('sheetTitle').textContent='วิธีชำระเงิน';goPage('pg-method');
@@ -1345,11 +1654,13 @@ function getAppConfig(){
 }
 
 function setupQR(s){
+  Voice.speak('สแกนคิวอาร์โค้ด และแนบสลิปเพื่อเริ่มชาร์จค่ะ');
   $('qr-port').textContent=S.portLabel;$('qr-amt').textContent=`฿${s.amount}`;$('qr-time').textContent=Math.round(s.chargeSeconds/60);
   $('qrImg').src=s.qr.image;$('prevQR').style.display='none';$('btnQR').disabled=true;$('fQR').value='';
   startExpire('qrCD',s.expiresAt);$('sheetTitle').textContent='สแกน QR Code';goPage('pg-qr');
 }
 function setupTR(s){
+  Voice.speak('โอนเงินตามยอดที่ระบุ และแนบสลิปเพื่อยืนยันค่ะ');
   const cfg=getAppConfig();
   $('tr-port').textContent=S.portLabel;$('tr-amt').textContent=`฿${s.amount}`;$('tr-time').textContent=Math.round(s.chargeSeconds/60);
   $('bAcc').textContent=s.bank?.account||cfg.bankAccount;$('bName').textContent=s.bank?.accountName||cfg.bankAccountName;
@@ -1359,13 +1670,21 @@ function setupTR(s){
 }
 
 let liveCashInserted=0;
+let _lastSpokenCash=0;
 function setupCash(s){
-  liveCashInserted=0;$('cash-port').textContent=S.portLabel;$('cash-amt').textContent=`฿${s.amount}`;$('cash-time').textContent=Math.round(s.chargeSeconds/60);
+  liveCashInserted=0;_lastSpokenCash=0;
+  $('cash-port').textContent=S.portLabel;$('cash-amt').textContent=`฿${s.amount}`;$('cash-time').textContent=Math.round(s.chargeSeconds/60);
   updateCashUI(s.amount);$('sheetTitle').textContent='ใส่เงินสด';goPage('pg-cash');
+  Voice.speak('กรุณาหยอดเหรียญหรือใส่ธนบัตรที่ช่องรับเงินค่ะ');
   _cashPoll=setInterval(()=>apiFetch('GET','/api/state').then(d=>d&&checkCash(d.ports)),3000);
 }
 function updateCashUI(t){
   const rem=Math.max(0,t-liveCashInserted);const pct=Math.min(100,Math.round((liveCashInserted/t)*100));
+  if(liveCashInserted>_lastSpokenCash){
+    Sound.coin();
+    Voice.speak(`ได้รับเงินแล้ว ${liveCashInserted} บาทค่ะ`);
+    _lastSpokenCash=liveCashInserted;
+  }
   $('cash-live-status').textContent=`ใส่แล้ว: ฿${liveCashInserted} / ฿${t}`;
   $('cash-remain-status').textContent=rem>0?`ยังขาดอีก: ฿${rem}`:'ใส่เงินครบแล้ว';
   $('cash-progress').style.width=`${pct}%`;
@@ -1387,7 +1706,7 @@ function checkCash(ports){
 }
 
 /* ── Slip Upload ── */
-function pickFile(id){$(id).click();}
+function pickFile(id){Sound.click();$(id).click();}
 function onFile(fId,pvId,btnId,dropId){
   const f=$(fId).files[0];if(!f)return;
   const pv=$(pvId);pv.src=URL.createObjectURL(f);pv.style.display='block';
@@ -1400,6 +1719,7 @@ function handleDrop(e,fId,pvId,btnId){
 
 async function submitSlip(method){
   const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];if(!file)return;
+  Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่าน EasySlip…';
   let res=null;
   try{const fd=new FormData();fd.append('portId',S.portId);fd.append('image',file);res=await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>null);}catch(e){}
@@ -1436,14 +1756,20 @@ async function submitSlip(method){
   }catch(err){console.error('EasySlip error:',err);showErr('ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิป กรุณาลองใหม่');}
 }
 
-function retrySlip(){if(!S.session){goPage('pg-amount');return;}goPage(S.method==='qr'?'pg-qr':'pg-transfer');}
+function retrySlip(){Sound.click();if(!S.session){goPage('pg-amount');return;}goPage(S.method==='qr'?'pg-qr':'pg-transfer');}
 
 function showOK(cs,sender,isDev){
+  Sound.success();
+  Voice.speak(`ชำระเงินสำเร็จแล้วค่ะ ระบบเปิดจ่ายไฟที่ช่อง ${S.portLabel} เรียบร้อยค่ะ`);
   $('okTitle').textContent='ชำระเงินสำเร็จ';$('okPort').textContent=`${S.portLabel} พร้อมใช้งานแล้ว`;
   $('okTime').textContent=fmtTime(cs);$('okSender').textContent=sender?`ผู้โอน: ${sender}`:'';
   $('sheetTitle').textContent='สำเร็จ';goPage('pg-ok');
 }
-function showErr(msg){$('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';goPage('pg-err');}
+function showErr(msg){
+  Sound.error();
+  Voice.speak('ตรวจสอบไม่ผ่าน กรุณาลองใหม่อีกครั้งค่ะ');
+  $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';goPage('pg-err');
+}
 
 function startExpire(spanId,isoStr){
   stopTimers();
@@ -1451,24 +1777,21 @@ function startExpire(spanId,isoStr){
   fn();_expTimer=setInterval(fn,1000);
 }
 function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
-async function cancelSession(){stopTimers();if(S.portId&&S.session)await apiFetch('POST','/api/payment/cancel',{portId:S.portId}).catch(()=>{});S.session=null;closeSheet();}
+async function cancelSession(){Sound.click();stopTimers();if(S.portId&&S.session)await apiFetch('POST','/api/payment/cancel',{portId:S.portId}).catch(()=>{});S.session=null;closeSheet();}
 
 /* ───────────────────────────────────────────────
    THEME TOGGLE (ขาว / ดำ)
 ─────────────────────────────────────────────── */
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
-  const isDark = theme === 'dark';
-  const sun = document.getElementById('iconSun');
-  const moon = document.getElementById('iconMoon');
-  if(sun) sun.style.display = isDark ? 'block' : 'none';
-  if(moon) moon.style.display = isDark ? 'none' : 'block';
   localStorage.setItem('sc_theme', theme);
 }
 
 function toggleTheme(){
+  Sound.click();
   const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  applyTheme(cur === 'dark' ? 'light' : 'dark');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
 }
 
 // init theme on load — ดึงค่าจาก localStorage หรือ prefers-color-scheme

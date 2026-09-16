@@ -17,6 +17,36 @@ if (!fs.existsSync(DATA_DIR)) {
   try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch(_) {}
 }
 
+// ─── Firebase Admin (Firestore real-time sync) ────────────────────────────────
+let db = null;
+try {
+  const admin = require("firebase-admin");
+  const credential = process.env.FIREBASE_SERVICE_ACCOUNT
+    ? admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+    : admin.credential.applicationDefault();
+
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential,
+      projectId: process.env.FIREBASE_PROJECT_ID || "usb-charger-project",
+    });
+  }
+  db = admin.firestore();
+  console.log("[🔥 Firestore] เชื่อมต่อ Firebase สำเร็จ — state จะ sync real-time ทุก device");
+} catch(e) {
+  console.warn("[🔥 Firestore] ไม่ได้ตั้งค่า FIREBASE_SERVICE_ACCOUNT — ใช้ local state.json แทน");
+}
+
+// ── push state ไปยัง Firestore (non-blocking) ──
+async function pushToFirestore(payload) {
+  if (!db) return;
+  try {
+    await db.collection("charger").doc("charger01").set(payload, { merge: true });
+  } catch(e) {
+    console.warn("[Firestore push error]", e.message);
+  }
+}
+
 // ─── Config (all from .env) ───────────────────────────────────────────────────
 const CFG = {
   promptpayPhone:   process.env.PROMPTPAY_PHONE     || "0969679951",
@@ -79,14 +109,17 @@ PORT_DEFS.forEach((d) => {
 // ─── State Persistence (บันทึกลงไฟล์ ป้องกันไฟดับ/รีสตาร์ท) ─────────────────
 function saveState() {
   try {
+    const ports = Object.values(state.ports).map(p => ({
+      id: p.id, label: p.label, type: p.type, relayGpio: p.relayGpio,
+      status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
+      remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
+      totalSeconds: p.currentTx?.chargeSeconds || 0,
+    }));
     const data = {
       transactions: state.transactions,
       usedTransRefs: Array.from(state.usedTransRefs),
       visits: state.visits || [],
-      ports: Object.values(state.ports).map(p => ({
-        id: p.id, status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
-        remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
-      })),
+      ports,
       config: {
         promptpayPhone: CFG.promptpayPhone,
         bankName: CFG.bankName,
@@ -98,6 +131,14 @@ function saveState() {
       updatedAt: state.updatedAt,
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(data, null, 2), "utf8");
+
+    // ── Firestore real-time sync ──
+    pushToFirestore({
+      ports,
+      secondsPerBaht: CFG.secondsPerBaht,
+      updatedAt: state.updatedAt,
+      deviceId: state.deviceId,
+    });
   } catch(e) {
     console.error("[Persistence Error]", e.message);
   }
