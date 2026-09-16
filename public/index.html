@@ -1155,6 +1155,24 @@ const Sound = {
         osc.stop(ctx.currentTime + idx * 0.12 + 0.15);
       });
     } catch(e) {}
+  },
+  chime() {
+    if (!Voice.soundEnabled) return;
+    try {
+      const ctx = getAudioCtx(); if (!ctx) return;
+      [880, 1174.66].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.09);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.09 + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.09);
+        osc.stop(ctx.currentTime + idx * 0.09 + 0.3);
+      });
+    } catch(e) {}
   }
 };
 
@@ -1163,12 +1181,41 @@ const Voice = {
   soundEnabled: true,
   thaiVoice: null,
   speakTimer: null,
+  cleanText(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/USB-C\s*(\d+)/gi, 'ยูเอสบี ซี ช่อง $1')
+      .replace(/USB-A\s*(\d+)/gi, 'ยูเอสบี เอ ช่อง $1')
+      .replace(/USB-C/gi, 'ยูเอสบี ซี')
+      .replace(/USB-A/gi, 'ยูเอสบี เอ')
+      .replace(/QR\s*Code/gi, 'คิวอาร์โค้ด')
+      .replace(/PromptPay/gi, 'พร้อมเพย์')
+      .replace(/พอร์ต\s*(\S+)/gi, 'ช่องชาร์จ $1')
+      .replace(/1\s*นาที/g, 'หนึ่งนาที')
+      .replace(/(\d+)\s*฿/g, '$1 บาท')
+      .replace(/(\d+)\s*วิ\b/g, '$1 วินาที');
+  },
   loadThaiVoice() {
     if (!('speechSynthesis' in window)) return;
     const voices = window.speechSynthesis.getVoices();
-    this.thaiVoice = voices.find(v => /^th(-|_)/i.test(v.lang || ''))
-      || voices.find(v => /thai/i.test(v.name || ''))
-      || null;
+    if (!voices || !voices.length) return;
+    const thaiList = voices.filter(v => /^th(-|_)/i.test(v.lang || '') || /thai/i.test(v.name || ''));
+    if (!thaiList.length) {
+      this.thaiVoice = null;
+      return;
+    }
+    // คัดเลือกเสียงภาษาไทยที่ไพเราะ นุ่มนวล ธรรมชาติที่สุด:
+    // 1. เสียง Online Natural (เช่น Premwadee Online ใน Edge / Windows 11)
+    // 2. เสียง Google ภาษาไทย (Chrome / Android)
+    // 3. เสียง Apple iOS / Siri / Kanya
+    // 4. เลี่ยง Desktop SAPI เก่า (เช่น Pattara Desktop) ที่เสียงแข็งกระด้าง
+    this.thaiVoice =
+      thaiList.find(v => /natural|neural|online/i.test(v.name) && /premwadee|female|ผู้หญิง/i.test(v.name))
+      || thaiList.find(v => /natural|neural|online/i.test(v.name))
+      || thaiList.find(v => /google/i.test(v.name))
+      || thaiList.find(v => /premwadee|achara|kanya|siri/i.test(v.name))
+      || thaiList.find(v => !/desktop/i.test(v.name))
+      || thaiList[0];
   },
   init() {
     const saved = localStorage.getItem('sc_voice_enabled');
@@ -1180,23 +1227,24 @@ const Voice = {
       window.speechSynthesis.onvoiceschanged = () => this.loadThaiVoice();
     }
   },
-  speak(text) {
+  speak(text, withChime = false) {
     if (!this.voiceEnabled || !('speechSynthesis' in window)) return;
     try {
-      // cancel() ทำงานแบบ asynchronous ในบาง browser; หน่วงสั้น ๆ ก่อนพูดใหม่
-      // เพื่อไม่ให้เสียงพูดสะดุด ซ้อน หรือออกเสียงด้วย voice เดิม
       if (this.speakTimer) clearTimeout(this.speakTimer);
       window.speechSynthesis.cancel();
+      if (withChime) Sound.chime();
+      const delay = withChime ? 220 : 60;
       this.speakTimer = setTimeout(() => {
         if (!this.voiceEnabled) return;
-        const utter = new SpeechSynthesisUtterance(text);
+        const cleaned = this.cleanText(text);
+        const utter = new SpeechSynthesisUtterance(cleaned);
         utter.lang = this.thaiVoice?.lang || 'th-TH';
-        utter.rate = 0.92;
-        utter.pitch = 1;
-        utter.volume = 0.9;
+        utter.rate = 1.0;
+        utter.pitch = 1.05;
+        utter.volume = 0.95;
         if (this.thaiVoice) utter.voice = this.thaiVoice;
         window.speechSynthesis.speak(utter);
-      }, 80);
+      }, delay);
     } catch(e) {
       console.warn('Speech error:', e);
     }
@@ -1211,8 +1259,8 @@ const Voice = {
     localStorage.setItem('sc_voice_enabled', this.voiceEnabled ? '1' : '0');
     this.updateBtn();
     if (this.voiceEnabled) {
-      Sound.success();
-      this.speak('เปิดระบบเสียงเรียบร้อยค่ะ');
+      Sound.chime();
+      this.speak('เปิดระบบเสียงแล้วค่ะ');
     }
   },
   updateBtn() {
@@ -1222,12 +1270,12 @@ const Voice = {
     if (!btn) return;
     if (this.voiceEnabled) {
       btn.classList.remove('muted');
-      btn.title = 'เสียง: เปิดอยู่ (แตะเพื่อปิดเสียง)';
+      btn.title = 'เสียงแนะนำ: เปิดอยู่ (แตะเพื่อปิดเสียง)';
       if (onIcon) onIcon.style.display = 'block';
       if (offIcon) offIcon.style.display = 'none';
     } else {
       btn.classList.add('muted');
-      btn.title = 'เสียง: ปิดอยู่ (แตะเพื่อเปิดเสียง)';
+      btn.title = 'เสียงแนะนำ: ปิดอยู่ (แตะเพื่อเปิดเสียง)';
       if (onIcon) onIcon.style.display = 'none';
       if (offIcon) offIcon.style.display = 'block';
     }
@@ -1470,7 +1518,7 @@ const fmtTime=s=>{
   if(m)return `${m} นาที`;
   return `${sc} วิ`;
 };
-const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);
+const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png'}[a]||null);
 
 async function refreshPorts(){
   const d=await apiFetch('GET','/api/state');
@@ -1599,13 +1647,13 @@ setInterval(()=>{
       if(rem===60 && card.dataset.warn60!=='1'){
         card.dataset.warn60='1';
         Sound.warning();
-        Voice.speak('แจ้งเตือน อีก 1 นาทีจะหมดเวลาชาร์จค่ะ');
+        Voice.speak('แจ้งเตือน อีก 1 นาทีจะหมดเวลาชาร์จค่ะ', true);
       }
       if(rem<=0){
         if(card.dataset.warn60==='1'){
           card.dataset.warn60='0';
           Sound.beep(523,0.2);
-          Voice.speak(`พอร์ต ${localP.label} หมดเวลาชาร์จแล้วค่ะ ขอบคุณที่ใช้บริการค่ะ`);
+          Voice.speak(`ช่องชาร์จ ${localP.label} หมดเวลาชาร์จแล้วค่ะ ขอบคุณที่ใช้บริการนะคะ`, true);
         }
         localP.status='available';localP.remainingSeconds=0;localP.currentTx=null;renderPorts(currentPorts);savePersistentPorts(currentPorts);return;
       }
@@ -1692,17 +1740,29 @@ function goMethod(){
   Sound.click();
   if($('mAmt'))$('mAmt').textContent=S.amount;if($('mTime'))$('mTime').textContent=fmtTime(S.amount*SPB);
   const isCashOk=S.amount>=5&&S.amount%5===0;
-  const btnC=$('btnMethodCash'),subC=$('cashMethodSub'),badgeC=$('cashMethodBadge'),warn=$('cashOnlyWarn');
+  const btnC=$('btnMethodCoin')||$('btnMethodCash'),subC=$('coinMethodSub')||$('cashMethodSub'),badgeC=$('coinMethodBadge')||$('cashMethodBadge'),warn=$('coinOnlyWarn')||$('cashOnlyWarn');
   if(btnC){
-    if(isCashOk){btnC.style.opacity='1';btnC.style.cursor='pointer';if(subC){subC.textContent='ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100';subC.style.color='';}if(badgeC){badgeC.textContent='รับเหรียญ & แบงค์';badgeC.className='method-badge';}if(warn)warn.style.display='none';}
-    else{btnC.style.opacity='.5';if(subC){subC.textContent=`ยอด ฿${S.amount} มีเศษ (ตู้ไม่มีช่องรับเหรียญ 1-2฿)`;subC.style.color='var(--amber)';}if(badgeC){badgeC.textContent='เงินโอนเท่านั้น';}if(warn)warn.style.display='block';}
+    if(isCashOk){
+      btnC.style.opacity='1';btnC.style.cursor='pointer';
+      if(subC){subC.textContent='หยอดเหรียญ 5 หรือ 10 บาท';subC.style.color='';}
+      if(badgeC){badgeC.textContent='รับเหรียญ';badgeC.className='method-badge';}
+      if(warn)warn.style.display='none';
+    } else {
+      btnC.style.opacity='.5';
+      if(subC){subC.textContent=`ยอด ฿${S.amount} มีเศษ (ตู้รับเฉพาะเหรียญ 5฿, 10฿)`;subC.style.color='var(--amber)';}
+      if(badgeC){badgeC.textContent='เงินโอนเท่านั้น';badgeC.className='method-badge';}
+      if(warn)warn.style.display='block';
+    }
   }
   $('sheetTitle').textContent='วิธีชำระเงิน';goPage('pg-method');
 }
 
-function handleCashMethodClick(){
-  if(S.amount<5||S.amount%5!==0){alert(`ยอด ฿${S.amount} ไม่สามารถรับด้วยเหรียญได้\n\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินครับ`);return;}
+function handleCoinMethodClick(){
+  if(S.amount<5||S.amount%5!==0){alert(`ยอด ฿${S.amount} ไม่สามารถหยอดด้วยเหรียญได้ (ตู้รับเฉพาะเหรียญ 5฿ และ 10฿)\n\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินค่ะ`);return;}
   createSession('cash');
+}
+function handleCashMethodClick(){
+  handleCoinMethodClick();
 }
 
 /* ── Create Session ── */
@@ -1745,29 +1805,32 @@ let liveCashInserted=0;
 let _lastSpokenCash=0;
 function setupCash(s){
   liveCashInserted=0;_lastSpokenCash=0;
-  $('cash-port').textContent=S.portLabel;$('cash-amt').textContent=`฿${s.amount}`;$('cash-time').textContent=Math.round(s.chargeSeconds/60);
-  updateCashUI(s.amount);$('sheetTitle').textContent='ใส่เงินสด';goPage('pg-cash');
-  Voice.speak('กรุณาหยอดเหรียญหรือใส่ธนบัตรที่ช่องรับเงินค่ะ');
+  const pEl=$('coin-port')||$('cash-port');if(pEl)pEl.textContent=S.portLabel;
+  const aEl=$('coin-amt')||$('cash-amt');if(aEl)aEl.textContent=`฿${s.amount}`;
+  const tEl=$('coin-time')||$('cash-time');if(tEl)tEl.textContent=Math.round(s.chargeSeconds/60);
+  updateCashUI(s.amount);$('sheetTitle').textContent='หยอดเหรียญ';
+  goPage($('pg-coin')?'pg-coin':'pg-cash');
+  Voice.speak('กรุณาหยอดเหรียญ 5 หรือ 10 บาท ที่ช่องรับเงินค่ะ');
   _cashPoll=setInterval(()=>apiFetch('GET','/api/state').then(d=>d&&checkCash(d.ports)),3000);
 }
 function updateCashUI(t){
   const rem=Math.max(0,t-liveCashInserted);const pct=Math.min(100,Math.round((liveCashInserted/t)*100));
   if(liveCashInserted>_lastSpokenCash){
     Sound.coin();
-    Voice.speak(`ได้รับเงินแล้ว ${liveCashInserted} บาทค่ะ`);
+    Voice.speak(`หยอดเหรียญแล้ว ${liveCashInserted} บาทค่ะ`);
     _lastSpokenCash=liveCashInserted;
   }
-  $('cash-live-status').textContent=`ใส่แล้ว: ฿${liveCashInserted} / ฿${t}`;
-  $('cash-remain-status').textContent=rem>0?`ยังขาดอีก: ฿${rem}`:'ใส่เงินครบแล้ว';
-  $('cash-progress').style.width=`${pct}%`;
-  const ex=$('cash-example-note');
+  const lEl=$('coin-live-status')||$('cash-live-status');if(lEl)lEl.textContent=`หยอดแล้ว: ฿${liveCashInserted} / ฿${t}`;
+  const rEl=$('coin-remain-status')||$('cash-remain-status');if(rEl)rEl.textContent=rem>0?`ยังขาดอีก: ฿${rem}`:'หยอดเงินครบแล้ว';
+  const prEl=$('coin-progress')||$('cash-progress');if(prEl)prEl.style.width=`${pct}%`;
+  const ex=$('coin-example-note')||$('cash-example-note');
   if(ex){
-    if(t===5)ex.innerHTML='<strong>วิธีใส่เงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
-    else if(t===10)ex.innerHTML='<strong>วิธีใส่เงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
-    else if(t===20)ex.innerHTML='<strong>วิธีใส่เงิน:</strong> ธนบัตร 20฿ (1 ใบ) <u>หรือ</u> เหรียญ 10฿ (2 เหรียญ)';
-    else if(t===50)ex.innerHTML='<strong>วิธีใส่เงิน:</strong> ธนบัตร 50฿ (1 ใบ)';
-    else if(t===100)ex.innerHTML='<strong>วิธีใส่เงิน:</strong> ธนบัตร 100฿ (1 ใบ)';
-    else ex.innerHTML=`<strong>วิธีใส่เงิน:</strong> ใส่รวมกันให้ครบ ฿${t}`;
+    if(t===5)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 5 บาท (1 เหรียญ)';
+    else if(t===10)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (1 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (2 เหรียญ)';
+    else if(t===20)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (2 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (4 เหรียญ)';
+    else if(t===50)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (10 เหรียญ)';
+    else if(t===100)ex.innerHTML='<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 10฿ หรือ 5฿ ให้ครบ 100฿';
+    else ex.innerHTML=`<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 5฿ หรือ 10฿ รวมกันให้ครบ ฿${t}`;
   }
 }
 function checkCash(ports){
@@ -1780,19 +1843,27 @@ function checkCash(ports){
 /* ── Slip Upload ── */
 function pickFile(id){Sound.click();$(id).click();}
 function onFile(fId,pvId,btnId,dropId){
-  const f=$(fId).files[0];if(!f)return;
-  const pv=$(pvId);pv.src=URL.createObjectURL(f);pv.style.display='block';
-  $(btnId).disabled=false;$(dropId).classList.remove('drag');
+  const file=$(fId).files[0];if(!file)return;
+  const r=new FileReader();r.onload=e=>{$(pvId).src=e.target.result;$(pvId).style.display='block';$(btnId).disabled=false;if(dropId)$(dropId).classList.add('has-file');};
+  r.readAsDataURL(file);
 }
-function handleDrop(e,fId,pvId,btnId){
-  e.preventDefault();const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);
-  $(fId).files=dt.files;onFile(fId,pvId,btnId,e.currentTarget.id);e.currentTarget.classList.remove('drag');
+function setupDrop(dropId,fId,pvId,btnId){
+  const d=$(dropId);if(!d)return;
+  ['dragenter','dragover'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add('drag');}));
+  ['dragleave','drop'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.remove('drag');}));
+  d.addEventListener('drop',ev=>{
+    const f=ev.dataTransfer?.files?.[0];
+    if(f){$(fId).files=ev.dataTransfer.files;onFile(fId,pvId,btnId,dropId);}
+  });
 }
+setupDrop('dropQR','fQR','prevQR','btnQR');
+setupDrop('dropTR','fTR','prevTR','btnTR');
 
 async function submitSlip(method){
-  const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];if(!file)return;
+  const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
+  if(!file){alert('กรุณาเลือกรูปสลิป');return;}
+  stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่าน EasySlip…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
-  goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่าน EasySlip…';
   let res=null;
   try{const fd=new FormData();fd.append('portId',S.portId);fd.append('image',file);res=await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>null);}catch(e){}
   if(res&&res.success){
@@ -1832,14 +1903,14 @@ function retrySlip(){Sound.click();if(!S.session){goPage('pg-amount');return;}go
 
 function showOK(cs,sender,isDev){
   Sound.success();
-  Voice.speak(`ชำระเงินสำเร็จแล้วค่ะ ระบบเปิดจ่ายไฟที่ช่อง ${S.portLabel} เรียบร้อยค่ะ`);
+  Voice.speak(`ชำระเงินสำเร็จแล้วค่ะ เริ่มจ่ายไฟที่ช่อง ${S.portLabel} ขอบคุณค่ะ`, true);
   $('okTitle').textContent='ชำระเงินสำเร็จ';$('okPort').textContent=`${S.portLabel} พร้อมใช้งานแล้ว`;
   $('okTime').textContent=fmtTime(cs);$('okSender').textContent=sender?`ผู้โอน: ${sender}`:'';
   $('sheetTitle').textContent='สำเร็จ';goPage('pg-ok');
 }
 function showErr(msg){
   Sound.error();
-  Voice.speak('ตรวจสอบไม่ผ่าน กรุณาลองใหม่อีกครั้งค่ะ');
+  Voice.speak('ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้งนะคะ');
   $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';goPage('pg-err');
 }
 
