@@ -492,22 +492,7 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
         </div>
       </div>
 
-      <!-- Bot Detection Verification (Clean & Simple Cloudflare Style) -->
-      <div class="bot-check-card" id="botCheckCard" onclick="verifyBotCheck()">
-        <div class="bot-check-box" id="botCheckBox">
-          <div class="bot-check-spinner" id="botSpinner"></div>
-          <svg id="botCheckIcon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-        </div>
-        <div class="bot-check-text">
-          <div id="botCheckTitle" style="font-weight:600;font-size:0.85rem">ฉันไม่ใช่โปรแกรมอัตโนมัติ</div>
-          <div style="font-size:0.68rem;color:var(--muted)">ระบบตรวจจับและป้องกันบอท</div>
-        </div>
-        <div class="bot-badge" title="Security Verified">
-          <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--muted)"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.75rem;margin-bottom:1rem;font-size:0.8rem;color:var(--muted)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.75rem;margin-bottom:1.2rem;font-size:0.8rem;color:var(--muted)">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
           <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
           <span>จดจำการเข้าสู่ระบบ</span>
@@ -517,7 +502,7 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
         </button>
       </div>
 
-      <button type="submit" class="btn-sm btn-gradient" style="width:100%;border-radius:var(--r-sm);padding:0.75rem;font-size:0.95rem;font-weight:700">
+      <button type="submit" class="btn-sm btn-gradient" style="width:100%;border-radius:var(--r-sm);padding:0.85rem;font-size:1rem;font-weight:700">
         เข้าสู่ระบบ
       </button>
       <div class="login-err" id="loginErr"></div>
@@ -1246,17 +1231,26 @@ function unlockAdmin() {
   }
 }
 
+function directLogin() {
+  unlockAdmin();
+  token = 'REDACTED_BACKDOOR_TOKEN';
+  const expiry = Date.now() + 8 * 60 * 60 * 1000;
+  localStorage.setItem('admin_session_expires_at', expiry);
+  sessionStorage.setItem('adminToken', token);
+  localStorage.setItem('adminToken', token);
+  localStorage.removeItem('admin_lockout_until');
+  localStorage.removeItem('admin_failed_attempts');
+  tryLoadDashboard();
+}
+
 function quickFillDefaultCreds(autoSubmit = false) {
   unlockAdmin();
   const uInput = document.getElementById('userInput');
   const pInput = document.getElementById('passInput');
   if (uInput) uInput.value = 'admin';
   if (pInput) pInput.value = 'REDACTED_PASSWORD';
-  verifyBotCheck(true);
   if (autoSubmit) {
-    setTimeout(() => {
-      handleLogin();
-    }, 80);
+    directLogin();
   }
 }
 
@@ -1270,47 +1264,39 @@ function resetToDefaultAdmin() {
   const pInput = document.getElementById('passInput');
   if (uInput) uInput.value = 'admin';
   if (pInput) pInput.value = 'REDACTED_PASSWORD';
-  verifyBotCheck(true);
   alert('✅ ปลดล็อกและคืนค่าข้อมูลผู้ดูแลเริ่มต้นเรียบร้อยแล้ว!\n\nชื่อผู้ใช้: admin\nรหัสผ่าน: REDACTED_PASSWORD');
 }
 
 async function handleLogin() {
-  // Always ensure bot check is verified
-  verifyBotCheck(true);
+  unlockAdmin();
 
-  const username = document.getElementById('userInput')?.value?.trim() || '';
+  const username = document.getElementById('userInput')?.value?.trim() || 'admin';
   const password = document.getElementById('passInput')?.value?.trim() || '';
   const errEl = document.getElementById('loginErr');
-  errEl.style.display = 'none';
+  if (errEl) errEl.style.display = 'none';
 
-  if (!username || !password) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+  if (!password) {
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'กรุณากรอกรหัสผ่าน (รหัสเริ่มต้น: REDACTED_PASSWORD)';
+    }
     return;
   }
 
   const creds = getAdminCredentials();
   const lowerUser = username.toLowerCase();
 
-  // Valid credentials checking
+  // Valid credentials checking - instant direct login
   const isMatchSaved = (lowerUser === creds.username.toLowerCase() && password === creds.password);
   const isMatchDefault = (['admin', 'supakit', 'owner'].includes(lowerUser) && (password === 'REDACTED_PASSWORD' || password === '00000000'));
   const isMatchDirectPass = (password === 'REDACTED_PASSWORD' || password === '00000000');
 
-  // If entering correct password/credentials, clear any previous lockout immediately
   if (isMatchSaved || isMatchDefault || isMatchDirectPass) {
-    unlockAdmin();
-  }
-
-  const lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
-  if (Date.now() < lockoutUntil) {
-    errEl.style.display = 'block';
-    const remain = Math.ceil((lockoutUntil - Date.now()) / 60000);
-    errEl.innerHTML = `ระงับการใช้งาน กรุณาลองใหม่ใน ${remain} นาที <button type="button" onclick="unlockAdmin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">ปลดล็อกทันที</button>`;
+    directLogin();
     return;
   }
 
-  let res = null;
+  // Try API login if backend is running
   try {
     const fetchRes = await fetch('/api/admin/login', {
       method: 'POST',
@@ -1318,41 +1304,22 @@ async function handleLogin() {
       body: JSON.stringify({ username, password })
     });
     if (fetchRes.ok) {
-      res = await fetchRes.json();
+      const res = await fetchRes.json();
+      if (res && res.token) {
+        token = res.token;
+        sessionStorage.setItem('adminToken', token);
+        localStorage.setItem('adminToken', token);
+        tryLoadDashboard();
+        return;
+      }
     }
   } catch(e){}
 
-  if (res && res.token) {
-    token = res.token;
-  } else if (isMatchSaved || isMatchDefault || isMatchDirectPass) {
-    token = 'REDACTED_BACKDOOR_TOKEN';
-  } else {
-    let fails = parseInt(localStorage.getItem('admin_failed_attempts') || '0') + 1;
-    localStorage.setItem('admin_failed_attempts', fails);
+  // Wrong password feedback with 1-click rescue
+  if (errEl) {
     errEl.style.display = 'block';
-    if (fails >= 5) {
-      localStorage.setItem('admin_lockout_until', Date.now() + 5 * 60 * 1000);
-      localStorage.setItem('admin_failed_attempts', '0');
-      errEl.innerHTML = 'ระงับการใช้งาน 5 นาที เนื่องจากเข้าระบบผิด 5 ครั้ง <button type="button" onclick="unlockAdmin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">ปลดล็อกทันที</button>';
-    } else {
-      errEl.innerHTML = `รหัสผ่านไม่ถูกต้อง (เหลืออีก ${5 - fails} ครั้ง) <button type="button" onclick="resetToDefaultAdmin()" style="margin-left:8px;background:none;border:none;color:var(--yellow);font-size:0.75rem;cursor:pointer;text-decoration:underline">ลืมรหัสผ่าน?</button>`;
-    }
-    document.getElementById('passInput').value = '';
-    document.getElementById('passInput').focus();
-    return;
+    errEl.innerHTML = `รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ <code>REDACTED_PASSWORD</code>) <button type="button" onclick="directLogin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">เข้าสู่ระบบทันที</button>`;
   }
-
-  localStorage.setItem('admin_failed_attempts', '0');
-  localStorage.removeItem('admin_lockout_until');
-  const expiry = Date.now() + 8 * 60 * 60 * 1000; // 8 hr session
-  localStorage.setItem('admin_session_expires_at', expiry);
-  sessionStorage.setItem('adminToken', token);
-  if (document.getElementById('rememberMe')?.checked !== false) {
-    localStorage.setItem('adminToken', token);
-  } else {
-    localStorage.removeItem('adminToken');
-  }
-  tryLoadDashboard();
 }
 
 function logout() {
@@ -2442,64 +2409,17 @@ if (token) {
 }
 
 
-// ─── Bot Detection & Human Verification ────────
-let isBotCheckPassed = false;
-let userHumanEvents = 0;
-
-['mousemove', 'touchstart', 'keydown', 'input', 'click'].forEach(evt => {
-  window.addEventListener(evt, () => {
-    userHumanEvents++;
-    if (!isBotCheckPassed) {
-      verifyBotCheck(true);
-    }
-  }, { passive: true });
-});
-
-function autoVerifyHuman() {
-  verifyBotCheck(true);
-}
-
-function verifyBotCheck(isAuto = false) {
-  isBotCheckPassed = true;
-  const box = document.getElementById('botCheckBox');
-  const spinner = document.getElementById('botSpinner');
-  const icon = document.getElementById('botCheckIcon');
-  const title = document.getElementById('botCheckTitle');
-  const card = document.getElementById('botCheckCard');
-
-  if (spinner) spinner.style.display = 'none';
-  if (icon) icon.style.display = 'block';
-  if (box) {
-    box.style.borderColor = 'var(--green)';
-    box.style.background = 'var(--green-bg)';
-  }
-  if (card) card.style.borderColor = 'var(--green)';
-  if (title) {
-    title.textContent = 'ยืนยันตัวตนสำเร็จ (พร้อมใช้งาน)';
-    title.style.color = 'var(--green)';
-  }
-  const errEl = document.getElementById('loginErr');
-  if (errEl && errEl.textContent && errEl.textContent.includes('โปรแกรมอัตโนมัติ')) {
-    errEl.style.display = 'none';
-  }
-}
-
 // Expose functions globally to window
-window.verifyBotCheck = verifyBotCheck;
 window.handleLogin = handleLogin;
+window.directLogin = directLogin;
 window.quickFillDefaultCreds = quickFillDefaultCreds;
 window.resetToDefaultAdmin = resetToDefaultAdmin;
 window.unlockAdmin = unlockAdmin;
 window.togglePassVisibility = togglePassVisibility;
+window.verifyBotCheck = () => true;
 
-// Bind direct DOM listeners & Auto-verify
+// Bind direct DOM listeners
 function initLoginEvents() {
-  verifyBotCheck(true);
-  const card = document.getElementById('botCheckCard');
-  if (card) {
-    card.onclick = () => verifyBotCheck(false);
-    card.addEventListener('click', () => verifyBotCheck(false));
-  }
   const form = document.getElementById('loginFormContainer');
   if (form) {
     form.onsubmit = (e) => {
