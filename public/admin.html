@@ -529,7 +529,7 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
           <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
           <span>จดจำการเข้าสู่ระบบ</span>
         </label>
-        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">
+        <button type="button" onclick="alert('หากลืมรหัสผ่าน กรุณาติดต่อผู้ดูแลตู้ชาร์จหรือผู้รับผิดชอบระบบ')" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">
           ลืมรหัสผ่าน?
         </button>
       </div>
@@ -540,42 +540,6 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
       <div class="login-err" id="loginErr"></div>
     </form>
 
-    <!-- Admin Credential Helper Card -->
-    <div style="margin-top:1.25rem;padding:0.85rem 1rem;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:0.8rem;text-align:left">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
-        <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px">
-          <i class="pic-icon ic-key" style="color:var(--cyan);font-size:15px"></i>
-          <span>รหัสผ่านเริ่มต้นสำหรับผู้ดูแล</span>
-        </span>
-        <span style="font-size:0.68rem;background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:4px;font-weight:600">Admin Access</span>
-      </div>
-      <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;color:var(--muted);margin-bottom:0.75rem;font-size:0.78rem">
-        <div>ชื่อผู้ใช้:</div>
-        <div><code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--cyan);font-weight:bold">admin</code> หรือ <code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--cyan);font-weight:bold">supakit</code></div>
-        <div>รหัสผ่าน:</div>
-        <div><code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--green);font-weight:bold">REDACTED_PASSWORD</code> (หรือ PIN: <code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--green);font-weight:bold">00000000</code>)</div>
-      </div>
-      
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button type="button" onclick="quickFillDefaultCreds(false)" class="btn-sm" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px">
-          <i class="pic-icon ic-zap" style="color:var(--amber);font-size:13px"></i>
-          <span>กรอกรหัสอัตโนมัติ</span>
-        </button>
-        <button type="button" onclick="quickFillDefaultCreds(true)" class="btn-sm btn-primary" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px">
-          <i class="pic-icon ic-key" style="font-size:13px"></i>
-          <span>เข้าสู่ระบบทันที</span>
-        </button>
-      </div>
-
-      <div style="margin-top:0.6rem;padding-top:0.5rem;border-top:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:0.72rem;color:var(--muted)">ติดล็อกหรือต้องการรีเซ็ต?</span>
-        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--yellow);font-size:0.72rem;text-decoration:underline;cursor:pointer;padding:0;font-weight:600;display:inline-flex;align-items:center;gap:4px">
-          <i class="pic-icon ic-refresh" style="font-size:12px"></i>
-          <span>ปลดล็อก & คืนค่าเริ่มต้น</span>
-        </button>
-      </div>
-    </div>
-    
     <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:0.85rem">
       <a href="/" style="color:var(--muted);font-size:.85rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
     </div>
@@ -1033,7 +997,7 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
       <form id="changeCredsForm" onsubmit="event.preventDefault(); saveNewCreds();">
         <div class="form-group" style="margin-bottom:.75rem">
           <label class="form-label">รหัสผ่านปัจจุบัน (Current Password)</label>
-          <input type="password" id="oldPassInput" class="form-input" required placeholder="ใส่รหัสผ่านปัจจุบัน (ค่าเริ่มต้น: REDACTED_PASSWORD)" />
+          <input type="password" id="oldPassInput" class="form-input" required placeholder="ใส่รหัสผ่านปัจจุบัน" />
         </div>
         <div class="form-group" style="margin-bottom:.75rem">
           <label class="form-label">ชื่อผู้ใช้ใหม่ (New Username)</label>
@@ -1291,42 +1255,26 @@ function directLogin() {
   tryLoadDashboard();
 }
 
-function quickFillDefaultCreds(autoSubmit = false) {
-  unlockAdmin();
-  const uInput = document.getElementById('userInput');
-  const pInput = document.getElementById('passInput');
-  if (uInput) uInput.value = 'admin';
-  if (pInput) pInput.value = 'REDACTED_PASSWORD';
-  if (autoSubmit) {
-    directLogin();
-  }
-}
-
-function resetToDefaultAdmin() {
-  unlockAdmin();
-  localStorage.setItem('usb_charger_admin_credentials', JSON.stringify({
-    username: 'admin',
-    password: 'REDACTED_PASSWORD'
-  }));
-  const uInput = document.getElementById('userInput');
-  const pInput = document.getElementById('passInput');
-  if (uInput) uInput.value = 'admin';
-  if (pInput) pInput.value = 'REDACTED_PASSWORD';
-  alert('ปลดล็อกและคืนค่าข้อมูลผู้ดูแลเริ่มต้นเรียบร้อยแล้ว!\n\nชื่อผู้ใช้: admin\nรหัสผ่าน: REDACTED_PASSWORD');
-}
-
 async function handleLogin() {
   unlockAdmin();
 
-  const username = document.getElementById('userInput')?.value?.trim() || 'admin';
+  const username = document.getElementById('userInput')?.value?.trim() || '';
   const password = document.getElementById('passInput')?.value?.trim() || '';
   const errEl = document.getElementById('loginErr');
   if (errEl) errEl.style.display = 'none';
 
+  if (!username) {
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'กรุณากรอกชื่อผู้ใช้';
+    }
+    return;
+  }
+
   if (!password) {
     if (errEl) {
       errEl.style.display = 'block';
-      errEl.textContent = 'กรุณากรอกรหัสผ่าน (รหัสเริ่มต้น: REDACTED_PASSWORD)';
+      errEl.textContent = 'กรุณากรอกรหัสผ่าน';
     }
     return;
   }
@@ -1334,12 +1282,11 @@ async function handleLogin() {
   const creds = getAdminCredentials();
   const lowerUser = username.toLowerCase();
 
-  // Valid credentials checking - instant direct login
+  // Valid credentials checking
   const isMatchSaved = (lowerUser === creds.username.toLowerCase() && password === creds.password);
-  const isMatchDefault = (['admin', 'supakit', 'owner'].includes(lowerUser) && (password === 'REDACTED_PASSWORD' || password === '00000000'));
-  const isMatchDirectPass = (password === 'REDACTED_PASSWORD' || password === '00000000');
+  const isMatchDefault = (['admin', 'supakit', 'owner'].includes(lowerUser) && (password === creds.password || password === 'REDACTED_PASSWORD' || password === '00000000'));
 
-  if (isMatchSaved || isMatchDefault || isMatchDirectPass) {
+  if (isMatchSaved || isMatchDefault) {
     directLogin();
     return;
   }
@@ -1363,10 +1310,10 @@ async function handleLogin() {
     }
   } catch(e){}
 
-  // Wrong password feedback with 1-click rescue
+  // Failed login feedback without leaking password
   if (errEl) {
     errEl.style.display = 'block';
-    errEl.innerHTML = `รหัสผ่านไม่ถูกต้อง (รหัสเริ่มต้นคือ <code>REDACTED_PASSWORD</code>) <button type="button" onclick="directLogin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">เข้าสู่ระบบทันที</button>`;
+    errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
   }
 }
 
@@ -2248,6 +2195,7 @@ function switchTab(name) {
     }, 60);
   } else if (name === 'issues') {
     renderAdminIssues();
+    syncAdminIssuesFromBackend();
   } else if (name === 'testing') {
     loadSupportSettings();
     const ports = (dashData && dashData.ports) ? dashData.ports : loadAdminPersistentPorts();
@@ -2258,6 +2206,71 @@ function switchTab(name) {
 /* ───────────────────────────────────────────────
    ISSUES & SUPPORT MANAGEMENT (Admin)
 ─────────────────────────────────────────────── */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const DEFAULT_ADMIN_ISSUES = [
+  {
+    id: "ISSUE-1001",
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    category: "coin",
+    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
+    portId: "usb-a-1",
+    portLabel: "USB-A 1",
+    amount: 10,
+    contact: "081-999-xxxx",
+    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+      isPublic: true
+    }
+  },
+  {
+    id: "ISSUE-1002",
+    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+    category: "transfer",
+    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
+    portId: "usb-c-1",
+    portLabel: "USB-C 1",
+    amount: 5,
+    contact: "Line: student_test",
+    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
+      isPublic: true
+    }
+  },
+  {
+    id: "ISSUE-1003",
+    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+    category: "power",
+    categoryLabel: "อุปกรณ์และสายชาร์จ",
+    portId: "usb-c-2",
+    portLabel: "USB-C 2",
+    amount: 10,
+    contact: "095-123-xxxx",
+    description: "หัวสายชาร์จ Type-C หลวม เสียบแล้วไฟเข้าๆ ออกๆ ครับ",
+    imageUrl: "",
+    status: "pending",
+    reply: null
+  }
+];
+
 let currentAdminIssues = [];
 let activeEditingIssueId = null;
 
@@ -2265,15 +2278,34 @@ function loadAdminIssues() {
   try {
     const raw = localStorage.getItem('usb_charger_issues');
     if (raw) {
-      currentAdminIssues = JSON.parse(raw);
-    } else {
-      currentAdminIssues = [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        currentAdminIssues = parsed;
+        updateAdminIssuesBadge();
+        return currentAdminIssues;
+      }
     }
-  } catch(e) {
-    currentAdminIssues = [];
-  }
+  } catch(e) {}
+  currentAdminIssues = JSON.parse(JSON.stringify(DEFAULT_ADMIN_ISSUES));
+  try {
+    localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues));
+  } catch(_) {}
   updateAdminIssuesBadge();
   return currentAdminIssues;
+}
+
+async function syncAdminIssuesFromBackend() {
+  try {
+    const res = await adminApi('GET', '/api/issues');
+    if (res && res.issues && Array.isArray(res.issues) && res.issues.length > 0) {
+      currentAdminIssues = res.issues;
+      try {
+        localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues));
+      } catch(_) {}
+      updateAdminIssuesBadge();
+      renderAdminIssues();
+    }
+  } catch(e) {}
 }
 
 function saveAdminIssues() {
@@ -2404,7 +2436,7 @@ function closeIssueDetailModal(e) {
   if (e.target.id === 'issueDetailModal') hideIssueDetailModal();
 }
 
-function saveAdminReply() {
+async function saveAdminReply() {
   if (!activeEditingIssueId) return;
   loadAdminIssues();
   const issue = currentAdminIssues.find(x => x.id === activeEditingIssueId);
@@ -2423,18 +2455,37 @@ function saveAdminReply() {
   };
 
   saveAdminIssues();
+
+  // Sync to backend API if available
+  try {
+    await adminApi('POST', `/api/issues/${encodeURIComponent(issue.id)}/reply`, {
+      status: issue.status,
+      message: issue.reply.message,
+      adminName: issue.reply.adminName,
+      isPublic: issue.reply.isPublic
+    });
+  } catch(err) {
+    console.warn('Backend sync issue reply:', err);
+  }
+
   hideIssueDetailModal();
   renderAdminIssues();
   setActionNotice(`บันทึกคำตอบ Ticket ${issue.id} เรียบร้อย (${isPublic ? 'สาธารณะ' : 'ส่วนตัว'})`);
 }
 
-function deleteCurrentIssue() {
+async function deleteCurrentIssue() {
   if (!activeEditingIssueId) return;
-  if (!confirm(`ต้องการลบ Ticket ${activeEditingIssueId} ออกจากระบบ?`)) return;
+  const targetId = activeEditingIssueId;
+  if (!confirm(`ต้องการลบ Ticket ${targetId} ออกจากระบบ?`)) return;
 
   loadAdminIssues();
-  currentAdminIssues = currentAdminIssues.filter(x => x.id !== activeEditingIssueId);
+  currentAdminIssues = currentAdminIssues.filter(x => x.id !== targetId);
   saveAdminIssues();
+
+  try {
+    await adminApi('DELETE', `/api/issues/${encodeURIComponent(targetId)}`);
+  } catch(err) {}
+
   hideIssueDetailModal();
   renderAdminIssues();
   setActionNotice('ลบรายการปัญหาเรียบร้อย');
@@ -2481,11 +2532,8 @@ if (token) {
 }
 
 
-// Expose functions globally to window
+// Expose safe functions globally to window
 window.handleLogin = handleLogin;
-window.directLogin = directLogin;
-window.quickFillDefaultCreds = quickFillDefaultCreds;
-window.resetToDefaultAdmin = resetToDefaultAdmin;
 window.unlockAdmin = unlockAdmin;
 window.togglePassVisibility = togglePassVisibility;
 window.verifyBotCheck = () => true;

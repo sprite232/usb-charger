@@ -9,3 +9,4 @@ Thumbs.db
 .tempmediaStorage/
 .user_uploaded/
 data/state.json
+data/*.json
