@@ -361,7 +361,7 @@ html:not([data-theme="dark"]) .sun-icon{
   transition:transform .4s var(--ease-spring),box-shadow .4s,border-color .3s,background .3s;
   position:relative;overflow:hidden;
   box-shadow:var(--shadow);
-  opacity:0;animation:fup .6s var(--ease-expo) forwards;
+  animation:fup .6s var(--ease-expo) both;
 }
 .port-card::before{
   content:'';position:absolute;inset:0;
@@ -551,6 +551,7 @@ footer{
 }
 @keyframes slideUp{from{transform:translateY(48px);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes fadeUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fup{0%{transform:translateY(22px);opacity:0}100%{transform:translateY(0);opacity:1}}
 
 .sheet-drag{width:32px;height:4px;background:var(--g2);border-radius:100px;margin:12px auto 0}
 .sheet-top{
@@ -773,7 +774,7 @@ footer{
   color:var(--g3);margin-bottom:18px;
   box-shadow:0 2px 10px rgba(0,0,0,.03);
   transition:all .3s ease;
-  opacity:0;animation:fup .7s .05s var(--ease-expo) forwards;
+  animation:fup .7s .05s var(--ease-expo) both;
 }
 [data-theme="dark"] .hero-badge{
   background:rgba(24,34,53,.7);border-color:rgba(255,255,255,.08);
@@ -791,7 +792,7 @@ footer{
   letter-spacing:-.035em;
   line-height:1.06;
   margin-bottom:16px;
-  opacity:0;animation:fup .8s .12s var(--ease-expo) forwards;
+  animation:fup .8s .12s var(--ease-expo) both;
 }
 .title-primary{
   display:inline-block;
@@ -820,7 +821,7 @@ footer{
 .hero-hd p{
   font-size:clamp(.9rem,2vw,1.05rem);
   color:var(--g3);line-height:1.65;max-width:380px;margin:0 auto;
-  opacity:0;animation:fup .8s .22s var(--ease-expo) forwards;
+  animation:fup .8s .22s var(--ease-expo) both;
 }
 
 /* ── PORT CARD ENHANCED GLOW & HOVER ───────── */
@@ -1779,110 +1780,122 @@ if (window.matchMedia('(pointer: fine)').matches && dot && ring) {
    WEBGL PARTICLE FIELD (Transparent Ambient Dust)
 ─────────────────────────────────────────────── */
 (function initWebGL(){
-  const canvas = document.getElementById('bgc');
-  if (!canvas) return;
-  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false })
-          || canvas.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
-  if (!gl) return;
-  function resize(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    gl.viewport(0, 0, canvas.width, canvas.height);
-  }
-  resize();
-  window.addEventListener('resize', resize);
+  try {
+    const canvas = document.getElementById('bgc');
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false })
+            || canvas.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) return;
+    function resize(){
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+    resize();
+    window.addEventListener('resize', resize);
 
-  const vs = `attribute vec2 aPos;attribute float aSize;attribute float aAlpha;uniform vec2 uRes;uniform vec2 uMouse;varying float vAlpha;
-  void main(){vec2 d=aPos-uMouse;float dist=max(length(d),1.0);float rep=70./dist;vec2 p=aPos+normalize(d)*min(rep,18.);
-  vec2 c=(p/uRes)*2.-1.;c.y=-c.y;gl_Position=vec4(c,0.,1.);gl_PointSize=aSize;vAlpha=aAlpha;}`;
-  const fs = `precision mediump float;uniform vec3 uColor;varying float vAlpha;
-  void main(){float d=length(gl_PointCoord-.5)*2.;float a=smoothstep(1.,.2,d)*vAlpha;gl_FragColor=vec4(uColor,a);}`;
+    const vs = `attribute vec2 aPos;attribute float aSize;attribute float aAlpha;uniform vec2 uRes;uniform vec2 uMouse;varying float vAlpha;
+    void main(){vec2 d=aPos-uMouse;float dist=max(length(d),1.0);float rep=70./dist;vec2 p=aPos+normalize(d)*min(rep,18.);
+    vec2 c=(p/uRes)*2.-1.;c.y=-c.y;gl_Position=vec4(c,0.,1.);gl_PointSize=aSize;vAlpha=aAlpha;}`;
+    const fs = `precision mediump float;uniform vec3 uColor;varying float vAlpha;
+    void main(){float d=length(gl_PointCoord-.5)*2.;float a=smoothstep(1.,.2,d)*vAlpha;gl_FragColor=vec4(uColor,a);}`;
 
-  const comp = (src, type) => {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    return s;
-  };
-  const prog = gl.createProgram();
-  gl.attachShader(prog, comp(vs, gl.VERTEX_SHADER));
-  gl.attachShader(prog, comp(fs, gl.FRAGMENT_SHADER));
-  gl.linkProgram(prog);
-  gl.useProgram(prog);
+    const comp = (src, type) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, comp(vs, gl.VERTEX_SHADER));
+    gl.attachShader(prog, comp(fs, gl.FRAGMENT_SHADER));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
 
-  const N = 160;
-  const pos = new Float32Array(N * 2);
-  const sizes = new Float32Array(N);
-  const alphas = new Float32Array(N);
-  const spd = Array.from({ length: N }, () => ({ vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22 }));
+    const N = 160;
+    const pos = new Float32Array(N * 2);
+    const sizes = new Float32Array(N);
+    const alphas = new Float32Array(N);
+    const spd = Array.from({ length: N }, () => ({ vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22 }));
 
-  for (let i = 0; i < N; i++) {
-    pos[i * 2] = Math.random() * window.innerWidth;
-    pos[i * 2 + 1] = Math.random() * window.innerHeight;
-    sizes[i] = 1.4 + Math.random() * 2.8;
-    alphas[i] = 0.08 + Math.random() * 0.2;
-  }
-
-  const mkBuf = (data, attr, sz) => {
-    const b = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, b);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    const loc = gl.getAttribLocation(prog, attr);
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, sz, gl.FLOAT, false, 0, 0);
-    return b;
-  };
-  mkBuf(sizes, 'aSize', 1);
-  mkBuf(alphas, 'aAlpha', 1);
-  const posBuf = mkBuf(pos, 'aPos', 2);
-  const uRes = gl.getUniformLocation(prog, 'uRes');
-  const uMouse = gl.getUniformLocation(prog, 'uMouse');
-  const uColor = gl.getUniformLocation(prog, 'uColor');
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-  let pmx = -9999, pmy = -9999;
-  document.addEventListener('mousemove', e => { pmx = e.clientX; pmy = e.clientY; });
-  document.addEventListener('touchmove', e => { if (e.touches[0]) { pmx = e.touches[0].clientX; pmy = e.touches[0].clientY; } }, { passive: true });
-
-  (function frame(){
     for (let i = 0; i < N; i++) {
-      pos[i * 2] += spd[i].vx;
-      pos[i * 2 + 1] += spd[i].vy;
-      if (pos[i * 2] < 0) pos[i * 2] = canvas.width;
-      if (pos[i * 2] > canvas.width) pos[i * 2] = 0;
-      if (pos[i * 2 + 1] < 0) pos[i * 2 + 1] = canvas.height;
-      if (pos[i * 2 + 1] > canvas.height) pos[i * 2 + 1] = 0;
-    }
-    // Transparent clear — NEVER opaque white!
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      gl.uniform3f(uColor, 99 / 255, 102 / 255, 241 / 255);
-    } else {
-      gl.uniform3f(uColor, 79 / 255, 70 / 255, 229 / 255);
+      pos[i * 2] = Math.random() * window.innerWidth;
+      pos[i * 2 + 1] = Math.random() * window.innerHeight;
+      sizes[i] = 1.4 + Math.random() * 2.8;
+      alphas[i] = 0.08 + Math.random() * 0.2;
     }
 
-    gl.uniform2f(uRes, canvas.width, canvas.height);
-    gl.uniform2f(uMouse, pmx, pmy);
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
-    const loc = gl.getAttribLocation(prog, 'aPos');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.POINTS, 0, N);
-    requestAnimationFrame(frame);
-  })();
+    const mkBuf = (data, attr, sz) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      const loc = gl.getAttribLocation(prog, attr);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, sz, gl.FLOAT, false, 0, 0);
+      return b;
+    };
+    mkBuf(sizes, 'aSize', 1);
+    mkBuf(alphas, 'aAlpha', 1);
+    const posBuf = mkBuf(pos, 'aPos', 2);
+    const uRes = gl.getUniformLocation(prog, 'uRes');
+    const uMouse = gl.getUniformLocation(prog, 'uMouse');
+    const uColor = gl.getUniformLocation(prog, 'uColor');
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    let pmx = -9999, pmy = -9999;
+    document.addEventListener('mousemove', e => { pmx = e.clientX; pmy = e.clientY; });
+    document.addEventListener('touchmove', e => { if (e.touches[0]) { pmx = e.touches[0].clientX; pmy = e.touches[0].clientY; } }, { passive: true });
+
+    (function frame(){
+      for (let i = 0; i < N; i++) {
+        pos[i * 2] += spd[i].vx;
+        pos[i * 2 + 1] += spd[i].vy;
+        if (pos[i * 2] < 0) pos[i * 2] = canvas.width;
+        if (pos[i * 2] > canvas.width) pos[i * 2] = 0;
+        if (pos[i * 2 + 1] < 0) pos[i * 2 + 1] = canvas.height;
+        if (pos[i * 2 + 1] > canvas.height) pos[i * 2 + 1] = 0;
+      }
+      // Transparent clear — NEVER opaque white!
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        gl.uniform3f(uColor, 99 / 255, 102 / 255, 241 / 255);
+      } else {
+        gl.uniform3f(uColor, 79 / 255, 70 / 255, 229 / 255);
+      }
+
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform2f(uMouse, pmx, pmy);
+      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
+      const loc = gl.getAttribLocation(prog, 'aPos');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.POINTS, 0, N);
+      requestAnimationFrame(frame);
+    })();
+  } catch(err) {
+    console.warn('WebGL init skipped:', err);
+  }
 })();
 
 /* ───────────────────────────────────────────────
    SCROLL REVEAL
 ─────────────────────────────────────────────── */
-document.querySelectorAll('.reveal').forEach(el=>{
-  new IntersectionObserver(([e])=>{if(e.isIntersecting)e.target.classList.add('vis');},{threshold:.1}).observe(el);
-});
+try {
+  const revealObs = new IntersectionObserver((entries)=>{
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); });
+  },{threshold:.05});
+  document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
+} catch(e) {
+  document.querySelectorAll('.reveal').forEach(el=>el.classList.add('vis'));
+}
+setTimeout(()=>{
+  document.querySelectorAll('.reveal').forEach(el=>el.classList.add('vis'));
+}, 350);
 
 /* ───────────────────────────────────────────────
    NAV SCROLL
