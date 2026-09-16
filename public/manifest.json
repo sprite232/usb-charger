@@ -1,0 +1,18 @@
+{
+  "name": "ตู้ชาร์จ USB · Smart Charger",
+  "short_name": "ตู้ชาร์จ USB",
+  "description": "ระบบตู้ชาร์จโทรศัพท์มือถืออัตโนมัติด้วย ESP32",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/logo.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

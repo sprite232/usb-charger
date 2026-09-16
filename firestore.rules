@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Port state — anyone can read (for customer page), only server writes
+    match /charger/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    // Transactions — admin reads only (protected), only server writes
+    match /transactions/{txId} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}
