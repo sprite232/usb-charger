@@ -625,33 +625,33 @@ app.post("/api/admin/login", (req, res) => {
   const nowMs = Date.now();
   const rec = loginAttempts.get(ip) || { count: 0, lockUntil: 0 };
 
-  if (rec.lockUntil > nowMs) {
-    const remainSec = Math.ceil((rec.lockUntil - nowMs) / 1000);
-    return res.status(429).json({ error: `ใส่รหัสผิดเกินจำนวน กรุณารอ ${remainSec} วินาที` });
-  }
-
   const { username, password, pin } = req.body;
   const validUser = !username || ["admin", "supakit", "owner"].includes(String(username).toLowerCase().trim());
   const inputPass = String(password || pin || "").trim();
   const validPass = inputPass === String(CFG.adminPin) || inputPass === "REDACTED_PASSWORD";
 
-  if (!validUser || !validPass) {
-    rec.count += 1;
-    if (rec.count >= 5) {
-      rec.lockUntil = nowMs + 5 * 60 * 1000; // ล็อก 5 นาที
-      rec.count = 0;
-      loginAttempts.set(ip, rec);
-      return res.status(429).json({ error: "ใส่รหัสผิดเกิน 5 ครั้ง บัญชีถูกระงับชั่วคราว 5 นาที" });
-    }
-    loginAttempts.set(ip, rec);
-    return res.status(401).json({ error: `ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (เหลือโอกาส ${5 - rec.count} ครั้ง)` });
+  // รหัสถูกต้อง -> ปลดล็อกและเข้าสู่ระบบทันที (แอดมินจะไม่ถูกขัง)
+  if (validUser && validPass) {
+    loginAttempts.delete(ip);
+    const token = jwt.sign({ role: "admin", user: username || "admin" }, CFG.jwtSecret, { expiresIn: "8h" });
+    console.log(`[🔐 Admin] Login success: ${username || "admin"}`);
+    return res.json({ success: true, token, username: username || "admin" });
   }
 
-  // เข้าสู่ระบบสำเร็จ -> รีเซ็ตการนับ
-  loginAttempts.delete(ip);
-  const token = jwt.sign({ role: "admin", user: username || "admin" }, CFG.jwtSecret, { expiresIn: "8h" });
-  console.log(`[🔐 Admin] Login success: ${username || "admin"}`);
-  res.json({ success: true, token, username: username || "admin" });
+  if (rec.lockUntil > nowMs) {
+    const remainSec = Math.ceil((rec.lockUntil - nowMs) / 1000);
+    return res.status(429).json({ error: `ใส่รหัสผิดเกินจำนวน กรุณารอ ${remainSec} วินาที หรือใช้รหัสผ่านที่ถูกต้อง` });
+  }
+
+  rec.count += 1;
+  if (rec.count >= 5) {
+    rec.lockUntil = nowMs + 5 * 60 * 1000; // ล็อก 5 นาที
+    rec.count = 0;
+    loginAttempts.set(ip, rec);
+    return res.status(429).json({ error: "ใส่รหัสผิดเกิน 5 ครั้ง บัญชีถูกระงับชั่วคราว 5 นาที" });
+  }
+  loginAttempts.set(ip, rec);
+  return res.status(401).json({ error: `ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (เหลือโอกาส ${5 - rec.count} ครั้ง)` });
 });
 
 

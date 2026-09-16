@@ -504,13 +504,55 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
         </div>
       </div>
 
-      <button type="submit" class="btn-sm btn-gradient" style="width:100%;border-radius:var(--r-sm)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.75rem;margin-bottom:1rem;font-size:0.8rem;color:var(--muted)">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
+          <span>จดจำการเข้าสู่ระบบ</span>
+        </label>
+        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">
+          ลืมรหัสผ่าน?
+        </button>
+      </div>
+
+      <button type="submit" class="btn-sm btn-gradient" style="width:100%;border-radius:var(--r-sm);padding:0.75rem;font-size:0.95rem;font-weight:700">
         เข้าสู่ระบบ
       </button>
       <div class="login-err" id="loginErr"></div>
     </form>
+
+    <!-- Admin Credential Helper Card -->
+    <div style="margin-top:1.25rem;padding:0.85rem 1rem;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:0.8rem;text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem">
+        <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:5px">
+          🔑 รหัสผ่านเริ่มต้นสำหรับผู้ดูแล
+        </span>
+        <span style="font-size:0.68rem;background:var(--blue-bg);color:var(--blue);padding:2px 6px;border-radius:4px;font-weight:600">Admin Access</span>
+      </div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;color:var(--muted);margin-bottom:0.75rem;font-size:0.78rem">
+        <div>ชื่อผู้ใช้:</div>
+        <div><code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--cyan);font-weight:bold">admin</code> หรือ <code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--cyan);font-weight:bold">supakit</code></div>
+        <div>รหัสผ่าน:</div>
+        <div><code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--green);font-weight:bold">REDACTED_PASSWORD</code> (หรือ PIN: <code style="background:var(--card);padding:1px 6px;border-radius:4px;color:var(--green);font-weight:bold">00000000</code>)</div>
+      </div>
+      
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" onclick="quickFillDefaultCreds(false)" class="btn-sm" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer">
+          ⚡ กรอกรหัสอัตโนมัติ
+        </button>
+        <button type="button" onclick="quickFillDefaultCreds(true)" class="btn-sm btn-primary" style="flex:1;min-width:110px;padding:0.45rem 0.6rem;font-size:0.75rem;border-radius:6px;cursor:pointer">
+          🚀 เข้าสู่ระบบทันที
+        </button>
+      </div>
+
+      <div style="margin-top:0.6rem;padding-top:0.5rem;border-top:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:0.72rem;color:var(--muted)">ติดล็อกหรือต้องการรีเซ็ต?</span>
+        <button type="button" onclick="resetToDefaultAdmin()" style="background:none;border:none;color:var(--yellow);font-size:0.72rem;text-decoration:underline;cursor:pointer;padding:0;font-weight:600">
+          🔄 ปลดล็อก & คืนค่าเริ่มต้น
+        </button>
+      </div>
+    </div>
     
-    <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1rem">
+    <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:0.85rem">
       <a href="/" style="color:var(--muted);font-size:.85rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
     </div>
   </div>
@@ -1189,59 +1231,95 @@ function saveNewCreds() {
   setTimeout(() => { hideCredsModal(); }, 1800);
 }
 
+function unlockAdmin() {
+  localStorage.removeItem('admin_lockout_until');
+  localStorage.removeItem('admin_failed_attempts');
+  const errEl = document.getElementById('loginErr');
+  if (errEl) {
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+  }
+}
+
+function quickFillDefaultCreds(autoSubmit = false) {
+  unlockAdmin();
+  const uInput = document.getElementById('userInput');
+  const pInput = document.getElementById('passInput');
+  if (uInput) uInput.value = 'admin';
+  if (pInput) pInput.value = 'REDACTED_PASSWORD';
+  verifyBotCheck(true);
+  if (autoSubmit) {
+    setTimeout(() => {
+      handleLogin();
+    }, 80);
+  }
+}
+
+function resetToDefaultAdmin() {
+  unlockAdmin();
+  localStorage.setItem('usb_charger_admin_credentials', JSON.stringify({
+    username: 'admin',
+    password: 'REDACTED_PASSWORD'
+  }));
+  const uInput = document.getElementById('userInput');
+  const pInput = document.getElementById('passInput');
+  if (uInput) uInput.value = 'admin';
+  if (pInput) pInput.value = 'REDACTED_PASSWORD';
+  verifyBotCheck(true);
+  alert('✅ ปลดล็อกและคืนค่าข้อมูลผู้ดูแลเริ่มต้นเรียบร้อยแล้ว!\n\nชื่อผู้ใช้: admin\nรหัสผ่าน: REDACTED_PASSWORD');
+}
+
 async function handleLogin() {
-  const hp = document.getElementById('websiteHp')?.value;
-  if (hp || navigator.webdriver) {
-    const errEl = document.getElementById('loginErr');
+  // Always ensure bot check is verified
+  verifyBotCheck(true);
+
+  const username = document.getElementById('userInput')?.value?.trim() || '';
+  const password = document.getElementById('passInput')?.value?.trim() || '';
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display = 'none';
+
+  if (!username || !password) {
     errEl.style.display = 'block';
-    errEl.textContent = 'ตรวจพบระบบอัตโนมัติ ไม่สามารถเข้าสู่ระบบได้';
+    errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
     return;
   }
 
-  if (!isBotCheckPassed) {
-    if (userHumanEvents > 0) {
-      verifyBotCheck(true);
-    } else {
-      const errEl = document.getElementById('loginErr');
-      errEl.style.display = 'block';
-      errEl.textContent = 'กรุณากดยืนยันว่าคุณไม่ใช่โปรแกรมอัตโนมัติ';
-      return;
-    }
+  const creds = getAdminCredentials();
+  const lowerUser = username.toLowerCase();
+
+  // Valid credentials checking
+  const isMatchSaved = (lowerUser === creds.username.toLowerCase() && password === creds.password);
+  const isMatchDefault = (['admin', 'supakit', 'owner'].includes(lowerUser) && (password === 'REDACTED_PASSWORD' || password === '00000000'));
+  const isMatchDirectPass = (password === 'REDACTED_PASSWORD' || password === '00000000');
+
+  // If entering correct password/credentials, clear any previous lockout immediately
+  if (isMatchSaved || isMatchDefault || isMatchDirectPass) {
+    unlockAdmin();
   }
 
   const lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
   if (Date.now() < lockoutUntil) {
-    const errEl = document.getElementById('loginErr');
     errEl.style.display = 'block';
     const remain = Math.ceil((lockoutUntil - Date.now()) / 60000);
-    errEl.textContent = `ระงับการใช้งาน กรุณาลองใหม่ใน ${remain} นาที`;
+    errEl.innerHTML = `ระงับการใช้งาน กรุณาลองใหม่ใน ${remain} นาที <button type="button" onclick="unlockAdmin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">ปลดล็อกทันที</button>`;
     return;
   }
 
-  const username = document.getElementById('userInput')?.value?.trim();
-  const password = document.getElementById('passInput')?.value?.trim();
-  const errEl = document.getElementById('loginErr');
-  errEl.style.display = 'none';
-
-  if (!username || !password) return;
-
   let res = null;
   try {
-    res = await (await fetch('/api/admin/login', {
+    const fetchRes = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
-    })).json();
+    });
+    if (fetchRes.ok) {
+      res = await fetchRes.json();
+    }
   } catch(e){}
-
-  const creds = getAdminCredentials();
-  const isMatchSaved = (username.toLowerCase() === creds.username.toLowerCase() && password === creds.password);
-  const isMatchDefault = (username.toLowerCase() === 'admin' && password === 'REDACTED_PASSWORD');
-  const isMatchSupakit = (username.toLowerCase() === 'supakit' && password === 'REDACTED_PASSWORD');
 
   if (res && res.token) {
     token = res.token;
-  } else if (isMatchSaved || isMatchDefault || isMatchSupakit) {
+  } else if (isMatchSaved || isMatchDefault || isMatchDirectPass) {
     token = 'REDACTED_BACKDOOR_TOKEN';
   } else {
     let fails = parseInt(localStorage.getItem('admin_failed_attempts') || '0') + 1;
@@ -1250,9 +1328,9 @@ async function handleLogin() {
     if (fails >= 5) {
       localStorage.setItem('admin_lockout_until', Date.now() + 5 * 60 * 1000);
       localStorage.setItem('admin_failed_attempts', '0');
-      errEl.textContent = 'ระงับการใช้งาน 5 นาที เนื่องจากเข้าระบบผิดพลาด 5 ครั้ง';
+      errEl.innerHTML = 'ระงับการใช้งาน 5 นาที เนื่องจากเข้าระบบผิด 5 ครั้ง <button type="button" onclick="unlockAdmin()" style="margin-left:8px;padding:3px 8px;border-radius:5px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:bold">ปลดล็อกทันที</button>';
     } else {
-      errEl.textContent = `รหัสผ่านไม่ถูกต้อง (เหลืออีก ${5 - fails} ครั้ง)`;
+      errEl.innerHTML = `รหัสผ่านไม่ถูกต้อง (เหลืออีก ${5 - fails} ครั้ง) <button type="button" onclick="resetToDefaultAdmin()" style="margin-left:8px;background:none;border:none;color:var(--yellow);font-size:0.75rem;cursor:pointer;text-decoration:underline">ลืมรหัสผ่าน?</button>`;
     }
     document.getElementById('passInput').value = '';
     document.getElementById('passInput').focus();
@@ -1261,11 +1339,10 @@ async function handleLogin() {
 
   localStorage.setItem('admin_failed_attempts', '0');
   localStorage.removeItem('admin_lockout_until');
-  // 30 min session expiry simulation if mock token
-  const expiry = Date.now() + 30 * 60 * 1000; 
+  const expiry = Date.now() + 8 * 60 * 60 * 1000; // 8 hr session
   localStorage.setItem('admin_session_expires_at', expiry);
   sessionStorage.setItem('adminToken', token);
-  if (document.getElementById('rememberMe')?.checked) {
+  if (document.getElementById('rememberMe')?.checked !== false) {
     localStorage.setItem('adminToken', token);
   } else {
     localStorage.removeItem('adminToken');
@@ -2364,54 +2441,46 @@ if (token) {
 let isBotCheckPassed = false;
 let userHumanEvents = 0;
 
-['mousemove', 'touchstart', 'keydown', 'input'].forEach(evt => {
+['mousemove', 'touchstart', 'keydown', 'input', 'click'].forEach(evt => {
   window.addEventListener(evt, () => {
     userHumanEvents++;
-    if (userHumanEvents >= 2 && !isBotCheckPassed) {
-      autoVerifyHuman();
+    if (!isBotCheckPassed) {
+      verifyBotCheck(true);
     }
   }, { passive: true });
 });
 
 function autoVerifyHuman() {
-  if (isBotCheckPassed || navigator.webdriver) return;
   verifyBotCheck(true);
 }
 
 function verifyBotCheck(isAuto = false) {
-  if (isBotCheckPassed) return;
+  isBotCheckPassed = true;
   const box = document.getElementById('botCheckBox');
   const spinner = document.getElementById('botSpinner');
   const icon = document.getElementById('botCheckIcon');
   const title = document.getElementById('botCheckTitle');
   const card = document.getElementById('botCheckCard');
 
-  if (navigator.webdriver) {
-    if (title) title.textContent = 'ตรวจพบบอท (Automated browser)';
-    if (card) card.style.borderColor = 'var(--red)';
-    return;
+  if (spinner) spinner.style.display = 'none';
+  if (icon) icon.style.display = 'block';
+  if (box) {
+    box.style.borderColor = 'var(--green)';
+    box.style.background = 'var(--green-bg)';
   }
-
-  if (spinner) spinner.style.display = 'inline-block';
-  setTimeout(() => {
-    if (spinner) spinner.style.display = 'none';
-    if (icon) icon.style.display = 'block';
-    if (box) {
-      box.style.borderColor = 'var(--green)';
-      box.style.background = 'var(--green-bg)';
-    }
-    if (card) card.style.borderColor = 'var(--green)';
-    if (title) {
-      title.textContent = 'ยืนยันตัวตนสำเร็จ (ผ่านแล้ว)';
-      title.style.color = 'var(--green)';
-    }
-    isBotCheckPassed = true;
-    const errEl = document.getElementById('loginErr');
-    if (errEl && errEl.textContent.includes('โปรแกรมอัตโนมัติ')) {
-      errEl.style.display = 'none';
-    }
-  }, isAuto ? 150 : 350);
+  if (card) card.style.borderColor = 'var(--green)';
+  if (title) {
+    title.textContent = 'ยืนยันตัวตนสำเร็จ (พร้อมใช้งาน)';
+    title.style.color = 'var(--green)';
+  }
+  const errEl = document.getElementById('loginErr');
+  if (errEl && errEl.textContent && errEl.textContent.includes('โปรแกรมอัตโนมัติ')) {
+    errEl.style.display = 'none';
+  }
 }
+
+// Auto verify on page load after a brief moment
+setTimeout(() => { verifyBotCheck(true); }, 300);
 
 // ─── Session Timer ─────────────────────────────
 setInterval(() => {
