@@ -132,15 +132,61 @@ html, body, .topbar, .tabs, .tab, .stat-card, .chart-card, .port-card-admin, .tb
   cursor:pointer;padding:8px;font-size:.8rem;font-weight:600;font-family:inherit;
 }
 
-/* Captcha Terminal */
-.captcha-box {
-  background: #0a0a0a; border: 1px solid #333; border-radius: var(--r-sm);
-  padding: 1rem; font-family: monospace; color: #22c55e;
-  text-align: left; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
+/* Bot Detection Widget (Clean & Professional Cloudflare Style) */
+.bot-check-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
-.captcha-box input {
-  background: transparent; border: none; border-bottom: 1px solid #22c55e;
-  color: #22c55e; font-family: monospace; font-size: 1.1rem; width: 60px; outline: none; text-align: center;
+.bot-check-card:hover {
+  border-color: var(--blue);
+  background: var(--card-hover);
+}
+.bot-check-box {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.bot-check-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--muted2);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: botSpin 0.6s linear infinite;
+  display: none;
+}
+@keyframes botSpin { to { transform: rotate(360deg); } }
+#botCheckIcon {
+  display: none;
+  width: 16px;
+  height: 16px;
+  fill: var(--green);
+}
+.bot-check-text {
+  flex: 1;
+  text-align: left;
+  line-height: 1.35;
+}
+.bot-badge {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
 }
 
 .login-err{
@@ -386,6 +432,30 @@ tr:last-child td{border-bottom:none}
 .slip-info-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:.35rem}
 .slip-info-row .lbl{color:var(--muted);font-weight:600}
 .slip-info-row .val{color:var(--text);font-weight:600}
+
+/* ── Product refresh: operational console, not a sci-fi demo ──────── */
+:root,[data-theme="dark"]{
+  --bg:#101826;--card:#172235;--card2:#1d2a3e;--card-hover:#27364d;
+  --border:#34455e;--border-subtle:#26354b;--text:#f4f7fb;--muted:#a7b4c8;--muted2:#74839b;
+  --green:#48c995;--green-bg:rgba(72,201,149,.13);--yellow:#f2b84b;--yellow-bg:rgba(242,184,75,.13);
+  --red:#fb7185;--red-bg:rgba(251,113,133,.13);--blue:#7ba9ff;--blue-bg:rgba(123,169,255,.14);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,.14);--cyan:#55c9e8;--cyan-bg:rgba(85,201,232,.14);--r:14px;--r-sm:10px;
+}
+[data-theme="light"]{
+  --bg:#f4f7fb;--card:#ffffff;--card2:#f1f5f9;--card-hover:#e8eef6;--border:#d9e2ef;--border-subtle:#e7edf5;
+  --text:#172033;--muted:#60708a;--muted2:#8996a8;--green:#087f5b;--green-bg:#e7f7f0;--yellow:#ae6600;--yellow-bg:#fff4df;
+  --red:#c43b51;--red-bg:#ffedf0;--blue:#2563d9;--blue-bg:#eaf1ff;--purple:#6d52d9;--purple-bg:#f0ebff;--cyan:#087b9d;--cyan-bg:#e7f7fb;
+}
+body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.scanline-overlay{display:none}
+#loginScreen{background:radial-gradient(circle at 50% 0%,rgba(85,201,232,.12),transparent 34%),var(--bg)}
+.login-box{background:var(--card);border-color:var(--border);border-radius:18px;box-shadow:0 18px 55px rgba(0,0,0,.2);padding:2.25rem 2rem;animation:none;opacity:1;transform:none}
+.login-brand-icon{box-shadow:none;border-color:var(--border);border-radius:14px}.login-box h1{font-size:1.45rem}
+.btn-gradient{background:var(--blue);box-shadow:none}.btn-gradient:hover{background:#5a91f7;box-shadow:none;transform:none}
+.topbar{min-height:66px;padding:.8rem clamp(1rem,4vw,3rem);background:var(--card);box-shadow:0 1px 0 var(--border)}.topbar-icon{box-shadow:none;border-color:var(--border)}.status-dot{box-shadow:none;animation:none}.session-badge{font-family:inherit;color:var(--muted);background:var(--card2);border-color:var(--border)}
+.tabs{padding:.6rem clamp(1rem,4vw,3rem);gap:.35rem;background:var(--card);border-color:var(--border)}.tab{border-radius:9px;background:transparent;padding:.55rem .85rem}.tab:hover{background:var(--card2)}.tab.active{background:var(--blue-bg);color:var(--blue);border-color:transparent}.tab.active .tab-icon{filter:none;opacity:1}
+.content{max-width:1180px;padding:1.75rem clamp(1rem,4vw,3rem)}.stats-grid{gap:.85rem}.stat-card{border:1px solid var(--border);border-left-width:3px;border-radius:14px;background:var(--card);padding:1.1rem;box-shadow:none}.stat-card.green,.stat-card.blue,.stat-card.yellow,.stat-card.purple,.stat-card.cyan{background:var(--card)}.stat-card .lbl{font-size:.7rem;letter-spacing:.06em}.stat-card .val{font-size:1.55rem}
+.chart-card,.port-card-admin,.tbl-wrap,.test-panel{border-color:var(--border);border-radius:14px;box-shadow:none}.chart-card{padding:1.35rem}.port-card-admin{padding:1.15rem}.port-card-admin.available,.port-card-admin.in-use{box-shadow:none}.port-card-admin.in-use::after{animation:none;opacity:.8}.port-timer-big{font-family:'Plus Jakarta Sans',monospace}.btn-sm{border-radius:9px}.btn-primary{background:var(--blue)}.btn-green{background:var(--green)}.btn-gray{background:var(--card2)}
+@media(max-width:560px){.topbar{padding:.7rem 1rem}.session-badge,.btn-logout{display:none}.tabs{padding:.5rem 1rem}.tab{padding:.5rem .72rem;font-size:.8rem}.content{padding:1.2rem 1rem}.stats-grid{gap:.65rem}.stat-card{padding:.9rem}.stat-card .val{font-size:1.3rem}.login-box{padding:1.8rem 1.35rem}}
 </style>
 </head>
 <body>
@@ -397,35 +467,40 @@ tr:last-child td{border-bottom:none}
     <img src="assets/logo.jpg" class="login-brand-icon" alt="Portal"/>
     <h1>ระบบจัดการตู้ชาร์จ</h1>
     <p>Smart Charger Admin Portal</p>
-    
-    <div id="captchaContainer">
-      <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; text-align: left;">ยืนยันตัวตน (CAPTCHA)</div>
-      <div class="captcha-box">
-        <span id="captchaQuestion">? + ? = ?</span>
-        <input type="number" id="captchaInput" autocomplete="off">
-      </div>
-      <button class="btn-sm btn-gradient" style="width:100%;" onclick="verifyCaptcha()">ตรวจสอบ</button>
-      <div id="captchaErr" class="login-err" style="display:none; text-align:center;">คำตอบไม่ถูกต้อง</div>
-    </div>
 
-    <form id="loginFormContainer" style="display:none;" onsubmit="event.preventDefault(); handleLogin();">
+    <form id="loginFormContainer" onsubmit="event.preventDefault(); handleLogin();">
       <!-- Honeypot -->
       <input type="text" name="website" id="websiteHp" style="display:none" tabindex="-1" autocomplete="off">
 
       <div class="form-group">
         <label class="form-label">ชื่อผู้ใช้ (Username)</label>
         <div class="input-wrap">
-          <input type="text" id="userInput" class="form-input" placeholder="admin" required />
+          <input type="text" id="userInput" class="form-input" placeholder="admin" required autocomplete="username" />
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label">รหัสผ่าน (Password)</label>
         <div class="input-wrap">
-          <input type="password" id="passInput" class="form-input" placeholder="รหัสผ่านผู้ดูแล" required />
+          <input type="password" id="passInput" class="form-input" placeholder="รหัสผ่านผู้ดูแล" required autocomplete="current-password" />
           <button type="button" class="eye-btn" onclick="togglePassVisibility()" title="ดูรหัส">
             <span id="eyeIcon">แสดง</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Bot Detection Verification (Clean & Simple Cloudflare Style) -->
+      <div class="bot-check-card" id="botCheckCard" onclick="verifyBotCheck()">
+        <div class="bot-check-box" id="botCheckBox">
+          <div class="bot-check-spinner" id="botSpinner"></div>
+          <svg id="botCheckIcon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div class="bot-check-text">
+          <div id="botCheckTitle" style="font-weight:600;font-size:0.85rem">ฉันไม่ใช่โปรแกรมอัตโนมัติ</div>
+          <div style="font-size:0.68rem;color:var(--muted)">ระบบตรวจจับและป้องกันบอท</div>
+        </div>
+        <div class="bot-badge" title="Security Verified">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--muted)"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
         </div>
       </div>
 
@@ -435,8 +510,8 @@ tr:last-child td{border-bottom:none}
       <div class="login-err" id="loginErr"></div>
     </form>
     
-    <div style="margin-top:2rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem">
-      <a href="/" style="color:var(--muted);font-size:.8rem;text-decoration:none">กลับไปยังหน้าตู้ชาร์จ</a>
+    <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1rem">
+      <a href="/" style="color:var(--muted);font-size:.85rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
     </div>
   </div>
 </div>
@@ -923,11 +998,22 @@ function saveNewCreds() {
 
 async function handleLogin() {
   const hp = document.getElementById('websiteHp')?.value;
-  if (hp) {
+  if (hp || navigator.webdriver) {
     const errEl = document.getElementById('loginErr');
     errEl.style.display = 'block';
-    errEl.textContent = 'รหัสผ่านไม่ถูกต้อง';
+    errEl.textContent = 'ตรวจพบระบบอัตโนมัติ ไม่สามารถเข้าสู่ระบบได้';
     return;
+  }
+
+  if (!isBotCheckPassed) {
+    if (userHumanEvents > 0) {
+      verifyBotCheck(true);
+    } else {
+      const errEl = document.getElementById('loginErr');
+      errEl.style.display = 'block';
+      errEl.textContent = 'กรุณากดยืนยันว่าคุณไม่ใช่โปรแกรมอัตโนมัติ';
+      return;
+    }
   }
 
   const lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
@@ -1866,35 +1952,57 @@ if (token) {
 }
 
 
-// ─── Math CAPTCHA ──────────────────────────────
-let captchaAnswer = 0;
-function generateCaptcha() {
-  const a = Math.floor(Math.random() * 9) + 1;
-  const b = Math.floor(Math.random() * 9) + 1;
-  const op = Math.random() > 0.5 ? '+' : '-';
-  if (op === '+') {
-    captchaAnswer = a + b;
-    document.getElementById('captchaQuestion').textContent = `${a} + ${b} = ?`;
-  } else {
-    const max = Math.max(a, b);
-    const min = Math.min(a, b);
-    captchaAnswer = max - min;
-    document.getElementById('captchaQuestion').textContent = `${max} - ${min} = ?`;
-  }
-  document.getElementById('captchaInput').value = '';
+// ─── Bot Detection & Human Verification ────────
+let isBotCheckPassed = false;
+let userHumanEvents = 0;
+
+['mousemove', 'touchstart', 'keydown', 'input'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    userHumanEvents++;
+    if (userHumanEvents >= 2 && !isBotCheckPassed) {
+      autoVerifyHuman();
+    }
+  }, { passive: true });
+});
+
+function autoVerifyHuman() {
+  if (isBotCheckPassed || navigator.webdriver) return;
+  verifyBotCheck(true);
 }
 
-function verifyCaptcha() {
-  const val = parseInt(document.getElementById('captchaInput').value);
-  if (val === captchaAnswer) {
-    document.getElementById('captchaContainer').style.display = 'none';
-    document.getElementById('loginFormContainer').style.display = 'block';
-  } else {
-    generateCaptcha();
-    const err = document.getElementById('captchaErr');
-    err.style.display = 'block';
-    setTimeout(() => err.style.display = 'none', 2000);
+function verifyBotCheck(isAuto = false) {
+  if (isBotCheckPassed) return;
+  const box = document.getElementById('botCheckBox');
+  const spinner = document.getElementById('botSpinner');
+  const icon = document.getElementById('botCheckIcon');
+  const title = document.getElementById('botCheckTitle');
+  const card = document.getElementById('botCheckCard');
+
+  if (navigator.webdriver) {
+    if (title) title.textContent = 'ตรวจพบบอท (Automated browser)';
+    if (card) card.style.borderColor = 'var(--red)';
+    return;
   }
+
+  if (spinner) spinner.style.display = 'inline-block';
+  setTimeout(() => {
+    if (spinner) spinner.style.display = 'none';
+    if (icon) icon.style.display = 'block';
+    if (box) {
+      box.style.borderColor = 'var(--green)';
+      box.style.background = 'var(--green-bg)';
+    }
+    if (card) card.style.borderColor = 'var(--green)';
+    if (title) {
+      title.textContent = 'ยืนยันตัวตนสำเร็จ (ผ่านแล้ว)';
+      title.style.color = 'var(--green)';
+    }
+    isBotCheckPassed = true;
+    const errEl = document.getElementById('loginErr');
+    if (errEl && errEl.textContent.includes('โปรแกรมอัตโนมัติ')) {
+      errEl.style.display = 'none';
+    }
+  }, isAuto ? 150 : 350);
 }
 
 // ─── Session Timer ─────────────────────────────
@@ -1969,8 +2077,6 @@ renderAll = function(d) {
     });
   }, 100);
 }
-
-document.addEventListener('DOMContentLoaded', generateCaptcha);
 
 </script>
 </body>

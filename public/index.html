@@ -731,6 +731,40 @@ footer{
 /* ── SCROLLBAR ─────────────────────────── */
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px}
+
+/* ── Product refresh: quiet, dependable, and readable ─────────────── */
+:root{
+  --white:#f6f8fc;--off:#ffffff;--g1:#eef2f7;--g2:#d9e1ec;--g3:#60708a;
+  --dark:#172033;--card-bg:#ffffff;--card-border:#dce4ef;
+  --green:#087f5b;--green-bg:#e7f7f0;--amber:#b86a00;--amber-bg:#fff4df;
+  --blue:#2563d9;--blue-bg:#eaf1ff;--violet:#4f46e5;
+  --shadow:0 12px 32px rgba(25,43,73,.08);--r:18px;
+}
+[data-theme="dark"]{
+  --white:#111827;--off:#172033;--g1:#1e293b;--g2:#304057;--g3:#a8b4c7;
+  --dark:#f4f7fb;--card-bg:#1a2435;--card-border:#304057;
+  --green:#47d19b;--green-bg:#133a32;--amber:#f5b54c;--amber-bg:#44351c;
+  --blue:#7eaeff;--blue-bg:#1c3155;--shadow:0 12px 30px rgba(0,0,0,.22);
+}
+body{background:var(--white);letter-spacing:0}
+#bgc,.noise,#cur,#curR{display:none!important}
+nav{min-height:68px;padding:12px clamp(18px,4vw,48px);background:rgba(255,255,255,.94);border-color:var(--g2);box-shadow:none}
+[data-theme="dark"] nav{background:rgba(17,24,39,.94);border-color:var(--g2)}
+nav.scrolled{box-shadow:0 4px 20px rgba(25,43,73,.08)}
+.nav-brand{font-size:1.02rem}.nav-brand img{width:36px;height:36px;border-radius:11px}
+.nav-dot{background:var(--green);animation:none}.rate-pill{background:var(--green-bg);border-color:transparent;color:var(--green);animation:none}
+.rate-dot{animation:none}.icon-nav-btn,.theme-switch-pill{border-color:var(--g2);background:var(--off)}
+.hero-hd{max-width:760px;margin:0 auto;padding:74px 24px 46px;text-align:left}
+.hero-hd h1{font-family:var(--sans);font-size:clamp(2.35rem,5vw,4.25rem);line-height:1.07;letter-spacing:-.055em;max-width:650px;margin-bottom:16px;animation:none;opacity:1}
+.hero-hd h1 .g{background:none;-webkit-text-fill-color:var(--violet);color:var(--violet)}
+.hero-hd p{max-width:510px;margin:0;font-size:1rem;color:var(--g3);animation:none;opacity:1}
+.main{max-width:760px;padding:0 24px 48px}.sec-lbl{font-size:.74rem;color:var(--g3);margin-bottom:14px}.sec-lbl::before{width:0}
+.port-grid{gap:16px;margin-bottom:42px}.port-card{min-height:170px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:18px;padding:20px;box-shadow:none;animation:none;opacity:1}
+.port-card::before{display:none}.port-card.available{animation:none}.port-card.available:hover{transform:translateY(-3px);background:var(--card-bg);border-color:var(--green);box-shadow:var(--shadow)}
+.port-card.in-use{animation:none;box-shadow:none}.usb-icon{margin-bottom:18px;filter:none!important}.pc-name{font-family:var(--sans);font-size:1rem}.pc-type{font-size:.75rem}.pc-hint{margin-top:12px;color:var(--g3)}
+.status-badge{padding:5px 9px;animation:none;font-size:.69rem}.faq{max-width:760px;padding:0 24px;margin-bottom:50px}.faq-ttl{font-family:var(--sans);font-size:1.05rem}.acc{border-color:var(--card-border);border-radius:14px;margin-bottom:10px;box-shadow:none}.acc:hover{box-shadow:none}.acc-head{padding:16px 18px;font-size:.9rem}.acc-body p{padding:14px 18px}
+footer{border-color:var(--g2);padding:28px 24px}.sheet{border-color:var(--card-border);box-shadow:0 20px 56px rgba(25,43,73,.22)}
+@media(max-width:520px){nav{padding:11px 16px}.nav-brand{font-size:.92rem}.rate-pill{padding:6px 9px}.theme-switch-pill{width:54px}.pill-thumb{width:24px;height:24px}.hero-hd{padding:46px 20px 34px}.hero-hd h1{font-size:2.3rem}.main,.faq{padding-left:16px;padding-right:16px}.port-grid{grid-template-columns:1fr;gap:12px}.port-card{min-height:148px}.icon-nav-btn{display:none}}
 </style>
 </head>
 <body>
@@ -833,18 +867,6 @@ footer{
           <img src="assets/coin-10.png" alt="10฿"/>
           <div class="dc-foot"><div class="dc-amt">฿10</div><div class="dc-min" data-for="10">30 นาที</div></div>
         </div>
-        <div class="dc" onclick="pickDenom(20,this)">
-          <img src="assets/note-20.jpg" alt="20฿"/>
-          <div class="dc-foot"><div class="dc-amt">฿20</div><div class="dc-min" data-for="20">60 นาที</div></div>
-        </div>
-        <div class="dc" onclick="pickDenom(50,this)">
-          <img src="assets/note-50.jpg" alt="50฿"/>
-          <div class="dc-foot"><div class="dc-amt">฿50</div><div class="dc-min" data-for="50">150 นาที</div></div>
-        </div>
-        <div class="dc" onclick="pickDenom(100,this)">
-          <img src="assets/note-100.jpg" alt="100฿"/>
-          <div class="dc-foot"><div class="dc-amt">฿100</div><div class="dc-min" data-for="100">300 นาที</div></div>
-        </div>
         <div class="dc" id="dcCustom" onclick="focusCustom()">
           <div class="dc-custom-inner">
             <div class="lbl">กำหนดเอง</div>
@@ -900,16 +922,16 @@ footer{
           </div>
           <span class="method-badge">ตรวจสลิป</span>
         </button>
-        <button class="method-item" id="btnMethodCash" onclick="handleCashMethodClick()">
-          <img src="assets/banknote.png" alt="เงินสด" style="width:36px;height:36px;object-fit:contain;opacity:.75;flex-shrink:0"/>
+        <button class="method-item" id="btnMethodCoin" onclick="handleCoinMethodClick()">
+          <img src="assets/coin.png" alt="เหรียญ" style="width:36px;height:36px;object-fit:contain;opacity:.75;flex-shrink:0"/>
           <div>
-            <div class="ml">หยอดเงินสดที่ตู้</div>
-            <div class="ms" id="cashMethodSub">ใส่เหรียญ 5/10 หรือธนบัตร 20/50/100</div>
+            <div class="ml">หยอดเหรียญที่ตู้</div>
+            <div class="ms" id="coinMethodSub">รองรับเหรียญ 5 และ 10 บาท</div>
           </div>
-          <span class="method-badge" id="cashMethodBadge">รับเหรียญ &amp; แบงค์</span>
+          <span class="method-badge" id="coinMethodBadge">รับเหรียญ</span>
         </button>
       </div>
-      <div id="cashOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
+      <div id="coinOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
         ยอด 1-4 บาท ชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น
       </div>
       <button class="btn btn-ghost" style="margin-top:12px" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
@@ -959,19 +981,19 @@ footer{
       <button class="btn btn-ghost" onclick="cancelSession()">ยกเลิก</button>
     </div>
 
-    <!-- Cash -->
-    <div class="page" id="pg-cash">
+    <!-- Coin -->
+    <div class="page" id="pg-coin">
       <div class="pay-row">
-        <div class="pay-cell"><div class="pay-lbl">พอร์ต</div><div class="pay-val" id="cash-port">—</div></div>
-        <div class="pay-cell"><div class="pay-lbl">จำนวน</div><div class="pay-val" id="cash-amt">—</div></div>
-        <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="cash-time">—</div></div>
+        <div class="pay-cell"><div class="pay-lbl">พอร์ต</div><div class="pay-val" id="coin-port">—</div></div>
+        <div class="pay-cell"><div class="pay-lbl">จำนวน</div><div class="pay-val" id="coin-amt">—</div></div>
+        <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="coin-time">—</div></div>
       </div>
       <div class="cash-box">
-        <h3>ใส่เงินสดที่ช่องรับเงินของตู้</h3>
-        <div class="cash-live" id="cash-live-status">ใส่แล้ว: ฿0 / ฿—</div>
-        <div class="cash-rem" id="cash-remain-status">ยังขาดอีก: ฿—</div>
-        <div class="cash-progress-wrap"><div class="cash-progress" id="cash-progress" style="width:0%"></div></div>
-        <p id="cash-example-note" style="font-size:.75rem;color:var(--g3);line-height:1.5;margin-bottom:8px">รองรับเหรียญ 5฿, 10฿ และธนบัตร 20฿, 50฿, 100฿</p>
+        <h3>หยอดเหรียญที่ช่องรับเหรียญของตู้</h3>
+        <div class="cash-live" id="coin-live-status">หยอดแล้ว: ฿0 / ฿—</div>
+        <div class="cash-rem" id="coin-remain-status">ยังขาดอีก: ฿—</div>
+        <div class="cash-progress-wrap"><div class="cash-progress" id="coin-progress" style="width:0%"></div></div>
+        <p id="coin-example-note" style="font-size:.75rem;color:var(--g3);line-height:1.5;margin-bottom:8px">รองรับเฉพาะเหรียญ 5฿ และ 10฿</p>
         <div class="alert-warn" style="margin-top:10px">
           <div class="alert-ic">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
@@ -1139,27 +1161,42 @@ const Sound = {
 const Voice = {
   voiceEnabled: true,
   soundEnabled: true,
+  thaiVoice: null,
+  speakTimer: null,
+  loadThaiVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    this.thaiVoice = voices.find(v => /^th(-|_)/i.test(v.lang || ''))
+      || voices.find(v => /thai/i.test(v.name || ''))
+      || null;
+  },
   init() {
     const saved = localStorage.getItem('sc_voice_enabled');
     this.voiceEnabled = saved !== '0';
     this.soundEnabled = this.voiceEnabled;
     this.updateBtn();
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => { try { window.speechSynthesis.getVoices(); } catch(e){} };
+      this.loadThaiVoice();
+      window.speechSynthesis.onvoiceschanged = () => this.loadThaiVoice();
     }
   },
   speak(text) {
     if (!this.voiceEnabled || !('speechSynthesis' in window)) return;
     try {
+      // cancel() ทำงานแบบ asynchronous ในบาง browser; หน่วงสั้น ๆ ก่อนพูดใหม่
+      // เพื่อไม่ให้เสียงพูดสะดุด ซ้อน หรือออกเสียงด้วย voice เดิม
+      if (this.speakTimer) clearTimeout(this.speakTimer);
       window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'th-TH';
-      utter.rate = 1.05;
-      utter.pitch = 1.08;
-      const voices = window.speechSynthesis.getVoices();
-      const thVoice = voices.find(v => (v.lang && v.lang.toLowerCase().includes('th')) || (v.name && v.name.includes('Thai')));
-      if (thVoice) utter.voice = thVoice;
-      window.speechSynthesis.speak(utter);
+      this.speakTimer = setTimeout(() => {
+        if (!this.voiceEnabled) return;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = this.thaiVoice?.lang || 'th-TH';
+        utter.rate = 0.92;
+        utter.pitch = 1;
+        utter.volume = 0.9;
+        if (this.thaiVoice) utter.voice = this.thaiVoice;
+        window.speechSynthesis.speak(utter);
+      }, 80);
     } catch(e) {
       console.warn('Speech error:', e);
     }
@@ -1167,6 +1204,10 @@ const Voice = {
   toggle() {
     this.voiceEnabled = !this.voiceEnabled;
     this.soundEnabled = this.voiceEnabled;
+    if (!this.voiceEnabled && 'speechSynthesis' in window) {
+      if (this.speakTimer) clearTimeout(this.speakTimer);
+      window.speechSynthesis.cancel();
+    }
     localStorage.setItem('sc_voice_enabled', this.voiceEnabled ? '1' : '0');
     this.updateBtn();
     if (this.voiceEnabled) {
@@ -1529,7 +1570,7 @@ function renderPorts(ports){
           <div><div class="pc-name">${p.label}</div><div class="pc-type">${p.type}</div></div>
           ${badge}
         </div>
-        ${isA?'<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>':isP?`<div class="pc-pending">รอชำระเงิน (${p.sessionMethod||'—'})</div>`:''}`;
+        ${isA?'<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>':isP?`<div class="pc-pending" data-session-expires-at="${p.sessionExpiresAt||''}" data-session-method="${p.sessionMethod||'—'}">รอชำระ (${p.sessionMethod||'—'})</div>`:''}`;
       if(isA)el.addEventListener('click',()=>openSheet(p.id,p.label));
     }
     g.appendChild(el);
@@ -1586,6 +1627,17 @@ setInterval(()=>{
     if(bfEl){const u=100-pct;bfEl.style.background=pct===100?'linear-gradient(90deg,#16a34a,#22c55e)':pct===0?'linear-gradient(90deg,#b91c1c,#ef4444)':`linear-gradient(90deg,#ef4444 ${u}%,#16a34a ${u}%)`;}
   });
   if(hasInUse)savePersistentPorts(currentPorts);
+},1000);
+
+// แสดงเวลารอชำระบนการ์ดพอร์ต เพื่อให้ผู้ใช้รู้ว่าพอร์ตจะกลับมาว่างเมื่อไร
+setInterval(()=>{
+  document.querySelectorAll('[data-session-expires-at]').forEach(el=>{
+    const expiresAt=el.dataset.sessionExpiresAt;
+    if(!expiresAt)return;
+    const rem=Math.max(0,Math.ceil((new Date(expiresAt)-Date.now())/1000));
+    const method=el.dataset.sessionMethod||'—';
+    el.textContent=rem>0 ? `รอชำระ (${method}) · เหลือ ${fmtSecs(rem)}` : 'กำลังปลดล็อกพอร์ต…';
+  });
 },1000);
 
 /* ── FAQ ── */

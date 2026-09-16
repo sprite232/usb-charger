@@ -57,9 +57,10 @@ const CFG = {
   bankName:         process.env.BANK_NAME            || "กสิกรไทย (kbank)",
   bankAccount:      process.env.BANK_ACCOUNT         || "193-3-86131-3",
   bankAccountName:  process.env.BANK_ACCOUNT_NAME    || "ศุภกฤต สอนบุญมา",
-  sessionExpireMs:  10 * 60 * 1000,   // 10 นาที
+  // กันพอร์ตค้างเมื่อมีคนเปิดหน้า QR/โอนแล้วไม่ชำระ: ค่าเริ่มต้น 2 นาที
+  // ปรับได้จาก PAYMENT_SESSION_EXPIRE_SECONDS (30–600 วินาที)
+  sessionExpireMs:  Math.min(600_000, Math.max(30_000, Number(process.env.PAYMENT_SESSION_EXPIRE_SECONDS || 120) * 1000)),
   slipMaxAgeMins:   30,
-  cashScoreMin:     70,                // คะแนนรวมขั้นต่ำ (UV+Color+Magnetic)
 };
 
 // ─── Multer ───────────────────────────────────────────────────────────────────
@@ -260,6 +261,14 @@ function clearSession(portId) {
   saveState();
 }
 
+function expirePaymentSession(port) {
+  if (!port?.paymentSession?.expiresAt) return false;
+  if (Date.now() < new Date(port.paymentSession.expiresAt).getTime()) return false;
+  console.log(`[⌛ Session Expired] port=${port.id}`);
+  clearSession(port.id);
+  return true;
+}
+
 
 
 function summary() {
@@ -293,17 +302,14 @@ setInterval(() => {
 }, 1000);
 
 
-// ✅ Session timeout (ทุก 30 วินาที)
+// ✅ Session timeout — ปลดล็อกพอร์ตที่รอชำระให้คนถัดไปโดยเร็ว
 setInterval(() => {
   Object.values(state.ports).forEach((p) => {
     if (p.status === "pending_payment" && p.paymentSession) {
-      if (Date.now() > new Date(p.paymentSession.expiresAt).getTime()) {
-        console.log(`[⌛ Session Expired] port=${p.id}`);
-        clearSession(p.id);
-      }
+      expirePaymentSession(p);
     }
   });
-}, 30_000);
+}, 5_000);
 
 // ─── EasySlip Verification ────────────────────────────────────────────────────
 async function verifySlip(imageBuffer, mimetype, expectedAmount) {
@@ -474,21 +480,21 @@ app.get("/api/state", (_, res) => {
 
 /**
  * POST /api/payment/create
- * Body: { portId, amount, method: 'qr'|'transfer'|'cash' }
+ * Body: { portId, amount, method: 'qr'|'transfer'|'coin' }
  * สร้าง session การชำระ
  */
 app.post("/api/payment/create", async (req, res) => {
   const { portId, method } = req.body;
   const amount = Number(req.body.amount);
 
-  if (!["qr", "transfer", "cash"].includes(method)) {
-    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | cash)" });
+  if (!["qr", "transfer", "coin"].includes(method)) {
+    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | coin)" });
   }
   if (!Number.isFinite(amount) || amount < 1) {
     return res.status(400).json({ error: "จำนวนเงินต้องไม่น้อยกว่า 1 บาท" });
   }
-  if (method === "cash" && (amount < 5 || amount % 5 !== 0)) {
-    return res.status(400).json({ error: "เงินสดรับเฉพาะยอดเริ่มต้น 5 บาท และเป็นทวีคูณของ 5 บาท (เช่น 5, 10, 15, 20, 25...)" });
+  if (method === "coin" && (amount < 5 || amount % 5 !== 0)) {
+    return res.status(400).json({ error: "รับชำระด้วยเหรียญเฉพาะยอด 5 บาทขึ้นไป และเป็นทวีคูณของ 5 บาท" });
   }
 
 
@@ -519,7 +525,7 @@ app.post("/api/payment/create", async (req, res) => {
   } else if (method === "transfer") {
     session.bank = { name: CFG.bankName, account: CFG.bankAccount, accountName: CFG.bankAccountName, phone: CFG.promptpayPhone };
   }
-  // cash: ESP32 จะรายงานเอง
+  // coin: ตัวรับเหรียญจะรายงานยอดรวมเอง
 
   port.status = "pending_payment";
   port.paymentSession = session;
@@ -538,6 +544,7 @@ app.post("/api/payment/verify-slip", upload.single("image"), async (req, res) =>
   const port = getPort(req.body.portId);
 
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (expirePaymentSession(port)) return res.status(410).json({ error: "หมดเวลาชำระเงิน กรุณาเริ่มรายการใหม่" });
   if (port.status !== "pending_payment" || !port.paymentSession) {
     return res.status(400).json({ error: "ไม่มี session รอการชำระ" });
   }
@@ -570,46 +577,31 @@ app.post("/api/payment/verify-slip", upload.single("image"), async (req, res) =>
 });
 
 /**
- * POST /api/cash/insert  (จาก ESP32)
- * Body: { portId, amount, uvScore, colorScore, magneticScore }
- * ตรวจธนบัตรจริง — UV + สี + แม่เหล็ก
+ * POST /api/coin/insert  (จากตัวรับเหรียญ/ESP32)
+ * Body: { portId, amount }
  */
-app.post("/api/cash/insert", (req, res) => {
+app.post("/api/coin/insert", (req, res) => {
   const port = getPort(req.body.portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
-  if (port.status !== "pending_payment" || port.paymentSession?.method !== "cash") {
-    return res.status(409).json({ error: "พอร์ตนี้ไม่ได้รอการชำระด้วยเงินสด" });
+  if (expirePaymentSession(port)) return res.status(410).json({ error: "หมดเวลาชำระเงิน กรุณาเริ่มรายการใหม่" });
+  if (port.status !== "pending_payment" || port.paymentSession?.method !== "coin") {
+    return res.status(409).json({ error: "พอร์ตนี้ไม่ได้รอการหยอดเหรียญ" });
   }
 
-  const amount   = Number(req.body.amount || 0);
-  const uv       = Number(req.body.uvScore       || 0); // 0–40
-  const color    = Number(req.body.colorScore    || 0); // 0–30
-  const magnetic = Number(req.body.magneticScore || 0); // 0–30
-  const total    = uv + color + magnetic;
-  const isFake   = total < CFG.cashScoreMin;
-
-  console.log(`[💵 Cash] port=${port.id} ฿${amount} UV=${uv} Color=${color} Mag=${magnetic} Total=${total} fake=${isFake}`);
-
-  if (isFake) {
-    return res.status(422).json({
-      success: false,
-      reason: "COUNTERFEIT_DETECTED",
-      message: `❌ ตรวจพบธนบัตรปลอม (คะแนน ${total}/100 — ต้องการ ≥ ${CFG.cashScoreMin})`,
-      scores: { uv, color, magnetic, total },
-    });
-  }
-  if (!Number.isFinite(amount) || amount < port.paymentSession.amount) {
+  const amount = Number(req.body.amount || 0);
+  console.log(`[🪙 Coin] port=${port.id} ฿${amount}`);
+  if (!Number.isFinite(amount) || amount % 5 !== 0 || amount < port.paymentSession.amount) {
     return res.status(422).json({
       success: false,
       reason: "AMOUNT_TOO_LOW",
-      message: `❌ ใส่เงิน ฿${amount} ไม่พอ (ต้องการ ฿${port.paymentSession.amount})`,
+      message: `❌ ยอดเหรียญ ฿${amount} ไม่พอหรือไม่ถูกต้อง (ต้องการ ฿${port.paymentSession.amount})`,
     });
   }
 
-  const tx = activatePort(port.id, port.paymentSession.amount, "cash", {
-    cashInserted: amount, scores: { uv, color, magnetic, total },
+  const tx = activatePort(port.id, port.paymentSession.amount, "coin", {
+    coinsInserted: amount,
   });
-  res.json({ success: true, transaction: tx, scores: { uv, color, magnetic, total } });
+  res.json({ success: true, transaction: tx, coinsInserted: amount });
 });
 
 /**
