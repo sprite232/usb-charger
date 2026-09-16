@@ -136,6 +136,42 @@ html:not([data-theme="dark"]) body {
   background-attachment: fixed;
 }
 
+/* ── PIC ICONS (High-Res Vector Alpha Mask Icons) ── */
+.pic-icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.2em;
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  flex-shrink: 0;
+}
+.pic-icon.ic-zap { -webkit-mask-image: url('/assets/icon-zap.png'); mask-image: url('/assets/icon-zap.png'); }
+.pic-icon.ic-shield-alert { -webkit-mask-image: url('/assets/icon-shield-alert.png'); mask-image: url('/assets/icon-shield-alert.png'); }
+.pic-icon.ic-message-square { -webkit-mask-image: url('/assets/icon-message-square.png'); mask-image: url('/assets/icon-message-square.png'); }
+.pic-icon.ic-power { -webkit-mask-image: url('/assets/icon-power.png'); mask-image: url('/assets/icon-power.png'); }
+.pic-icon.ic-coin { -webkit-mask-image: url('/assets/icon-coin.png'); mask-image: url('/assets/icon-coin.png'); }
+.pic-icon.ic-smartphone { -webkit-mask-image: url('/assets/icon-smartphone.png'); mask-image: url('/assets/icon-smartphone.png'); }
+.pic-icon.ic-info { -webkit-mask-image: url('/assets/icon-info.png'); mask-image: url('/assets/icon-info.png'); }
+.pic-icon.ic-camera { -webkit-mask-image: url('/assets/icon-camera.png'); mask-image: url('/assets/icon-camera.png'); }
+.pic-icon.ic-checked { -webkit-mask-image: url('/assets/icon-checked.png'); mask-image: url('/assets/icon-checked.png'); }
+.pic-icon.ic-phone { -webkit-mask-image: url('/assets/icon-phone.png'); mask-image: url('/assets/icon-phone.png'); }
+.pic-icon.ic-line { -webkit-mask-image: url('/assets/icon-line.png'); mask-image: url('/assets/icon-line.png'); }
+.pic-icon.ic-map-pin { -webkit-mask-image: url('/assets/icon-map-pin.png'); mask-image: url('/assets/icon-map-pin.png'); }
+.pic-icon.ic-idea { -webkit-mask-image: url('/assets/icon-idea.png'); mask-image: url('/assets/icon-idea.png'); }
+.pic-icon.ic-refresh { -webkit-mask-image: url('/assets/icon-refresh.png'); mask-image: url('/assets/icon-refresh.png'); }
+.pic-icon.ic-key { -webkit-mask-image: url('/assets/icon-key.png'); mask-image: url('/assets/icon-key.png'); }
+.pic-icon.ic-shield-check { -webkit-mask-image: url('/assets/icon-shield-check.png'); mask-image: url('/assets/icon-shield-check.png'); }
+
+.contact-ic-box .pic-icon { width: 20px; height: 20px; }
+.btn-icon .pic-icon { width: 22px; height: 22px; }
+.chip-ic.pic-icon { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
+
 /* ── VIEW TRANSITIONS (Theme circular ripple) ─ */
 ::view-transition-old(root),
 ::view-transition-new(root) {
@@ -1053,7 +1089,7 @@ footer{
 <div class="hero-hd">
   <div class="hero-badge">
     <span class="badge-dot"></span>
-    <svg style="width:13px;height:13px;color:#10b981;display:inline-block" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <i class="pic-icon ic-zap" style="color:#10b981;font-size:13px;margin-right:2px"></i>
     <span>SMART CHARGING STATION · 24/7</span>
   </div>
   <h1><span class="title-primary">ชาร์จทันที</span><br/><span class="g title-secondary">จ่ายง่าย ปลอดภัย</span></h1>
@@ -1108,7 +1144,7 @@ footer{
     <div class="contact-grid">
       <a href="tel:0969679951" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก">
         <div class="contact-ic-box phone">
-          <svg viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.24.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          <i class="pic-icon ic-phone"></i>
         </div>
         <div class="contact-info">
           <span class="contact-lbl">โทรฉุกเฉิน (ผู้ดูแล)</span>
@@ -1118,7 +1154,7 @@ footer{
 
       <a href="https://line.me/ti/p/~@smartcharger" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Line">
         <div class="contact-ic-box line">
-          <svg viewBox="0 0 24 24"><path d="M21.5 10.7c0-4.8-4.7-8.7-10.5-8.7S.5 5.9.5 10.7c0 4.3 3.7 7.9 8.7 8.6.3.1.8.2.9.6.1.3.1.8 0 1.1 0 0-.3 1.6-.3 1.9-.1.6.2.3 1.4-.8 1.1-1 4.7-3.9 6.4-5.3 2.5-1.5 3.9-3.7 3.9-6.1z"/></svg>
+          <i class="pic-icon ic-line"></i>
         </div>
         <div class="contact-info">
           <span class="contact-lbl">Line ID ผู้ดูแล</span>
@@ -1128,7 +1164,7 @@ footer{
 
       <div class="contact-pill loc" id="contactLocPill">
         <div class="contact-ic-box loc">
-          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <i class="pic-icon ic-map-pin"></i>
         </div>
         <div class="contact-info">
           <span class="contact-lbl">จุดบริการช่วยเหลือ</span>
@@ -1141,7 +1177,7 @@ footer{
     <div class="support-actions">
       <button class="btn-support-report" onclick="openIssueModal()">
         <span class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <i class="pic-icon ic-shield-alert" style="color:#fff"></i>
         </span>
         <div class="btn-text-group">
           <strong>แจ้งปัญหาการใช้งาน / ข้อสงสัย</strong>
@@ -1151,7 +1187,7 @@ footer{
 
       <button class="btn-support-qa" onclick="openPublicQAModal()">
         <span class="btn-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <i class="pic-icon ic-message-square" style="color:var(--blue)"></i>
         </span>
         <div class="btn-text-group">
           <strong>กระดานปัญหาที่ตอบแล้ว (Public Q&A)</strong>
@@ -1170,7 +1206,7 @@ footer{
   <div class="sheet-drag"></div>
   <div class="sheet-top">
     <h2>
-      <svg style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;stroke:var(--red)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <i class="pic-icon ic-shield-alert" style="color:var(--red);font-size:20px;margin-right:6px"></i>
       แจ้งปัญหาการใช้งาน - ข้อสงสัย
     </h2>
     <button class="sheet-close" onclick="closeIssueModal()">✕</button>
@@ -1181,19 +1217,19 @@ footer{
         <label class="form-lbl">ประเภทปัญหา / ข้อสงสัย <span style="color:var(--red)">*</span></label>
         <div class="cat-chips" id="issueCatChips">
           <div class="cat-chip active" data-cat="power" onclick="selectIssueCat('power', this)">
-            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <i class="pic-icon ic-power chip-ic" style="color:var(--yellow)"></i>
             ระบบจ่ายไฟ
           </div>
           <div class="cat-chip" data-cat="coin" onclick="selectIssueCat('coin', this)">
-            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 0 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1"/><path d="M12 6v2m0 8v2"/></svg>
+            <i class="pic-icon ic-coin chip-ic" style="color:#f59e0b"></i>
             หยอดเหรียญ
           </div>
           <div class="cat-chip" data-cat="transfer" onclick="selectIssueCat('transfer', this)">
-            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <i class="pic-icon ic-smartphone chip-ic" style="color:var(--blue)"></i>
             โอนเงิน / QR
           </div>
           <div class="cat-chip" data-cat="other" onclick="selectIssueCat('other', this)">
-            <svg class="chip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <i class="pic-icon ic-info chip-ic" style="color:var(--cyan)"></i>
             ข้อสงสัยทั่วไป
           </div>
         </div>
@@ -1230,7 +1266,7 @@ footer{
         <label class="form-lbl">แนบรูปภาพหลักฐาน (หน้าจอ / ตู้ / สลิป)</label>
         <div class="issue-upload-zone" id="issueUploadZone" onclick="document.getElementById('issueFileInput').click()">
           <div style="margin-bottom:6px">
-            <svg style="width:36px;height:36px;stroke:var(--g3);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <i class="pic-icon ic-camera" style="width:36px;height:36px;color:var(--g3);margin:0 auto;display:block"></i>
           </div>
           <p style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:2px">คลิกเพื่อถ่ายรูป หรือเลือกรูปหลักฐาน</p>
           <small style="color:var(--g3)">รองรับไฟล์ภาพ JPG, PNG (ย่อขนาดอัตโนมัติ)</small>
@@ -1255,7 +1291,7 @@ footer{
     <!-- Success View -->
     <div id="issueSuccessWrap" style="display:none;text-align:center;padding:24px 0">
       <div style="margin-bottom:12px">
-        <svg style="width:52px;height:52px;color:var(--green);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <i class="pic-icon ic-checked" style="width:52px;height:52px;color:var(--green);margin:0 auto;display:block"></i>
       </div>
       <h3 style="font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--dark);margin-bottom:6px">ส่งแจ้งปัญหาเรียบร้อยแล้ว</h3>
       <p style="font-size:.82rem;color:var(--g3);line-height:1.6;margin-bottom:14px">
@@ -1274,7 +1310,7 @@ footer{
   <div class="sheet-drag"></div>
   <div class="sheet-top">
     <h2>
-      <svg style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;stroke:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <i class="pic-icon ic-message-square" style="color:var(--blue);font-size:20px;margin-right:6px"></i>
       กระดานปัญหาที่ตอบแล้ว (Public Q&A)
     </h2>
     <button class="sheet-close" onclick="closePublicQAModal()">✕</button>
@@ -1343,7 +1379,7 @@ footer{
         </div>
       </div>
       <div style="background:var(--off);border:1px solid var(--g1);border-radius:10px;padding:8px 12px;margin:6px 0 12px;display:flex;align-items:center;gap:8px;font-size:.74rem;color:var(--g3)">
-        <svg style="width:16px;height:16px;flex-shrink:0;stroke:var(--amber)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+        <i class="pic-icon ic-idea" style="color:var(--amber);font-size:16px;margin-right:2px"></i>
         <span><strong>คำแนะนำ:</strong> รูปธนบัตรเพื่อความสะดวกในการเลือกยอดเงิน · <u>ตู้ไม่ได้รับธนบัตรจริง</u> (ชำระผ่านพร้อมเพย์ QR, โอนเงิน หรือหยอดเหรียญ 5฿, 10฿)</span>
       </div>
       <div class="custom-row" id="customRow">
@@ -1407,7 +1443,7 @@ footer{
         ยอด 1-4 บาท ชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น
       </div>
       <div style="font-size:.72rem;color:var(--g3);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--off);border:1px solid var(--g1);border-radius:8px;padding:6px 10px">
-        <svg style="width:14px;height:14px;flex-shrink:0;stroke:var(--blue)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <i class="pic-icon ic-info" style="color:var(--blue);font-size:14px;margin-right:2px"></i>
         <span>ตู้รับเฉพาะเหรียญ 5฿, 10฿ และพร้อมเพย์ / โอนเงิน (ตู้ไม่ได้รับธนบัตรจริง)</span>
       </div>
       <button class="btn btn-ghost" style="margin-top:10px" onclick="goPage('pg-confirm')">ย้อนกลับ</button>
@@ -2430,7 +2466,7 @@ function updateCashUI(t){
     else if(t===50) noteHtml='<strong>วิธีหยอดเงิน:</strong> เหรียญ 10฿ (5 เหรียญ) <u>หรือ</u> เหรียญ 5฿ (10 เหรียญ)';
     else if(t===100) noteHtml='<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 10฿ หรือ 5฿ รวมกันให้ครบ 100฿';
     else noteHtml=`<strong>วิธีหยอดเงิน:</strong> หยอดเหรียญ 5฿ หรือ 10฿ รวมกันให้ครบ ฿${t}`;
-    ex.innerHTML = noteHtml + '<br/><span style="color:var(--amber);font-size:.7rem;display:inline-flex;align-items:center;gap:4px"><svg style="width:12px;height:12px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>ตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น (ไม่มีช่องรับธนบัตร)</span>';
+    ex.innerHTML = noteHtml + '<br/><span style="color:var(--amber);font-size:.7rem;display:inline-flex;align-items:center;gap:4px"><i class="pic-icon ic-shield-alert" style="font-size:12px;color:var(--amber);margin-right:2px"></i>ตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น (ไม่มีช่องรับธนบัตร)</span>';
   }
 }
 function checkCash(ports){
@@ -2779,7 +2815,7 @@ function renderPublicQA() {
     container.innerHTML = `
       <div class="qa-empty">
         <div style="margin-bottom:8px">
-          <svg style="width:36px;height:36px;stroke:var(--g3);margin:0 auto;display:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <i class="pic-icon ic-message-square" style="width:36px;height:36px;color:var(--g3);margin:0 auto;display:block"></i>
         </div>
         <p>ยังไม่มีข้อสงสัยในหมวดหมู่นี้ที่เผยแพร่</p>
         <small style="color:var(--g3)">เมื่อผู้ดูแลระบบตอบกลับและอนุมัติ จะแสดงบนกระดานนี้ค่ะ</small>
@@ -2806,7 +2842,7 @@ function renderPublicQA() {
         ${imgHtml}
         <div class="qa-reply-box">
           <div class="qa-reply-title">
-            <span style="display:inline-flex;align-items:center;gap:5px"><svg style="width:13px;height:13px;stroke:#10b981;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><i class="pic-icon ic-shield-check" style="font-size:14px;color:#10b981;margin-right:2px"></i>${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
             <span style="font-size:.65rem;color:var(--g3);margin-left:auto">${replyTimeStr}</span>
           </div>
           <div class="qa-reply-text">${escapeHtml(item.reply?.message || '—')}</div>
