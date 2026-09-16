@@ -10,10 +10,10 @@
 <link rel="icon" type="image/jpeg" href="assets/logo.jpg"/>
 <link rel="apple-touch-icon" href="assets/logo.jpg"/>
 
-<!-- Google Fonts (Plus Jakarta Sans & Prompt for Crystal-Clear Thai Typography) -->
+<!-- Google Fonts (Kanit for Thai UI · JetBrains Mono for code/IDs) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -108,7 +108,7 @@
 button, input, select, textarea{font-family:inherit;color:inherit}
 body{
   background:var(--bg);color:var(--text);
-  font-family:'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:'Kanit', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
@@ -116,6 +116,7 @@ body{
   transition:background-color .2s ease, color .2s ease;
   line-height: 1.5;
   position: relative;
+  font-weight: 400;
 }
 html, body, .topbar, .tabs, .tab, .stat-card, .chart-card, .port-card-admin, .tbl-wrap, table, th, td, .test-panel, .test-box, .modal-card, .form-input, .search-input, .btn-theme, .btn-gray {
   transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
@@ -360,7 +361,7 @@ html, body, .topbar, .tabs, .tab, .stat-card, .chart-card, .port-card-admin, .tb
 .pb-inuse{background:var(--blue-bg);color:var(--blue)}
 .pb-paused{background:rgba(245,158,11,0.2);color:#f59e0b}
 
-.port-timer-big{font-size:1.8rem;font-weight:800;color:var(--blue);letter-spacing:1px;margin:.5rem 0; font-family: monospace;}
+.port-timer-big{font-size:1.8rem;font-weight:700;color:var(--blue);letter-spacing:2px;margin:.5rem 0; font-family:'JetBrains Mono',monospace;}
 .port-timer-big.paused{color:#f59e0b}
 .port-actions{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
 
@@ -481,7 +482,7 @@ tr:last-child td{border-bottom:none}
   --text:#172033;--muted:#60708a;--muted2:#8996a8;--green:#087f5b;--green-bg:#e7f7f0;--yellow:#ae6600;--yellow-bg:#fff4df;
   --red:#c43b51;--red-bg:#ffedf0;--blue:#2563d9;--blue-bg:#eaf1ff;--purple:#6d52d9;--purple-bg:#f0ebff;--cyan:#087b9d;--cyan-bg:#e7f7fb;
 }
-body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.scanline-overlay{display:none}
+body{background:var(--bg);font-family:'Kanit','Noto Sans Thai',sans-serif;font-weight:400;letter-spacing:0}.scanline-overlay{display:none}
 #loginScreen{background:radial-gradient(circle at 50% 0%,rgba(85,201,232,.12),transparent 34%),var(--bg)}
 .login-box{background:var(--card);border-color:var(--border);border-radius:18px;box-shadow:0 18px 55px rgba(0,0,0,.2);padding:2.25rem 2rem;animation:none;opacity:1;transform:none}
 .login-brand-icon{box-shadow:none;border-color:var(--border);border-radius:14px}.login-box h1{font-size:1.45rem}
@@ -489,7 +490,7 @@ body{background:var(--bg);font-family:'Prompt','Plus Jakarta Sans',sans-serif}.s
 .topbar{min-height:66px;padding:.8rem clamp(1rem,4vw,3rem);background:var(--card);box-shadow:0 1px 0 var(--border)}.topbar-icon{box-shadow:none;border-color:var(--border)}.status-dot{box-shadow:none;animation:none}.session-badge{font-family:inherit;color:var(--muted);background:var(--card2);border-color:var(--border)}
 .tabs{padding:.6rem clamp(1rem,4vw,3rem);gap:.35rem;background:var(--card);border-color:var(--border)}.tab{border-radius:9px;background:transparent;padding:.55rem .85rem}.tab:hover{background:var(--card2)}.tab.active{background:var(--blue-bg);color:var(--blue);border-color:transparent}.tab.active .tab-icon{filter:none;opacity:1}
 .content{max-width:1180px;padding:1.75rem clamp(1rem,4vw,3rem)}.stats-grid{gap:.85rem}.stat-card{border:1px solid var(--border);border-left-width:3px;border-radius:14px;background:var(--card);padding:1.1rem;box-shadow:none}.stat-card.green,.stat-card.blue,.stat-card.yellow,.stat-card.purple,.stat-card.cyan{background:var(--card)}.stat-card .lbl{font-size:.7rem;letter-spacing:.06em}.stat-card .val{font-size:1.55rem}
-.chart-card,.port-card-admin,.tbl-wrap,.test-panel{border-color:var(--border);border-radius:14px;box-shadow:none}.chart-card{padding:1.35rem}.port-card-admin{padding:1.15rem}.port-card-admin.available,.port-card-admin.in-use{box-shadow:none}.port-card-admin.in-use::after{animation:none;opacity:.8}.port-timer-big{font-family:'Plus Jakarta Sans',monospace}.btn-sm{border-radius:9px}.btn-primary{background:var(--blue)}.btn-green{background:var(--green)}.btn-gray{background:var(--card2)}
+.chart-card,.port-card-admin,.tbl-wrap,.test-panel{border-color:var(--border);border-radius:14px;box-shadow:none}.chart-card{padding:1.35rem}.port-card-admin{padding:1.15rem}.port-card-admin.available,.port-card-admin.in-use{box-shadow:none}.port-card-admin.in-use::after{animation:none;opacity:.8}.port-timer-big{font-family:'JetBrains Mono',monospace}.btn-sm{border-radius:9px}.btn-primary{background:var(--blue)}.btn-green{background:var(--green)}.btn-gray{background:var(--card2)}
 @media(max-width:560px){.topbar{padding:.7rem 1rem}.session-badge,.btn-logout{display:none}.tabs{padding:.5rem 1rem}.tab{padding:.5rem .72rem;font-size:.8rem}.content{padding:1.2rem 1rem}.stats-grid{gap:.65rem}.stat-card{padding:.9rem}.stat-card .val{font-size:1.3rem}.login-box{padding:1.8rem 1.35rem}}
 </style>
 </head>
@@ -1840,24 +1841,24 @@ function createOrUpdateChart(canvasId, type, data, opts={}) {
     plugins: {
       legend: {
         display: !!opts.legend,
-        labels: { color: opts.textColor, font: { size: 10, weight: '600', family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } }
+        labels: { color: opts.textColor, font: { size: 10, weight: '600', family: "'Kanit', 'Noto Sans Thai', sans-serif" } }
       }
     },
     scales: type === 'doughnut' || type === 'pie' ? {} : {
       x: {
         grid: { color: opts.gridColor },
-        ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } }
+        ticks: { color: opts.textColor, font: { size: 10, family: "'Kanit', sans-serif" } }
       },
       y: {
         grid: { color: opts.gridColor },
-        ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } },
+        ticks: { color: opts.textColor, font: { size: 10, family: "'Kanit', sans-serif" } },
         beginAtZero: true
       },
       ...(opts.dualY ? {
         y1: {
           position: 'right',
           grid: { drawOnChartArea: false },
-          ticks: { color: opts.textColor, font: { size: 10, family: "'Plus Jakarta Sans', 'Prompt', sans-serif" } },
+          ticks: { color: opts.textColor, font: { size: 10, family: "'Kanit', sans-serif" } },
           beginAtZero: true
         }
       } : {})
