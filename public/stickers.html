@@ -75,10 +75,16 @@ body{
 
 <div class="no-print-bar">
   <div>
-    <h1>🖨️ สติกเกอร์ QR Code ติดหน้าตู้ชาร์จ</h1>
+    <h1 style="display:flex;align-items:center;gap:8px">
+      <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;stroke-width:2;fill:none"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      สติกเกอร์ QR Code ติดหน้าตู้ชาร์จ
+    </h1>
     <p>ปริ้นท์ลงกระดาษ A4 หรือสติกเกอร์ แล้วตัดแปะที่หน้าตู้ชาร์จได้ทันที</p>
   </div>
-  <button class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ (Print / PDF)</button>
+  <button class="btn-print" onclick="window.print()" style="display:inline-flex;align-items:center;gap:8px">
+    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+    สั่งพิมพ์ (Print / PDF)
+  </button>
 </div>
 
 <div class="sheet-container">
@@ -93,7 +99,7 @@ body{
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://usb-charger-project.web.app/" alt="QR Main">
       </div>
       <div class="st-steps">
-        <strong>วิธีใช้งาน:</strong> 1. สแกน QR Code ด้วยมือถือ  ➔  2. เลือกช่องชาร์จและจำนวนเงิน  ➔  3. ชำระเงินแล้วเริ่มชาร์จได้ทันที
+        <strong>วิธีใช้งาน:</strong> 1. สแกน QR Code ด้วยมือถือ  &rarr;  2. เลือกช่องชาร์จและจำนวนเงิน  &rarr;  3. ชำระเงินแล้วเริ่มชาร์จได้ทันที
       </div>
     </div>
 
@@ -106,7 +112,7 @@ body{
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-a-1" alt="QR USB-A 1">
       </div>
       <div class="st-steps">
-        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+        สแกนปุ๊บ &rarr; เลือกจำนวนเงิน &rarr; เสียบสายชาร์จได้ทันที
       </div>
     </div>
 
@@ -119,7 +125,7 @@ body{
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-a-2" alt="QR USB-A 2">
       </div>
       <div class="st-steps">
-        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+        สแกนปุ๊บ &rarr; เลือกจำนวนเงิน &rarr; เสียบสายชาร์จได้ทันที
       </div>
     </div>
 
@@ -132,7 +138,7 @@ body{
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-c-1" alt="QR USB-C 1">
       </div>
       <div class="st-steps">
-        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+        สแกนปุ๊บ &rarr; เลือกจำนวนเงิน &rarr; เสียบสายชาร์จได้ทันที
       </div>
     </div>
 
@@ -145,7 +151,7 @@ body{
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://usb-charger-project.web.app/?port=usb-c-2" alt="QR USB-C 2">
       </div>
       <div class="st-steps">
-        สแกนปุ๊บ ➔ เลือกจำนวนเงิน ➔ เสียบสายชาร์จได้ทันที
+        สแกนปุ๊บ &rarr; เลือกจำนวนเงิน &rarr; เสียบสายชาร์จได้ทันที
       </div>
     </div>
 
