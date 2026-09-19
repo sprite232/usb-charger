@@ -8,10 +8,10 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()));
     }
 
-    // Charger & Port state — anyone can read for kiosk status, client write strictly disabled
+    // Charger & Port state — anyone can read for kiosk status; authorized admins can update
     match /charger/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // Transactions — financial ledger: client read/write forbidden (Server Admin SDK only)

@@ -1998,11 +1998,25 @@ function loadAdminPersistentPorts() {
   return def;
 }
 
+async function syncAdminToFirestore(partial) {
+  try {
+    if (fbDb && (currentUser || fbAuth.currentUser)) {
+      await fbDb.collection('charger').doc('charger01').set({
+        ...partial,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  } catch(e) {
+    console.warn('[Firestore admin sync]', e.message);
+  }
+}
+
 function saveAdminPersistentPorts(ports) {
   try {
     localStorage.setItem('usb_charger_ports_state', JSON.stringify(ports));
     localStorage.setItem('usb_charger_last_time', String(Date.now()));
   } catch(e){}
+  syncAdminToFirestore({ ports });
 }
 
 // ─── Load & Refresh (100% Real Data) ──────────
@@ -2011,13 +2025,30 @@ let refreshInterval = null;
 async function tryLoadDashboard() {
   let data = await adminApi('GET', '/api/admin/dashboard');
   if (!data || !data.ports) {
-    // Load 100% REAL DATA from persistent state
+    // Check if Firestore cloud state exists
+    let fsDoc = null;
+    try {
+      if (fbDb) {
+        const snap = await fbDb.collection('charger').doc('charger01').get();
+        if (snap.exists) fsDoc = snap.data();
+      }
+    } catch(e) {
+      console.warn('[Firestore load notice]', e.message);
+    }
+
+    // Load 100% REAL DATA from persistent state / cloud
     const realTxs = getLocalRealTransactions();
     const realVisits = getLocalVisits();
     const realRev = realTxs.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const savedPorts = loadAdminPersistentPorts();
-    const cfg = getLocalSavedConfig();
-    
+    const savedPorts = (fsDoc && fsDoc.ports && Array.isArray(fsDoc.ports) && fsDoc.ports.length > 0) ? fsDoc.ports : loadAdminPersistentPorts();
+    const localCfg = getLocalSavedConfig();
+    const cfg = { ...localCfg, ...(fsDoc?.config || {}), ...(fsDoc?.secondsPerBaht ? { secondsPerBaht: fsDoc.secondsPerBaht } : {}) };
+
+    try {
+      localStorage.setItem('usb_charger_ports_state', JSON.stringify(savedPorts));
+      localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+    } catch(e){}
+
     data = {
       summary: {
         revenue: realRev,
@@ -2030,6 +2061,22 @@ async function tryLoadDashboard() {
       visits: realVisits,
       config: cfg
     };
+
+    // If Firestore document does not exist, seed it immediately from admin
+    if (!fsDoc) {
+      syncAdminToFirestore({
+        ports: savedPorts,
+        config: cfg,
+        secondsPerBaht: cfg.secondsPerBaht,
+        supportPhone: cfg.supportPhone,
+        supportLine: cfg.supportLine,
+        supportLocation: cfg.supportLocation,
+        promptpayPhone: cfg.promptpayPhone,
+        bankName: cfg.bankName,
+        bankAccount: cfg.bankAccount,
+        bankAccountName: cfg.bankAccountName
+      });
+    }
   } else {
     saveAdminPersistentPorts(data.ports);
   }
@@ -2634,7 +2681,17 @@ async function saveSettings() {
     await adminApi('POST', '/api/admin/config', updatedConfig);
   } catch(e){}
 
-  // 3. Show feedback toast
+  // 3. Sync to Firestore Cloud for instant real-time sync across all devices/mobiles
+  syncAdminToFirestore({
+    config: updatedConfig,
+    secondsPerBaht: updatedConfig.secondsPerBaht,
+    promptpayPhone: updatedConfig.promptpayPhone,
+    bankName: updatedConfig.bankName,
+    bankAccount: updatedConfig.bankAccount,
+    bankAccountName: updatedConfig.bankAccountName
+  });
+
+  // 4. Show feedback toast
   const toast = document.getElementById('saveSettingsToast');
   if (toast) {
     toast.style.display = 'flex';
