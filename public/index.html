@@ -199,6 +199,8 @@ nav, .port-card, .sheet, .dc, .acc, .acc-head, .method-item, .bank-block, .pay-c
 }
 a,button,.port-card,.dc,.method-item,.acc-head,.slip-zone,.sheet-close,.theme-switch-pill,.icon-nav-btn{
   cursor:pointer !important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
 
 /* ── MOBILE TOUCH & BUTTON PRESS INTERACTION ── */
@@ -208,60 +210,23 @@ a,button,.port-card,.dc,.method-item,.acc-head,.slip-zone,.sheet-close,.theme-sw
 .method-item:active,
 .theme-switch-pill:active,
 .icon-nav-btn:active {
-  transform: scale(0.96) !important;
-  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transform: scale(0.97) !important;
+  transition: transform 0.1s ease !important;
 }
-
-/* ── AMBIENT CURSOR (Mouse only, never touch) ── */
-#cur{
-  position:fixed;top:0;left:0;
-  width:10px;height:10px;
-  background:var(--dark);border-radius:50%;
-  pointer-events:none;z-index:9999;
-  transform:translate(-50%,-50%);
-  opacity:0;
-  transition:opacity .2s,width .25s var(--ease-spring),height .25s var(--ease-spring);
-}
-#curR{
-  position:fixed;top:0;left:0;
-  width:36px;height:36px;
-  border:1.5px solid rgba(99,102,241,.35);
-  border-radius:50%;
-  pointer-events:none;z-index:9998;
-  transform:translate(-50%,-50%);
-  opacity:0;
-  transition:opacity .2s,width .35s var(--ease-spring),height .35s var(--ease-spring),border-color .3s;
-}
-[data-theme="dark"] #curR{border-color:rgba(129,140,248,.45)}
-body.hov #cur{width:6px;height:6px}
-body.hov #curR{width:56px;height:56px;border-color:rgba(16,185,129,.55)}
-body.clk #cur{transform:translate(-50%,-50%) scale(.7)}
-@media(pointer:coarse), (hover:none){#cur,#curR{display:none !important;}}
-
-/* ── NOISE ─────────────────────────────── */
-.noise{
-  position:fixed;inset:0;z-index:9997;
-  pointer-events:none;opacity:.025;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:200px 200px;
-}
-
-/* ── CANVAS ────────────────────────────── */
-#bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
 
 /* ── NAV ───────────────────────────────── */
 nav{
   position:sticky;top:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:14px 20px;
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  background:rgba(255,255,255,.85);
+  padding:12px 16px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
   border-bottom:1px solid rgba(0,0,0,.06);
-  transition:box-shadow .4s,background .3s;
+  transition:box-shadow .3s,background .3s;
 }
-[data-theme="dark"] nav{background:rgba(9,13,22,.88);border-color:rgba(255,255,255,.08)}
-nav.scrolled{box-shadow:0 2px 28px rgba(0,0,0,.08)}
+[data-theme="dark"] nav{background:rgba(9,13,22,.92);border-color:rgba(255,255,255,.08)}
+nav.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.06)}
 
 .nav-brand{
   display:flex;align-items:center;gap:10px;
@@ -387,88 +352,48 @@ html:not([data-theme="dark"]) .sun-icon{
 /* ── PORT GRID ─────────────────────────── */
 .port-grid{
   display:grid;grid-template-columns:1fr 1fr;
-  gap:14px;margin-bottom:32px;
-  perspective:1200px;
+  gap:12px;margin-bottom:28px;
+}
+@media(max-width:560px){
+  .port-grid{grid-template-columns:1fr;gap:10px;}
 }
 
-/* ── PORT CARD (3D SPATIAL TACTILE) ────── */
+/* ── PORT CARD (CLEAN & LIGHTWEIGHT) ───── */
 .port-card{
   background:var(--off);
   border:1px solid var(--g1);
   border-radius:var(--r);
-  padding:20px;
+  padding:18px 16px;
   position:relative;overflow:hidden;
   box-shadow:var(--shadow);
-  animation:fup .6s var(--ease-expo) both;
-  transform-style:preserve-3d;
-  will-change:transform,box-shadow;
-  transition:box-shadow .35s ease,border-color .3s,background .3s;
+  touch-action:manipulation;
+  transition:transform .18s cubic-bezier(0.16,1,0.3,1),box-shadow .2s ease,border-color .2s ease;
 }
 
-/* 3D Specular Sheen Glare (Polished Surface Reflection) */
-.card-3d-glare{
-  position:absolute;inset:0;border-radius:inherit;
-  pointer-events:none;z-index:15;
-  background:radial-gradient(circle 240px at var(--glare-x,50%) var(--glare-y,50%),rgba(255,255,255,.24),transparent 75%);
-  opacity:0;mix-blend-mode:overlay;
-  transition:opacity .25s ease;
-  transform:translateZ(1px);
+.port-card.available{
+  cursor:pointer;
 }
-[data-theme="dark"] .card-3d-glare{
-  background:radial-gradient(circle 260px at var(--glare-x,50%) var(--glare-y,50%),rgba(255,255,255,.22),rgba(99,102,241,.18) 35%,transparent 75%);
-  mix-blend-mode:screen;
+@media(hover:hover) and (pointer:fine){
+  .port-card.available:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,.08);
+    border-color:rgba(5,150,105,.45);
+    background:var(--card-bg);
+  }
 }
-
-/* 3D Depth Layers for Card Contents */
-.port-card .usb-icon{
-  transform:translateZ(30px);
-  transform-style:preserve-3d;
-  transition:transform .3s var(--ease-spring);
-  will-change:transform;
-}
-.port-card .pc-top{
-  transform:translateZ(24px);
-  transform-style:preserve-3d;
-  transition:transform .3s var(--ease-spring);
-}
-.port-card .status-badge{
-  transform:translateZ(26px);
-  box-shadow:0 4px 12px rgba(0,0,0,.15);
-}
-.port-card .pc-hint{
-  transform:translateZ(16px);
-}
-.port-card .pc-pending{
-  transform:translateZ(18px);
-}
-.port-card .bar-hd,
-.port-card .bar-pill,
-.port-card .warn-1m{
-  transform:translateZ(24px);
-  transform-style:preserve-3d;
-}
-
-.port-card.available{cursor:pointer; animation: fup .6s var(--ease-expo) forwards, cardPulse 4s ease-in-out infinite alternate;}
-.port-card.available:hover{
-  box-shadow:0 18px 48px rgba(0,0,0,.12), 0 0 24px rgba(5,150,105,.14);
-  border-color:rgba(5,150,105,.45);
-  background:var(--card-bg);
-}
-
-@keyframes cardPulse{
-  0%{box-shadow:var(--shadow)}
-  100%{box-shadow:0 4px 20px rgba(5,150,105,.15)}
+.port-card.available:active{
+  transform:scale(0.98);
 }
 
 .port-card.in-use{
   grid-column:1/-1;
-  border-color:rgba(37,99,235,.2);
+  border-color:rgba(37,99,235,.35);
   background:var(--card-bg);
-  animation:fup .6s var(--ease-expo) forwards, glowPulse 3s ease-in-out infinite alternate;
 }
-@keyframes glowPulse{
-  0%{box-shadow:0 4px 24px rgba(0,0,0,.06)}
-  100%{box-shadow:0 8px 32px rgba(37,99,235,.12)}
+
+.port-card.pending_payment{
+  border-color:rgba(217,119,6,.35);
+  background:var(--card-bg);
 }
 
 .port-card.pending_payment{
@@ -836,134 +761,54 @@ footer{
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px}
 
-/* ── MODERN SMART UI ANIMATIONS & EFFECTS ── */
+/* ── MODERN SMART UI ── */
 .hero-hd{
   position:relative;z-index:1;
   text-align:center;
-  padding:52px 20px 36px;
-  overflow:visible;
-  perspective:1000px;
+  padding:32px 16px 20px;
 }
-.hero-3d-layer{
-  position:absolute;inset:0;
-  pointer-events:none;z-index:-1;
-  overflow:hidden;
-}
-.hero-3d-float{
-  position:absolute;pointer-events:none;
-  will-change:transform;
-  transition:transform .12s cubic-bezier(.16,1,.3,1);
-}
-.float-orb-1{
-  width:220px;height:220px;border-radius:50%;
-  top:-40px;left:8%;
-  background:radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%);
-  filter:blur(30px);
-}
-.float-orb-2{
-  width:260px;height:260px;border-radius:50%;
-  top:30px;right:6%;
-  background:radial-gradient(circle,rgba(16,185,129,.15) 0%,transparent 70%);
-  filter:blur(34px);
-}
-.float-geo-1{
-  top:15%;left:12%;opacity:.75;
-  filter:drop-shadow(0 0 10px rgba(99,102,241,.4));
-  animation:floatSpin 18s linear infinite;
-}
-.float-geo-2{
-  top:30%;right:12%;opacity:.75;
-  filter:drop-shadow(0 0 10px rgba(16,185,129,.4));
-  animation:floatSpin 24s linear infinite reverse;
-}
-@keyframes floatSpin{
-  0%{transform:rotate(0deg)}
-  100%{transform:rotate(360deg)}
-}
-
 .hero-badge{
   display:inline-flex;align-items:center;gap:8px;
-  padding:6px 14px;border-radius:100px;
-  font-size:.75rem;font-weight:700;letter-spacing:.06em;
+  padding:5px 12px;border-radius:100px;
+  font-size:.74rem;font-weight:700;letter-spacing:.04em;
   background:var(--g1);border:1px solid var(--g2);
-  color:var(--g3);margin-bottom:18px;
-  box-shadow:0 2px 10px rgba(0,0,0,.03);
-  transition:all .3s ease;
-  animation:fup .7s .05s var(--ease-expo) both;
-  transform-style:preserve-3d;
-  will-change:transform;
+  color:var(--g3);margin-bottom:12px;
 }
 [data-theme="dark"] .hero-badge{
-  background:rgba(24,34,53,.7);border-color:rgba(255,255,255,.08);
-  color:#94a3b8;box-shadow:0 0 24px rgba(99,102,241,.14);
+  background:rgba(24,34,53,.75);border-color:rgba(255,255,255,.08);
+  color:#94a3b8;
 }
 .badge-dot{
   width:7px;height:7px;border-radius:50%;
-  background:#10b981;box-shadow:0 0 10px #10b981;
-  animation:pdot 2s ease-in-out infinite;
+  background:#10b981;
 }
 .hero-hd h1{
   font-family:var(--display);
-  font-size:clamp(2.2rem,7.5vw,4.4rem);
+  font-size:clamp(1.9rem,6.5vw,3.4rem);
   font-weight:800;
-  letter-spacing:-.035em;
-  line-height:1.06;
-  margin-bottom:16px;
-  animation:fup .8s .12s var(--ease-expo) both;
-  transform-style:preserve-3d;
-  will-change:transform;
+  letter-spacing:-.03em;
+  line-height:1.18;
+  margin-bottom:10px;
 }
 .title-primary{
   display:inline-block;
   color:var(--dark);
-  background:linear-gradient(180deg, var(--dark) 0%, var(--g3) 140%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 2px 12px rgba(0,0,0,.06));
 }
 [data-theme="dark"] .title-primary{
-  background:linear-gradient(180deg, #ffffff 20%, #cbd5e1 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 28px rgba(255,255,255,.25));
+  color:#ffffff;
 }
 .title-secondary{
   display:inline-block;
-  background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#d946ef 100%);
-  background-size:200% 200%;
+  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#059669 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  animation:gradShift 5s ease infinite alternate;
-  filter:drop-shadow(0 4px 18px rgba(124,58,237,.28));
 }
-@keyframes gradShift{
-  0%{background-position:0% 50%}
-  100%{background-position:100% 50%}
+[data-theme="dark"] .title-secondary{
+  background:linear-gradient(135deg,#818cf8 0%,#a78bfa 50%,#34d399 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 .hero-hd p{
-  font-size:clamp(.9rem,2vw,1.05rem);
-  color:var(--g3);line-height:1.65;max-width:380px;margin:0 auto;
-  animation:fup .8s .22s var(--ease-expo) both;
-  transform-style:preserve-3d;
-  will-change:transform;
-}
-
-/* ── PORT CARD ENHANCED GLOW & HOVER ───────── */
-.port-card.available{
-  cursor:pointer;
-  animation:fup .6s var(--ease-expo) forwards, cardBreathing 3.5s ease-in-out infinite alternate;
-}
-@keyframes cardBreathing{
-  0%{box-shadow:var(--shadow);border-color:var(--g1)}
-  100%{box-shadow:0 8px 28px rgba(16,185,129,.16);border-color:rgba(16,185,129,.35)}
-}
-[data-theme="dark"] .port-card.available:hover{
-  border-color:rgba(16,185,129,.6);
-  box-shadow:0 14px 40px rgba(0,0,0,.42), 0 0 26px rgba(16,185,129,.25);
-}
-.port-card.available:hover{
-  border-color:rgba(5,150,105,.45);
-  box-shadow:0 18px 48px rgba(0,0,0,.12), 0 0 22px rgba(5,150,105,.14);
-}
-@media(hover:none),(pointer:coarse){
-  .port-card.available:hover{transform:translateY(-4px)}
+  font-size:clamp(.84rem,2.2vw,.96rem);
+  color:var(--g3);line-height:1.55;max-width:380px;margin:0 auto;
 }
 
 @media(max-width:520px){
@@ -1134,11 +979,6 @@ footer{
 </head>
 <body>
 
-<div class="noise"></div>
-<div id="cur"></div>
-<div id="curR"></div>
-<canvas id="bgc"></canvas>
-
 <!-- NAV -->
 <nav id="main-nav">
   <div class="nav-brand" id="adminSecretTrigger">
@@ -1173,29 +1013,6 @@ footer{
 
 <!-- HERO -->
 <div class="hero-hd" id="heroHd">
-  <!-- 3D Spatial Parallax Floaters (Pure CSS & SVG vectors, ZERO EMOJI) -->
-  <div class="hero-3d-layer" aria-hidden="true">
-    <div class="hero-3d-float float-orb-1" data-depth="0.10"></div>
-    <div class="hero-3d-float float-orb-2" data-depth="0.08"></div>
-    <div class="hero-3d-float float-geo-1" data-depth="0.06">
-      <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><rect x="5" y="5" width="30" height="30" rx="8" stroke="url(#heroGrad1)" stroke-width="2" stroke-dasharray="4 4"/></svg>
-    </div>
-    <div class="hero-3d-float float-geo-2" data-depth="0.05">
-      <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="12" stroke="url(#heroGrad2)" stroke-width="2"/></svg>
-    </div>
-    <svg width="0" height="0" style="position:absolute">
-      <defs>
-        <linearGradient id="heroGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#6366f1" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#10b981" stop-opacity="0.8"/>
-        </linearGradient>
-        <linearGradient id="heroGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.9"/>
-        </linearGradient>
-      </defs>
-    </svg>
-  </div>
   <div class="hero-badge">
     <span class="badge-dot"></span>
     <i class="pic-icon ic-zap" style="color:#10b981;font-size:13px;margin-right:2px"></i>
@@ -1911,161 +1728,6 @@ const Voice = {
 Voice.init();
 
 /* ───────────────────────────────────────────────
-   CUSTOM CURSOR
-─────────────────────────────────────────────── */
-/* ── AMBIENT CURSOR (Fine pointer only, never stuck on touch) ── */
-const dot = document.getElementById('cur');
-const ring = document.getElementById('curR');
-let mx = -100, my = -100, rx = -100, ry = -100;
-let curActive = false;
-
-if (window.matchMedia('(pointer: fine)').matches && dot && ring) {
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX;
-    my = e.clientY;
-    if (!curActive) {
-      curActive = true;
-      dot.style.opacity = '1';
-      ring.style.opacity = '1';
-    }
-    dot.style.left = mx + 'px';
-    dot.style.top = my + 'px';
-  });
-  document.addEventListener('mouseleave', () => {
-    curActive = false;
-    dot.style.opacity = '0';
-    ring.style.opacity = '0';
-  });
-  document.addEventListener('mouseenter', () => {
-    curActive = true;
-    dot.style.opacity = '1';
-    ring.style.opacity = '1';
-  });
-  (function tickR(){
-    rx += (mx - rx) * 0.14;
-    ry += (my - ry) * 0.14;
-    ring.style.left = rx + 'px';
-    ring.style.top = ry + 'px';
-    requestAnimationFrame(tickR);
-  })();
-  document.querySelectorAll('a,button,.port-card,.dc,.method-item,.acc-head,.slip-zone,.sheet-close,.theme-switch-pill,.icon-nav-btn').forEach(el=>{
-    el.addEventListener('mouseenter', () => document.body.classList.add('hov'));
-    el.addEventListener('mouseleave', () => document.body.classList.remove('hov'));
-  });
-  document.addEventListener('mousedown', () => document.body.classList.add('clk'));
-  document.addEventListener('mouseup', () => document.body.classList.remove('clk'));
-} else {
-  if (dot) dot.style.display = 'none';
-  if (ring) ring.style.display = 'none';
-}
-
-/* ───────────────────────────────────────────────
-   WEBGL PARTICLE FIELD (Transparent Ambient Dust)
-─────────────────────────────────────────────── */
-(function initWebGL(){
-  try {
-    const canvas = document.getElementById('bgc');
-    if (!canvas) return;
-    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false })
-            || canvas.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: false });
-    if (!gl) return;
-    function resize(){
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    const vs = `attribute vec2 aPos;attribute float aSize;attribute float aAlpha;uniform vec2 uRes;uniform vec2 uMouse;varying float vAlpha;
-    void main(){vec2 d=aPos-uMouse;float dist=max(length(d),1.0);float rep=70./dist;vec2 p=aPos+normalize(d)*min(rep,18.);
-    vec2 c=(p/uRes)*2.-1.;c.y=-c.y;gl_Position=vec4(c,0.,1.);gl_PointSize=aSize;vAlpha=aAlpha;}`;
-    const fs = `precision mediump float;uniform vec3 uColor;varying float vAlpha;
-    void main(){float d=length(gl_PointCoord-.5)*2.;float a=smoothstep(1.,.2,d)*vAlpha;gl_FragColor=vec4(uColor,a);}`;
-
-    const comp = (src, type) => {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, comp(vs, gl.VERTEX_SHADER));
-    gl.attachShader(prog, comp(fs, gl.FRAGMENT_SHADER));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-
-    const N = 160;
-    const pos = new Float32Array(N * 2);
-    const sizes = new Float32Array(N);
-    const alphas = new Float32Array(N);
-    const spd = Array.from({ length: N }, () => ({ vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22 }));
-
-    for (let i = 0; i < N; i++) {
-      pos[i * 2] = Math.random() * window.innerWidth;
-      pos[i * 2 + 1] = Math.random() * window.innerHeight;
-      sizes[i] = 1.4 + Math.random() * 2.8;
-      alphas[i] = 0.08 + Math.random() * 0.2;
-    }
-
-    const mkBuf = (data, attr, sz) => {
-      const b = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, b);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-      const loc = gl.getAttribLocation(prog, attr);
-      gl.enableVertexAttribArray(loc);
-      gl.vertexAttribPointer(loc, sz, gl.FLOAT, false, 0, 0);
-      return b;
-    };
-    mkBuf(sizes, 'aSize', 1);
-    mkBuf(alphas, 'aAlpha', 1);
-    const posBuf = mkBuf(pos, 'aPos', 2);
-    const uRes = gl.getUniformLocation(prog, 'uRes');
-    const uMouse = gl.getUniformLocation(prog, 'uMouse');
-    const uColor = gl.getUniformLocation(prog, 'uColor');
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    let pmx = -9999, pmy = -9999;
-    document.addEventListener('mousemove', e => { pmx = e.clientX; pmy = e.clientY; });
-    document.addEventListener('touchmove', e => { if (e.touches[0]) { pmx = e.touches[0].clientX; pmy = e.touches[0].clientY; } }, { passive: true });
-
-    (function frame(){
-      for (let i = 0; i < N; i++) {
-        pos[i * 2] += spd[i].vx;
-        pos[i * 2 + 1] += spd[i].vy;
-        if (pos[i * 2] < 0) pos[i * 2] = canvas.width;
-        if (pos[i * 2] > canvas.width) pos[i * 2] = 0;
-        if (pos[i * 2 + 1] < 0) pos[i * 2 + 1] = canvas.height;
-        if (pos[i * 2 + 1] > canvas.height) pos[i * 2 + 1] = 0;
-      }
-      // Transparent clear — NEVER opaque white!
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        gl.uniform3f(uColor, 99 / 255, 102 / 255, 241 / 255);
-      } else {
-        gl.uniform3f(uColor, 79 / 255, 70 / 255, 229 / 255);
-      }
-
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform2f(uMouse, pmx, pmy);
-      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, pos, gl.DYNAMIC_DRAW);
-      const loc = gl.getAttribLocation(prog, 'aPos');
-      gl.enableVertexAttribArray(loc);
-      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.POINTS, 0, N);
-      requestAnimationFrame(frame);
-    })();
-  } catch(err) {
-    console.warn('WebGL init skipped:', err);
-  }
-})();
-
-/* ───────────────────────────────────────────────
    SCROLL REVEAL
 ─────────────────────────────────────────────── */
 try {
@@ -2086,192 +1748,6 @@ setTimeout(()=>{
 window.addEventListener('scroll',()=>{
   document.getElementById('main-nav').classList.toggle('scrolled',scrollY>30);
 });
-
-/* ───────────────────────────────────────────────
-   3D SPATIAL MOUSE PARALLAX & TILT ENGINE (60/120 FPS)
-─────────────────────────────────────────────── */
-(function init3DSpatialEngine(){
-  const isFinePointer = window.matchMedia('(pointer: fine)').matches;
-  if (!isFinePointer) return;
-
-  // 1. HERO 3D "LOOK AT MOUSE" SPATIAL PARALLAX
-  const heroBadge = document.querySelector('.hero-badge');
-  const heroH1 = document.querySelector('.hero-hd h1');
-  const heroP = document.querySelector('.hero-hd p');
-  const heroFloats = document.querySelectorAll('.hero-3d-float');
-
-  let mouseX = window.innerWidth / 2;
-  let mouseY = window.innerHeight / 2;
-  let heroTgtX = 0, heroTgtY = 0;
-  let heroCurX = 0, heroCurY = 0;
-
-  window.addEventListener('mousemove', e => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    heroTgtX = (mouseX - window.innerWidth / 2) / (window.innerWidth / 2);
-    heroTgtY = (mouseY - window.innerHeight / 2) / (window.innerHeight / 2);
-  }, { passive: true });
-
-  function renderHeroParallax() {
-    heroCurX += (heroTgtX - heroCurX) * 0.08;
-    heroCurY += (heroTgtY - heroCurY) * 0.08;
-
-    if (heroH1) {
-      const rotY = (heroCurX * 10).toFixed(2);
-      const rotX = (-heroCurY * 10).toFixed(2);
-      const tx = (heroCurX * 16).toFixed(2);
-      const ty = (heroCurY * 10).toFixed(2);
-      heroH1.style.transform = `perspective(900px) translate3d(${tx}px, ${ty}px, 20px) rotateY(${rotY}deg) rotateX(${rotX}deg)`;
-    }
-    if (heroBadge) {
-      const tx = (heroCurX * 10).toFixed(2);
-      const ty = (heroCurY * 6).toFixed(2);
-      const rotY = (heroCurX * 8).toFixed(2);
-      heroBadge.style.transform = `perspective(900px) translate3d(${tx}px, ${ty}px, 35px) rotateY(${rotY}deg)`;
-    }
-    if (heroP) {
-      const tx = (heroCurX * 8).toFixed(2);
-      const ty = (heroCurY * 4).toFixed(2);
-      heroP.style.transform = `perspective(900px) translate3d(${tx}px, ${ty}px, 12px)`;
-    }
-    heroFloats.forEach(el => {
-      const depth = parseFloat(el.dataset.depth || '0.06');
-      const tx = (heroCurX * depth * 380).toFixed(2);
-      const ty = (heroCurY * depth * 300).toFixed(2);
-      const rot = (heroCurX * 25).toFixed(2);
-      el.style.transform = `translate3d(${tx}px, ${ty}px, 0) rotate(${rot}deg)`;
-    });
-
-    requestAnimationFrame(renderHeroParallax);
-  }
-  requestAnimationFrame(renderHeroParallax);
-
-  // 2. 3D TACTILE TILT & SPECULAR SHEEN FOR CARDS
-  function ensureGlare(card) {
-    let glare = card.querySelector('.card-3d-glare');
-    if (!glare) {
-      glare = document.createElement('div');
-      glare.className = 'card-3d-glare';
-      card.appendChild(glare);
-    }
-    return glare;
-  }
-
-  function attachTiltToCard(card) {
-    if (card._hasTiltAttached) return;
-    card._hasTiltAttached = true;
-    const glare = ensureGlare(card);
-
-    const state = {
-      card,
-      glare,
-      isHovered: false,
-      running: false,
-      curRotX: 0, tgtRotX: 0,
-      curRotY: 0, tgtRotY: 0,
-      curZ: 0, tgtZ: 0,
-      curScale: 1, tgtScale: 1,
-      glareX: 50, glareY: 50,
-      glareOpacity: 0, curGlareOpacity: 0
-    };
-
-    function onMouseMove(e) {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const w = rect.width;
-      const h = rect.height;
-
-      const normX = (x / w) - 0.5;
-      const normY = (y / h) - 0.5;
-
-      state.tgtRotY = normX * 22;
-      state.tgtRotX = -normY * 22;
-      state.tgtZ = 20;
-      state.tgtScale = 1.025;
-
-      state.glareX = (x / w) * 100;
-      state.glareY = (y / h) * 100;
-      state.glareOpacity = 1;
-    }
-
-    function onMouseEnter(e) {
-      state.isHovered = true;
-      card.style.transition = 'none';
-      startCardLoop(state);
-      onMouseMove(e);
-    }
-
-    function onMouseLeave() {
-      state.isHovered = false;
-      state.tgtRotX = 0;
-      state.tgtRotY = 0;
-      state.tgtZ = 0;
-      state.tgtScale = 1;
-      state.glareOpacity = 0;
-      card.style.transition = 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.65s ease';
-    }
-
-    card.addEventListener('mouseenter', onMouseEnter);
-    card.addEventListener('mousemove', onMouseMove);
-    card.addEventListener('mouseleave', onMouseLeave);
-  }
-
-  function startCardLoop(state) {
-    if (state.running) return;
-    state.running = true;
-
-    function step() {
-      state.curRotX += (state.tgtRotX - state.curRotX) * 0.14;
-      state.curRotY += (state.tgtRotY - state.curRotY) * 0.14;
-      state.curZ += (state.tgtZ - state.curZ) * 0.14;
-      state.curScale += (state.tgtScale - state.curScale) * 0.14;
-      state.curGlareOpacity += (state.glareOpacity - state.curGlareOpacity) * 0.15;
-
-      const rx = state.curRotX.toFixed(2);
-      const ry = state.curRotY.toFixed(2);
-      const tz = state.curZ.toFixed(1);
-      const s = state.curScale.toFixed(3);
-
-      state.card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(${tz}px) scale3d(${s}, ${s}, 1)`;
-
-      if (state.glare) {
-        state.glare.style.setProperty('--glare-x', `${state.glareX.toFixed(1)}%`);
-        state.glare.style.setProperty('--glare-y', `${state.glareY.toFixed(1)}%`);
-        state.glare.style.opacity = state.curGlareOpacity.toFixed(2);
-      }
-
-      const isResting = Math.abs(state.curRotX) < 0.05 &&
-                        Math.abs(state.curRotY) < 0.05 &&
-                        Math.abs(state.curZ) < 0.1 &&
-                        Math.abs(state.curScale - 1) < 0.002 &&
-                        state.curGlareOpacity < 0.02;
-
-      if (!state.isHovered && isResting) {
-        state.card.style.transform = '';
-        if (state.glare) state.glare.style.opacity = '0';
-        state.running = false;
-        return;
-      }
-
-      requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  function initAllCards() {
-    document.querySelectorAll('.port-card, .support-card').forEach(attachTiltToCard);
-  }
-  initAllCards();
-
-  const grid = document.getElementById('portGrid');
-  if (grid) {
-    const obs = new MutationObserver(() => {
-      initAllCards();
-    });
-    obs.observe(grid, { childList: true, subtree: true });
-  }
-})();
 
 /* ───────────────────────────────────────────────
    SECRET ADMIN TRIGGER
