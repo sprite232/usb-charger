@@ -15,6 +15,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Firebase SDK (Google Auth + Firestore) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
 <style>
 /* ─── THEME VARIABLES & LIGHTING MODEL ─────────────── */
@@ -455,8 +459,8 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
 
 /* ─── CONTENT CONTAINER ──────────────────────── */
 .content{
-  padding: 1.75rem clamp(1rem, 4vw, 2.5rem);
-  max-width: 1200px;
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
@@ -858,6 +862,242 @@ tr:hover td{background: var(--card-hover);}
   .stat-card .val{font-size: 1.35rem;}
   .login-box{padding: 2rem 1.35rem;}
 }
+
+/* ─── WIDER LAYOUT ──────────────────────────────── */
+.content {
+  padding: 2rem clamp(1rem, 4vw, 3rem);
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ─── ENTRANCE ANIMATIONS ────────────────────────── */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmerSweep {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center; }
+}
+
+.anim-enter {
+  animation: slideUpFade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.anim-enter:nth-child(1) { animation-delay: 0.00s; }
+.anim-enter:nth-child(2) { animation-delay: 0.06s; }
+.anim-enter:nth-child(3) { animation-delay: 0.12s; }
+.anim-enter:nth-child(4) { animation-delay: 0.18s; }
+.anim-enter:nth-child(5) { animation-delay: 0.24s; }
+.anim-enter:nth-child(6) { animation-delay: 0.30s; }
+
+.stat-card { animation: slideUpFade 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.stat-card:nth-child(1){animation-delay:0.00s}
+.stat-card:nth-child(2){animation-delay:0.06s}
+.stat-card:nth-child(3){animation-delay:0.12s}
+.stat-card:nth-child(4){animation-delay:0.18s}
+.stat-card:nth-child(5){animation-delay:0.24s}
+.stat-card:nth-child(6){animation-delay:0.30s}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
+  background-size: 200%;
+  transition: opacity 0.2s;
+}
+.stat-card:hover::after {
+  opacity: 1;
+  animation: shimmerSweep 0.6s ease;
+}
+
+.port-card-admin { animation: slideUpFade 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.port-card-admin:nth-child(1){animation-delay:0.04s}
+.port-card-admin:nth-child(2){animation-delay:0.10s}
+.port-card-admin:nth-child(3){animation-delay:0.16s}
+.port-card-admin:nth-child(4){animation-delay:0.22s}
+
+/* ─── ISSUE CARD GRID ────────────────────────────── */
+.issue-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media(min-width: 768px)  { .issue-card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media(min-width: 1280px) { .issue-card-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.issue-ticket-card {
+  background: var(--card-gradient);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease;
+  animation: slideUpFade 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+.issue-ticket-card:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: var(--shadow-card-hover);
+}
+.issue-ticket-card.status-pending  { border-left-color: var(--yellow); }
+.issue-ticket-card.status-in_progress { border-left-color: var(--blue); }
+.issue-ticket-card.status-resolved { border-left-color: var(--green); }
+
+.itc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.itc-id {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cyan);
+}
+.itc-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.itc-status-badge.pending    { background: var(--yellow-bg); color: var(--yellow); }
+.itc-status-badge.in_progress{ background: var(--blue-bg);   color: var(--blue); }
+.itc-status-badge.resolved   { background: var(--green-bg);  color: var(--green); }
+
+.itc-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1rem;
+  font-size: 0.82rem;
+}
+.itc-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.itc-meta-lbl  { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.itc-meta-val  { font-weight: 600; color: var(--text); }
+
+.itc-desc {
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.55;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.65rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+.itc-time { font-size: 0.72rem; color: var(--muted2); }
+
+/* ─── GOOGLE SIGN-IN LOGIN UI ───────────────────── */
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  background: #fff;
+  color: #1f2937;
+  border: 1.5px solid #d1d5db;
+  border-radius: var(--r-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
+  font-family: inherit;
+}
+.google-signin-btn:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+  border-color: #9ca3af;
+}
+.google-signin-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.google-signin-btn svg { flex-shrink: 0; }
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin: 1.25rem 0;
+}
+.login-divider::before, .login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-auth-loading {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+}
+.auth-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: botSpin 0.7s linear infinite;
+}
+
+/* Whitelist Manager */
+.whitelist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 0.88rem;
+  gap: 0.5rem;
+}
+.whitelist-item .email-text {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--cyan);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tab transition */
+.tab-content-panel {
+  animation: slideUpFade 0.3s cubic-bezier(0.16,1,0.3,1) both;
+}
 </style>
 </head>
 <body>
@@ -868,44 +1108,28 @@ tr:hover td{background: var(--card-hover);}
   <div class="login-box">
     <img src="assets/logo.jpg" class="login-brand-icon" alt="Portal"/>
     <h1>ระบบจัดการตู้ชาร์จ</h1>
-    <p>Smart Charger Admin Portal</p>
+    <p>Smart Charger Admin Portal · เข้าสู่ระบบด้วย Google</p>
 
-    <form id="loginFormContainer" onsubmit="event.preventDefault(); handleLogin();">
-      <!-- Honeypot -->
-      <input type="text" name="website" id="websiteHp" style="display:none" tabindex="-1" autocomplete="off">
-
-      <div class="form-group">
-        <label class="form-label">ชื่อผู้ใช้ (Username)</label>
-        <div class="input-wrap">
-          <input type="text" id="userInput" class="form-input" placeholder="admin" required autocomplete="username" />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">รหัสผ่าน (Password)</label>
-        <div class="input-wrap">
-          <input type="password" id="passInput" class="form-input" placeholder="รหัสผ่านผู้ดูแล" required autocomplete="current-password" />
-          <button type="button" class="eye-btn" onclick="togglePassVisibility()" title="ดูรหัส">
-            <span id="eyeIcon">แสดง</span>
-          </button>
-        </div>
-      </div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.75rem;margin-bottom:1.2rem;font-size:0.8rem;color:var(--muted)">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-          <input type="checkbox" id="rememberMe" checked style="accent-color:var(--blue)">
-          <span>จดจำการเข้าสู่ระบบ</span>
-        </label>
-        <button type="button" onclick="alert('หากลืมรหัสผ่าน กรุณาติดต่อผู้ดูแลตู้ชาร์จหรือผู้รับผิดชอบระบบ')" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;text-decoration:underline">
-          ลืมรหัสผ่าน?
-        </button>
-      </div>
-
-      <button type="submit" class="btn-sm btn-gradient" style="width:100%;border-radius:var(--r-sm);padding:0.85rem;font-size:1rem;font-weight:700">
-        เข้าสู่ระบบ
+    <!-- Google Sign-In Button -->
+    <div id="loginFormContainer">
+      <button class="google-signin-btn" onclick="signInWithGoogle()" id="googleSignInBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        เข้าสู่ระบบด้วย Google
       </button>
-      <div class="login-err" id="loginErr"></div>
-    </form>
+
+      <div id="loginErr" class="login-err" style="margin-top:1rem"></div>
+    </div>
+
+    <!-- Auth Loading State -->
+    <div class="login-auth-loading" id="loginLoadingState">
+      <div class="auth-spinner"></div>
+      <div style="font-size:0.88rem;color:var(--muted)" id="loginLoadingText">กำลังตรวจสอบสิทธิ์...</div>
+    </div>
 
     <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:0.85rem">
       <a href="/" style="color:var(--muted);font-size:.85rem;text-decoration:none">← กลับไปยังหน้าตู้ชาร์จ</a>
@@ -1128,35 +1352,32 @@ tr:hover td{background: var(--card-hover);}
       </button>
     </div>
 
-    <!-- Issues Table -->
-    <div class="tbl-wrap-container">
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>รหัส Ticket</th>
-              <th>หมวดหมู่</th>
-              <th>พอร์ต</th>
-              <th>ยอดเงิน</th>
-              <th>ผู้แจ้ง / ติดต่อ</th>
-              <th>รายละเอียดปัญหา</th>
-              <th>หลักฐาน</th>
-              <th>สถานะ</th>
-              <th>สาธารณะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="issuesTableBody">
-            <!-- Rendered by JS -->
-          </tbody>
-        </table>
-      </div>
-      <div class="tbl-fade-hint"></div>
-    </div>
+    <!-- Issues Card Grid -->
+    <div class="issue-card-grid" id="issuesCardGrid"></div>
+    <!-- Keep hidden tbody for JS backward compat -->
+    <tbody id="issuesTableBody" style="display:none"></tbody>
   </div>
 
   <!-- ─── TAB: Testing ────────────────────────── -->
   <div id="tab-testing" class="content" style="display:none">
+    <!-- Admin Whitelist Manager -->
+    <div class="test-panel" style="border-left:4px solid var(--purple);margin-bottom:1.5rem">
+      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--purple);stroke-width:2;fill:none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>จัดการผู้ดูแลระบบ (Admin Whitelist)</span>
+      </div>
+      <div class="test-panel-desc">เพิ่มหรือลบ Gmail ที่อนุญาตให้เข้าใช้ระบบ Admin ได้ที่นี่ (ใช้ Firebase Firestore)</div>
+      <div id="whitelistLoadingMsg" style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem">กำลังโหลดรายการ...</div>
+      <div id="whitelistList" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem"></div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <input type="email" id="newAdminEmailInput" class="form-input" style="flex:1;min-width:200px" placeholder="email@gmail.com" />
+        <button class="btn-sm btn-primary" onclick="addAdminEmail()" style="white-space:nowrap">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          เพิ่ม Admin
+        </button>
+      </div>
+      <div id="whitelistMsg" style="display:none;margin-top:0.75rem;font-size:0.82rem"></div>
+    </div>
     <div class="test-panel" style="border-left:4px solid var(--cyan)">
       <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
         <i class="pic-icon ic-phone" style="font-size:18px;color:var(--cyan)"></i>
@@ -1461,8 +1682,23 @@ tr:hover td{background: var(--card-hover);}
 
 <script>
 
+// ─── Firebase Init ─────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyB_vTfWp4iygpGpqPWZzQmQzLM6zGdBtFI",
+  authDomain: "usb-charger-project.firebaseapp.com",
+  projectId: "usb-charger-project",
+  storageBucket: "usb-charger-project.firebasestorage.app",
+  messagingSenderId: "336947265559",
+  appId: "1:336947265559:web:3cfb492f857f1ef1021c52",
+  measurementId: "G-0YF8J79X26"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb   = firebase.firestore();
+
 // ─── Global State & Variables ─────────────────
-let token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+let token = '';
+let currentUser = null;
 let dashData = null;
 let allTransactions = [];
 
@@ -1642,78 +1878,177 @@ function directLogin() {
   tryLoadDashboard();
 }
 
-async function handleLogin() {
-  unlockAdmin();
-
-  const username = document.getElementById('userInput')?.value?.trim() || '';
-  const password = document.getElementById('passInput')?.value?.trim() || '';
+// ─── Google Sign-In with Firestore Whitelist ──
+async function signInWithGoogle() {
+  const btn = document.getElementById('googleSignInBtn');
   const errEl = document.getElementById('loginErr');
+  const loadingEl = document.getElementById('loginLoadingState');
+  const formEl = document.getElementById('loginFormContainer');
+  const loadingText = document.getElementById('loginLoadingText');
+
   if (errEl) errEl.style.display = 'none';
+  if (btn) btn.disabled = true;
 
-  if (!username) {
-    if (errEl) {
-      errEl.style.display = 'block';
-      errEl.textContent = 'กรุณากรอกชื่อผู้ใช้';
-    }
-    return;
-  }
-
-  if (!password) {
-    if (errEl) {
-      errEl.style.display = 'block';
-      errEl.textContent = 'กรุณากรอกรหัสผ่าน';
-    }
-    return;
-  }
-
-  const creds = getAdminCredentials();
-  const lowerUser = username.toLowerCase();
-
-  // Valid credentials checking
-  const isMatchSaved = (lowerUser === creds.username.toLowerCase() && password === creds.password);
-  const isMatchDefault = (['admin', 'supakit', 'owner'].includes(lowerUser) && (password === creds.password || password === 'REDACTED_PASSWORD' || password === '00000000'));
-
-  if (isMatchSaved || isMatchDefault) {
-    directLogin();
-    return;
-  }
-
-  // Try API login if backend is running
   try {
-    const fetchRes = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    if (fetchRes.ok) {
-      const res = await fetchRes.json();
-      if (res && res.token) {
-        token = res.token;
-        sessionStorage.setItem('adminToken', token);
-        localStorage.setItem('adminToken', token);
-        tryLoadDashboard();
-        return;
-      }
-    }
-  } catch(e){}
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await fbAuth.signInWithPopup(provider);
+    const user = result.user;
+    const email = user.email;
 
-  // Failed login feedback without leaking password
-  if (errEl) {
-    errEl.style.display = 'block';
-    errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    // Show loading
+    if (formEl) formEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (loadingText) loadingText.textContent = `ตรวจสอบสิทธิ์ ${email}...`;
+
+    // Check Firestore whitelist
+    const doc = await fbDb.collection('admin_whitelist').doc(email).get();
+    if (!doc.exists) {
+      await fbAuth.signOut();
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (formEl) formEl.style.display = 'block';
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = `${email} ไม่มีสิทธิ์เข้าระบบ Admin กรุณาติดต่อผู้ดูแล`;
+      }
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    // Authorized!
+    currentUser = user;
+    token = await user.getIdToken();
+    sessionStorage.setItem('adminToken', token);
+    localStorage.setItem('adminToken', token);
+    tryLoadDashboard();
+
+  } catch (err) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (formEl) formEl.style.display = 'block';
+    if (btn) btn.disabled = false;
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'เกิดข้อผิดพลาด: ' + (err.message || 'กรุณาลองใหม่');
+    }
   }
 }
 
 function logout() {
+  fbAuth.signOut().catch(() => {});
   token = '';
+  currentUser = null;
   sessionStorage.removeItem('adminToken');
   localStorage.removeItem('adminToken');
-  document.getElementById('loginErr').style.display = 'none';
-  if (document.getElementById('passInput')) document.getElementById('passInput').value = '';
+  if (document.getElementById('loginErr')) document.getElementById('loginErr').style.display = 'none';
+  const formEl = document.getElementById('loginFormContainer');
+  const loadingEl = document.getElementById('loginLoadingState');
+  const btn = document.getElementById('googleSignInBtn');
+  if (formEl) formEl.style.display = 'block';
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (btn) btn.disabled = false;
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
-  setTimeout(() => document.getElementById('userInput')?.focus(), 100);
 }
+
+// ─── Firebase Auth State Persistence ──────────
+fbAuth.onAuthStateChanged(async (user) => {
+  if (user) {
+    const email = user.email;
+    try {
+      const doc = await fbDb.collection('admin_whitelist').doc(email).get();
+      if (doc.exists) {
+        currentUser = user;
+        token = await user.getIdToken();
+        sessionStorage.setItem('adminToken', token);
+        localStorage.setItem('adminToken', token);
+        if (document.getElementById('appScreen').style.display !== 'flex') {
+          tryLoadDashboard();
+        }
+        return;
+      }
+    } catch(e) {}
+    await fbAuth.signOut();
+  }
+});
+
+// ─── Whitelist Manager (Firestore CRUD) ───────
+async function loadWhitelistUI() {
+  const listEl = document.getElementById('whitelistList');
+  const msgEl  = document.getElementById('whitelistLoadingMsg');
+  if (!listEl) return;
+  if (msgEl) msgEl.textContent = 'กำลังโหลดรายการ...';
+  try {
+    const snap = await fbDb.collection('admin_whitelist').get();
+    if (msgEl) msgEl.textContent = '';
+    listEl.innerHTML = '';
+    if (snap.empty) {
+      listEl.innerHTML = '<div style="color:var(--muted);font-size:0.85rem">ยังไม่มีอีเมลในระบบ</div>';
+      return;
+    }
+    snap.forEach(doc => {
+      const email = doc.id;
+      const isSelf = currentUser && currentUser.email === email;
+      const div = document.createElement('div');
+      div.className = 'whitelist-item';
+      div.innerHTML = `
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--green);stroke-width:2;fill:none;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="email-text">${email}</span>
+        ${isSelf ? '<span style="font-size:0.72rem;color:var(--cyan);font-weight:700">(คุณ)</span>' : ''}
+        <button class="btn-sm btn-danger" style="padding:.3rem .65rem;font-size:.74rem;min-height:30px" onclick="removeAdminEmail('${email}')" ${isSelf ? 'disabled title="ไม่สามารถลบตัวเองได้"' : ''}>
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;stroke-width:2.5;fill:none"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          ลบ
+        </button>
+      `;
+      listEl.appendChild(div);
+    });
+  } catch(e) {
+    if (msgEl) msgEl.textContent = 'โหลดรายการไม่ได้ (ตรวจสอบ Firestore Rules)';
+  }
+}
+
+async function addAdminEmail() {
+  const input = document.getElementById('newAdminEmailInput');
+  const email = input?.value?.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    showWhitelistMsg('กรุณากรอกอีเมลให้ถูกต้อง', 'var(--red)');
+    return;
+  }
+  try {
+    await fbDb.collection('admin_whitelist').doc(email).set({});
+    input.value = '';
+    showWhitelistMsg(`เพิ่ม ${email} เรียบร้อย`, 'var(--green)');
+    loadWhitelistUI();
+  } catch(e) {
+    showWhitelistMsg('เพิ่มไม่สำเร็จ: ' + e.message, 'var(--red)');
+  }
+}
+
+async function removeAdminEmail(email) {
+  if (!confirm(`ต้องการลบ ${email} ออกจาก Admin Whitelist?`)) return;
+  try {
+    await fbDb.collection('admin_whitelist').doc(email).delete();
+    showWhitelistMsg(`ลบ ${email} เรียบร้อย`, 'var(--yellow)');
+    loadWhitelistUI();
+  } catch(e) {
+    showWhitelistMsg('ลบไม่สำเร็จ: ' + e.message, 'var(--red)');
+  }
+}
+
+function showWhitelistMsg(text, color) {
+  const el = document.getElementById('whitelistMsg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color;
+  el.textContent = text;
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+function showUserInfo() {
+  if (currentUser) {
+    alert(`ผู้ดูแลระบบ: ${currentUser.displayName || currentUser.email}\nอีเมล: ${currentUser.email}`);
+  }
+}
+
 
 // ─── Admin API Helper ─────────────────────────
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
@@ -2650,6 +2985,7 @@ function switchTab(name) {
     syncAdminIssuesFromBackend();
   } else if (name === 'testing') {
     loadSupportSettings();
+    loadWhitelistUI();
     const ports = (dashData && dashData.ports) ? dashData.ports : loadAdminPersistentPorts();
     renderTestingTab(ports);
   }
@@ -2808,58 +3144,78 @@ function renderAdminIssues() {
   if (cat !== 'all') filtered = filtered.filter(x => x.category === cat);
   if (status !== 'all') filtered = filtered.filter(x => x.status === status);
 
-  const tbody = document.getElementById('issuesTableBody');
-  if (!tbody) return;
+  const grid = document.getElementById('issuesCardGrid');
+  if (!grid) return;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)">ไม่พบรายการแจ้งปัญหาตามเงื่อนไขที่เลือก</td></tr>';
+    grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1">ไม่พบรายการแจ้งปัญหาตามเงื่อนไขที่เลือก</div>';
     return;
   }
 
-  const statusBadges = {
-    pending: '<span style="background:var(--yellow-bg);color:var(--yellow);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">รอดำเนินการ</span>',
-    in_progress: '<span style="background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">กำลังตรวจสอบ</span>',
-    resolved: '<span style="background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:12px;font-size:.72rem;font-weight:700">แก้ไขเสร็จสิ้น</span>'
-  };
+  const statusMap = { pending: 'รอดำเนินการ', in_progress: 'กำลังตรวจสอบ', resolved: 'แก้ไขแล้ว' };
 
-  tbody.innerHTML = filtered.map(item => {
-    const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-    const imgHtml = item.imageUrl ? `<img src="${item.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border)" onclick="previewImageFullscreen('${item.imageUrl}')" title="คลิกดูรูปเต็ม"/>` : '<span style="color:var(--muted);font-size:.75rem">—</span>';
-    const isPublicBadge = (item.reply && item.reply.isPublic) ? '<span style="color:var(--cyan);font-weight:700;font-size:.78rem">สาธารณะ</span>' : '<span style="color:var(--muted);font-size:.75rem">ส่วนตัว</span>';
-    const shortDesc = item.description.length > 35 ? item.description.slice(0, 35) + '...' : item.description;
+  grid.innerHTML = filtered.map((item, idx) => {
+    const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const imgHtml = item.imageUrl
+      ? `<img src="${item.imageUrl}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;flex-shrink:0" onclick="previewImageFullscreen('${item.imageUrl}')" title="ดูรูปหลักฐาน"/>`
+      : '';
+    const isPublicBadge = (item.reply && item.reply.isPublic)
+      ? '<span style="font-size:0.7rem;color:var(--cyan);font-weight:700;background:var(--cyan-bg);padding:2px 8px;border-radius:10px">Public</span>'
+      : '';
 
     let catIcon = 'ic-info';
     if (item.category === 'coin') catIcon = 'ic-coin';
     else if (item.category === 'transfer' || item.category === 'qr') catIcon = 'ic-smartphone';
     else if (item.category === 'power') catIcon = 'ic-power';
 
-    const cleanCat = (item.categoryLabel || item.category || '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F1E0}-\u{1F1FF}]|🟠|📱|⚡|💡|⚠️|💬/gu, '').trim();
+    const cleanCat = (item.categoryLabel || item.category || '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+    const replyPreview = item.reply?.message
+      ? `<div style="font-size:0.78rem;color:var(--green);padding:0.4rem 0.6rem;background:var(--green-bg);border-radius:6px;border-left:3px solid var(--green)">ตอบแล้ว: ${item.reply.message.slice(0,60)}${item.reply.message.length > 60 ? '...' : ''}</div>`
+      : '';
 
-    return `
-      <tr>
-        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--cyan)">${item.id}</td>
-        <td>
-          <span style="font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:6px">
-            <i class="pic-icon ${catIcon}" style="font-size:14px;color:var(--cyan)"></i>
-            <span>${escapeHtml(cleanCat)}</span>
+    return `<div class="issue-ticket-card status-${item.status}" style="animation-delay:${idx * 0.05}s">
+      <div class="itc-header">
+        <span class="itc-id">${escapeHtml(item.id)}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${isPublicBadge}
+          <span class="itc-status-badge ${item.status}">${statusMap[item.status] || item.status}</span>
+        </div>
+      </div>
+      <div class="itc-meta">
+        <div class="itc-meta-item">
+          <span class="itc-meta-lbl">หมวดหมู่</span>
+          <span class="itc-meta-val" style="display:flex;align-items:center;gap:5px">
+            <i class="pic-icon ${catIcon}" style="font-size:13px;color:var(--cyan)"></i>
+            ${escapeHtml(cleanCat)}
           </span>
-        </td>
-        <td><strong style="font-family:'JetBrains Mono',sans-serif">${item.portLabel || item.portId}</strong></td>
-        <td><span style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:700">${item.amount ? `฿${item.amount}` : '—'}</span></td>
-        <td><span style="font-size:.78rem;color:var(--text)">${escapeHtml(item.contact)}</span></td>
-        <td title="${escapeHtml(item.description)}" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(shortDesc)}</td>
-        <td style="text-align:center">${imgHtml}</td>
-        <td>${statusBadges[item.status] || item.status}</td>
-        <td>${isPublicBadge}</td>
-        <td>
-          <button class="btn-sm btn-primary" style="padding:.35rem .75rem;font-size:.78rem;font-weight:600" onclick="openIssueReplyModal('${item.id}')">
-            ${item.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ'}
-          </button>
-        </td>
-      </tr>
-    `;
+        </div>
+        <div class="itc-meta-item">
+          <span class="itc-meta-lbl">พอร์ต</span>
+          <span class="itc-meta-val" style="font-family:var(--font-mono);color:var(--blue)">${escapeHtml(item.portLabel || item.portId)}</span>
+        </div>
+        <div class="itc-meta-item">
+          <span class="itc-meta-lbl">ยอดเงิน</span>
+          <span class="itc-meta-val" style="color:var(--green);font-family:var(--font-mono)">${item.amount ? '\u0e3f' + item.amount : '\u2014'}</span>
+        </div>
+        <div class="itc-meta-item">
+          <span class="itc-meta-lbl">ติดต่อ</span>
+          <span class="itc-meta-val" style="font-size:0.78rem;color:var(--yellow)">${escapeHtml(item.contact || '\u2014')}</span>
+        </div>
+      </div>
+      <div class="itc-desc" title="${escapeHtml(item.description)}">${escapeHtml(item.description)}</div>
+      ${replyPreview}
+      ${imgHtml ? `<div style="margin-top:0.25rem">${imgHtml}</div>` : ''}
+      <div class="itc-footer">
+        <span class="itc-time">${timeStr}</span>
+        <button class="btn-sm btn-primary" style="padding:.4rem .9rem;font-size:.78rem;min-height:34px" onclick="openIssueReplyModal('${item.id}')">
+          <i class="pic-icon ic-message-square" style="font-size:13px"></i>
+          ${item.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ'}
+        </button>
+      </div>
+    </div>`;
   }).join('');
 }
+
 
 function previewImageFullscreen(src) {
   if (!src) return;
@@ -3024,53 +3380,33 @@ async function saveSupportSettings() {
 // Initial load for admin issues badge
 setTimeout(loadAdminIssues, 500);
 
-// Check saved token on page load
-if (token) {
-  tryLoadDashboard();
-}
+// Firebase Auth handles session restoration via onAuthStateChanged (above)
 
-
-// Expose safe functions globally to window
-window.handleLogin = handleLogin;
-window.unlockAdmin = unlockAdmin;
-window.togglePassVisibility = togglePassVisibility;
-window.verifyBotCheck = () => true;
-
-// Bind direct DOM listeners
-function initLoginEvents() {
-  const form = document.getElementById('loginFormContainer');
-  if (form) {
-    form.onsubmit = (e) => {
-      e.preventDefault();
-      handleLogin();
-    };
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLoginEvents);
-} else {
-  initLoginEvents();
-}
-setTimeout(initLoginEvents, 200);
+// Expose functions globally
+window.signInWithGoogle = signInWithGoogle;
+window.addAdminEmail = addAdminEmail;
+window.removeAdminEmail = removeAdminEmail;
+window.showUserInfo = showUserInfo;
 
 // ─── Session Timer ─────────────────────────────
 setInterval(() => {
-  if (!token) return;
-  const expiry = parseInt(localStorage.getItem('admin_session_expires_at') || '0');
-  if (expiry > 0) {
-    const remain = expiry - Date.now();
-    if (remain <= 0) {
-      alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
-      logout();
-    } else {
-      const m = Math.floor(remain / 60000);
-      const s = Math.floor((remain % 60000) / 1000);
-      const el = document.getElementById('sessionTimer');
-      if (el) el.textContent = `Session: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (!currentUser) return;
+  const el = document.getElementById('sessionTimer');
+  if (el && currentUser) {
+    const name = currentUser.displayName ? currentUser.displayName.split(' ')[0] : currentUser.email.split('@')[0];
+    el.textContent = `${name}`;
+  }
+}, 5000);
+// Show name immediately after login
+setTimeout(() => {
+  if (currentUser) {
+    const el = document.getElementById('sessionTimer');
+    if (el) {
+      const name = currentUser.displayName ? currentUser.displayName.split(' ')[0] : currentUser.email.split('@')[0];
+      el.textContent = name;
     }
   }
-}, 1000);
+}, 2000);
 
 // ─── Counter Animation ─────────────────────────
 function animateCounter(id, start, end, duration) {
