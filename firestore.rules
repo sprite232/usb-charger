@@ -1,15 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Port state — anyone can read (for customer page), only server writes
+    // Helper function: check if authenticated user is in the admin whitelist
+    function isAdmin() {
+      return request.auth != null && 
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()));
+    }
+
+    // Charger & Port state — anyone can read for kiosk status, client write strictly disabled
     match /charger/{docId} {
       allow read: if true;
       allow write: if false;
     }
-    // Transactions — admin reads only (protected), only server writes
+
+    // Transactions — financial ledger: client read/write forbidden (Server Admin SDK only)
     match /transactions/{txId} {
-      allow read: if false;
-      allow write: if false;
+      allow read, write: if false;
+    }
+
+    // Admin Whitelist — users can read their own status; authorized admins can list and manage
+    match /admin_whitelist/{email} {
+      allow get: if request.auth != null && 
+                 request.auth.token.email != null && 
+                 request.auth.token.email.lower() == email.lower();
+      allow list, write: if isAdmin();
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

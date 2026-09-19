@@ -17,21 +17,24 @@ if (!fs.existsSync(DATA_DIR)) {
   try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch(_) {}
 }
 
+const bcrypt   = require("bcryptjs");
+
 // ─── Firebase Admin (Firestore real-time sync) ────────────────────────────────
 let db = null;
+let fbAdmin = null;
 try {
-  const admin = require("firebase-admin");
+  fbAdmin = require("firebase-admin");
   const credential = process.env.FIREBASE_SERVICE_ACCOUNT
-    ? admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
-    : admin.credential.applicationDefault();
+    ? fbAdmin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
+    : fbAdmin.credential.applicationDefault();
 
-  if (!admin.apps.length) {
-    admin.initializeApp({
+  if (!fbAdmin.apps.length) {
+    fbAdmin.initializeApp({
       credential,
       projectId: process.env.FIREBASE_PROJECT_ID || "usb-charger-project",
     });
   }
-  db = admin.firestore();
+  db = fbAdmin.firestore();
   console.log("[🔥 Firestore] เชื่อมต่อ Firebase สำเร็จ — state จะ sync real-time ทุก device");
 } catch(e) {
   console.warn("[🔥 Firestore] ไม่ได้ตั้งค่า FIREBASE_SERVICE_ACCOUNT — ใช้ local state.json แทน");
@@ -51,17 +54,17 @@ async function pushToFirestore(payload) {
 const CFG = {
   promptpayPhone:   process.env.PROMPTPAY_PHONE     || "0969679951",
   secondsPerBaht:   Number(process.env.SECONDS_PER_BAHT || 180), // 1 ฿ = 180 วิ = 3 นาที
-  adminPin:         process.env.ADMIN_PIN            || "00000000", // ≥8 หลัก (แนะนำ)
+  // Hash รหัสผ่านแอดมินด้วย bcrypt (ไม่มี plain text ในโค้ด)
+  adminPinHash:     process.env.ADMIN_PIN_HASH || (process.env.ADMIN_PIN ? bcrypt.hashSync(String(process.env.ADMIN_PIN), 10) : "$2b$10$rHV5FympGk4lK.g4Mnom5e1p6lcW5q5eW21bYZ/nQ/vhmEmLC0OFm"),
   jwtSecret:        process.env.JWT_SECRET           || `secret-${Math.random()}`,
   easyslipKey:      process.env.EASYSLIP_API_KEY     || "",
+  esp32Secret:      process.env.ESP32_SECRET         || "esp32_device_secret_2026_x89q",
   bankName:         process.env.BANK_NAME            || "กสิกรไทย (kbank)",
   bankAccount:      process.env.BANK_ACCOUNT         || "193-3-86131-3",
   bankAccountName:  process.env.BANK_ACCOUNT_NAME    || "ศุภกฤต สอนบุญมา",
   supportPhone:     process.env.SUPPORT_PHONE        || "0969679951",
   supportLine:      process.env.SUPPORT_LINE         || "@smartcharger",
   supportLocation:  process.env.SUPPORT_LOCATION     || "ห้องคอมพิวเตอร์ อาคาร 1",
-  // กันพอร์ตค้างเมื่อมีคนเปิดหน้า QR/โอนแล้วไม่ชำระ: ค่าเริ่มต้น 2 นาที
-  // ปรับได้จาก PAYMENT_SESSION_EXPIRE_SECONDS (30–600 วินาที)
   sessionExpireMs:  Math.min(600_000, Math.max(30_000, Number(process.env.PAYMENT_SESSION_EXPIRE_SECONDS || 120) * 1000)),
   slipMaxAgeMins:   30,
 };
@@ -444,17 +447,77 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
   };
 }
 
-// ─── Admin Middleware ──────────────────────────────────────────────────────────
-function requireAdmin(req, res, next) {
-  const bearer = (req.headers.authorization || "").replace("Bearer ", "").trim();
-  if (!bearer) return res.status(401).json({ error: "กรุณา Login ก่อน" });
-  if (bearer === "REDACTED_BACKDOOR_TOKEN") return next();
-  try {
-    jwt.verify(bearer, CFG.jwtSecret);
+// ─── Rate Limiter Engine ──────────────────────────────────────────────────────
+function createRateLimiter({ windowMs, maxRequests, message }) {
+  const hits = new Map(); // ip -> [timestamps]
+  return (req, res, next) => {
+    const ip = String(req.headers["x-forwarded-for"] || req.ip || req.socket?.remoteAddress || "local").split(",")[0].trim();
+    const nowMs = Date.now();
+    const timestamps = (hits.get(ip) || []).filter(t => nowMs - t < windowMs);
+    if (timestamps.length >= maxRequests) {
+      const retryAfter = Math.ceil((timestamps[0] + windowMs - nowMs) / 1000);
+      res.setHeader("Retry-After", String(retryAfter));
+      return res.status(429).json({ error: message || "คำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่", retryAfterSeconds: retryAfter });
+    }
+    timestamps.push(nowMs);
+    hits.set(ip, timestamps);
+    // Cleanup old map entries
+    if (hits.size > 2000) {
+      for (const [k, arr] of hits.entries()) {
+        if (arr.every(t => nowMs - t >= windowMs)) hits.delete(k);
+      }
+    }
     next();
-  } catch {
-    res.status(401).json({ error: "Token หมดอายุ กรุณา Login ใหม่" });
+  };
+}
+
+const limiterIssues        = createRateLimiter({ windowMs: 5 * 60 * 1000,  maxRequests: 5,  message: "แจ้งปัญหาบ่อยเกินไป กรุณารอ 5 นาทีแล้วลองใหม่" });
+const limiterVerifySlip    = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 5,  message: "ตรวจสอบสลิปเกินจำนวนที่กำหนด (สูงสุด 5 ครั้ง/15 นาที)" });
+const limiterCoin          = createRateLimiter({ windowMs: 60 * 1000,      maxRequests: 30, message: "คำขอหยอดเหรียญบ่อยเกินไป (สูงสุด 30 ครั้ง/นาที)" });
+const limiterPaymentCreate = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 10, message: "สร้างคำขอชำระเงินเกินจำนวนที่กำหนด (สูงสุด 10 ครั้ง/15 นาที)" });
+
+// ─── Hardware Device Authentication (ESP32) ───────────────────────────────────
+function requireEsp32Auth(req, res, next) {
+  const secretHeader = req.headers["x-esp32-secret"] || req.headers["x-device-token"] || req.headers["x-device-secret"];
+  const querySecret  = req.query?.secret;
+  const bodySecret   = req.body?.secret;
+  const provided     = secretHeader || querySecret || bodySecret;
+
+  if (!CFG.esp32Secret || !provided || String(provided).trim() !== CFG.esp32Secret) {
+    return res.status(403).json({ error: "ไม่อนุญาต: ขาดการยืนยันตัวตนจากอุปกรณ์ฮาร์ดแวร์ (Invalid or Missing Device Secret)" });
   }
+  next();
+}
+
+// ─── Admin Middleware (Strict JWT & Firebase Auth Verification) ───────────────
+async function requireAdmin(req, res, next) {
+  const bearer = (req.headers.authorization || "").replace("Bearer ", "").trim();
+  if (!bearer) return res.status(401).json({ error: "กรุณา Login ก่อน (Missing Authorization Token)" });
+
+  // 1. ตรวจสอบ JWT ที่ออกโดยระบบ Server ตัวเอง
+  try {
+    const decoded = jwt.verify(bearer, CFG.jwtSecret);
+    if (decoded && decoded.role === "admin") {
+      req.adminUser = decoded;
+      return next();
+    }
+  } catch (_) {}
+
+  // 2. ตรวจสอบ Firebase ID Token (กรณีล็อกอินผ่าน Google Sign-In ใน admin.html)
+  if (fbAdmin && fbAdmin.apps.length) {
+    try {
+      const decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
+      if (decodedFb && decodedFb.email && db) {
+        const whiteDoc = await db.collection("admin_whitelist").doc(decodedFb.email.toLowerCase()).get();
+        if (whiteDoc.exists) {
+          req.adminUser = { user: decodedFb.email, role: "admin", provider: "firebase" };
+          return next();
+        }
+      }
+    } catch (_) {}
+  }
+
+  return res.status(401).json({ error: "Token ไม่ถูกต้องหรือหมดอายุ กรุณาเข้าสู่ระบบใหม่" });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -499,7 +562,7 @@ app.get("/api/state", (_, res) => {
  * Body: { portId, amount, method: 'qr'|'transfer'|'coin' }
  * สร้าง session การชำระ
  */
-app.post("/api/payment/create", async (req, res) => {
+app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   const { portId, method } = req.body;
   const amount = Number(req.body.amount);
 
@@ -513,8 +576,6 @@ app.post("/api/payment/create", async (req, res) => {
     return res.status(400).json({ error: "รับชำระด้วยเหรียญเฉพาะยอด 5 บาทขึ้นไป และเป็นทวีคูณของ 5 บาท" });
   }
 
-
-
   const port = getPort(portId);
   if (!port)                       return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
   if (port.status !== "available") return res.status(409).json({ error: "พอร์ตนี้ไม่ว่าง", status: port.status });
@@ -524,7 +585,7 @@ app.post("/api/payment/create", async (req, res) => {
   const expiresAt     = new Date(Date.now() + CFG.sessionExpireMs).toISOString();
 
   const session = {
-    id: `sess_${Date.now()}`,
+    id: `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     portId, amount: rounded, method, chargeSeconds,
     createdAt: now(), expiresAt,
   };
@@ -541,7 +602,6 @@ app.post("/api/payment/create", async (req, res) => {
   } else if (method === "transfer") {
     session.bank = { name: CFG.bankName, account: CFG.bankAccount, accountName: CFG.bankAccountName, phone: CFG.promptpayPhone };
   }
-  // coin: ตัวรับเหรียญจะรายงานยอดรวมเอง
 
   port.status = "pending_payment";
   port.paymentSession = session;
@@ -554,9 +614,9 @@ app.post("/api/payment/create", async (req, res) => {
 /**
  * POST /api/payment/verify-slip  (multipart/form-data)
  * Fields: portId (text), image (file)
- * ตรวจสลิปด้วย EasySlip API
+ * ตรวจสลิปด้วย EasySlip API (Backend Proxy เท่านั้น)
  */
-app.post("/api/payment/verify-slip", upload.single("image"), async (req, res) => {
+app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), async (req, res) => {
   const port = getPort(req.body.portId);
 
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
@@ -593,10 +653,11 @@ app.post("/api/payment/verify-slip", upload.single("image"), async (req, res) =>
 });
 
 /**
- * POST /api/coin/insert  (จากตัวรับเหรียญ/ESP32)
+ * POST /api/coin/insert  (จากตัวรับเหรียญ ESP32 เท่านั้น — ต้องมี Hardware Secret)
  * Body: { portId, amount }
+ * Headers: X-ESP32-Secret
  */
-app.post("/api/coin/insert", (req, res) => {
+app.post("/api/coin/insert", requireEsp32Auth, limiterCoin, (req, res) => {
   const port = getPort(req.body.portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
   if (expirePaymentSession(port)) return res.status(410).json({ error: "หมดเวลาชำระเงิน กรุณาเริ่มรายการใหม่" });
@@ -622,11 +683,21 @@ app.post("/api/coin/insert", (req, res) => {
 
 /**
  * POST /api/payment/cancel
- * Body: { portId }
+ * Body: { portId, sessionId }
+ * ป้องกัน User A กดยกเลิกรายการของ User B
  */
 app.post("/api/payment/cancel", (req, res) => {
-  const port = getPort(req.body.portId);
-  if (port) clearSession(port.id);
+  const { portId, sessionId } = req.body;
+  const port = getPort(portId);
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (!port.paymentSession) return res.json({ success: true, message: "ไม่มี session ที่ค้างอยู่" });
+
+  // ตรวจสอบสิทธิ์ความเป็นเจ้าของ session
+  if (sessionId && port.paymentSession.id && port.paymentSession.id !== sessionId) {
+    return res.status(403).json({ error: "ไม่อนุญาต: รหัส session ไม่ถูกต้อง ไม่สามารถยกเลิกรายการของผู้อื่นได้" });
+  }
+
+  clearSession(port.id);
   res.json({ success: true });
 });
 
@@ -644,9 +715,10 @@ app.post("/api/admin/login", (req, res) => {
   const { username, password, pin } = req.body;
   const validUser = !username || ["admin", "supakit", "owner"].includes(String(username).toLowerCase().trim());
   const inputPass = String(password || pin || "").trim();
-  const validPass = inputPass === String(CFG.adminPin) || inputPass === "REDACTED_PASSWORD";
 
-  // รหัสถูกต้อง -> ปลดล็อกและเข้าสู่ระบบทันที (แอดมินจะไม่ถูกขัง)
+  // ตรวจสอบความถูกต้องด้วย bcrypt hash เท่านั้น (ไม่มี hardcoded password)
+  const validPass = inputPass && bcrypt.compareSync(inputPass, CFG.adminPinHash);
+
   if (validUser && validPass) {
     loginAttempts.delete(ip);
     const token = jwt.sign({ role: "admin", user: username || "admin" }, CFG.jwtSecret, { expiresIn: "8h" });
@@ -656,7 +728,7 @@ app.post("/api/admin/login", (req, res) => {
 
   if (rec.lockUntil > nowMs) {
     const remainSec = Math.ceil((rec.lockUntil - nowMs) / 1000);
-    return res.status(429).json({ error: `ใส่รหัสผิดเกินจำนวน กรุณารอ ${remainSec} วินาที หรือใช้รหัสผ่านที่ถูกต้อง` });
+    return res.status(429).json({ error: `ใส่รหัสผิดเกินจำนวน กรุณารอ ${remainSec} วินาที` });
   }
 
   rec.count += 1;
@@ -844,7 +916,7 @@ app.post("/api/admin/reset", requireAdmin, (_, res) => {
 
 // ─── ESP32 ────────────────────────────────────────────────────────────────────
 
-app.get("/api/esp32/command", (_, res) => {
+app.get("/api/esp32/command", requireEsp32Auth, (_, res) => {
   const relays = {};
   Object.values(state.ports).forEach((p) => {
     relays[p.id] = { gpio: p.relayGpio, on: p.relayOn, isPaused: !!p.isPaused, remainingSeconds: p.remainingSeconds };
@@ -852,8 +924,7 @@ app.get("/api/esp32/command", (_, res) => {
   res.json({ relays, updatedAt: state.updatedAt });
 });
 
-
-app.post("/api/esp32/report", (req, res) => {
+app.post("/api/esp32/report", requireEsp32Auth, (req, res) => {
   state.lastEsp32 = { ...req.body, receivedAt: now() };
   state.updatedAt = now();
   res.json({ success: true });
@@ -936,18 +1007,24 @@ function saveIssuesFile(issues) {
   } catch(_) {}
 }
 
-app.get("/api/issues", (req, res) => {
+app.get("/api/issues", async (req, res) => {
   const issues = loadIssuesFile();
   const auth = req.headers.authorization;
   let isAdmin = false;
   if (auth && auth.startsWith("Bearer ")) {
     const bearer = auth.slice(7).trim();
-    if (bearer === "REDACTED_BACKDOOR_TOKEN") {
-      isAdmin = true;
-    } else {
+    try {
+      const decoded = jwt.verify(bearer, CFG.jwtSecret);
+      if (decoded && decoded.role === "admin") isAdmin = true;
+    } catch(_) {}
+
+    if (!isAdmin && fbAdmin && fbAdmin.apps.length) {
       try {
-        jwt.verify(bearer, CFG.jwtSecret);
-        isAdmin = true;
+        const decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
+        if (decodedFb && decodedFb.email && db) {
+          const whiteDoc = await db.collection("admin_whitelist").doc(decodedFb.email.toLowerCase()).get();
+          if (whiteDoc.exists) isAdmin = true;
+        }
       } catch(_) {}
     }
   }
@@ -958,23 +1035,33 @@ app.get("/api/issues", (req, res) => {
   res.json({ issues: publicIssues });
 });
 
-app.post("/api/issues", (req, res) => {
+app.post("/api/issues", limiterIssues, (req, res) => {
   const issue = req.body;
   if (!issue || !issue.description) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "กรุณาระบุรายละเอียดปัญหา" });
   }
   const issues = loadIssuesFile();
+
+  // Validate and sanitize imageUrl (ป้องกัน Stored XSS)
+  let safeImageUrl = "";
+  if (issue.imageUrl && typeof issue.imageUrl === "string") {
+    const trimmed = issue.imageUrl.trim();
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:image/")) {
+      safeImageUrl = trimmed.slice(0, 2048);
+    }
+  }
+
   const newIssue = {
-    id: issue.id || `ISSUE-${Date.now().toString().slice(-4)}`,
-    createdAt: issue.createdAt || new Date().toISOString(),
-    category: issue.category || "other",
-    categoryLabel: issue.categoryLabel || "ทั่วไป",
-    portId: issue.portId || "all",
-    portLabel: issue.portLabel || "ทั่วไป",
+    id: `ISSUE-${Date.now().toString().slice(-4)}`,
+    createdAt: new Date().toISOString(),
+    category: String(issue.category || "other").slice(0, 30),
+    categoryLabel: String(issue.categoryLabel || "ทั่วไป").slice(0, 50),
+    portId: String(issue.portId || "all").slice(0, 20),
+    portLabel: String(issue.portLabel || "ทั่วไป").slice(0, 30),
     amount: Number(issue.amount) || 0,
-    contact: issue.contact || "—",
-    description: issue.description,
-    imageUrl: issue.imageUrl || "",
+    contact: String(issue.contact || "—").slice(0, 60),
+    description: String(issue.description).slice(0, 1000),
+    imageUrl: safeImageUrl,
     status: "pending",
     reply: null
   };

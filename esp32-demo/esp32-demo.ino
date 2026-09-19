@@ -21,6 +21,7 @@
 #define WIFI_SSID "YOUR_WIFI_SSID"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define SERVER_URL "http://192.168.1.50:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
+#define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Authentication Secret
 
 // 4 Relays Pins
 const int RELAY_PINS[4] = { 26, 27, 25, 33 };
@@ -58,6 +59,7 @@ void fetchRelayCommands() {
   HTTPClient http;
   http.begin(String(SERVER_URL) + "/api/esp32/command");
   http.setTimeout(3000);
+  http.addHeader("X-ESP32-Secret", ESP32_SECRET);
   
   int httpCode = http.GET();
   if (httpCode == 200) {

@@ -2323,7 +2323,6 @@ const apiFetch=(m,url,b)=>{
 let SPB=180;
 const S={portId:null,portLabel:null,amount:null,method:null,session:null};
 let _expTimer=null,_cashPoll=null;
-const EASYSLIP_KEY='REDACTED_EASYSLIP_KEY';
 
 const DEFAULT_PORTS=[
   {id:'usb-a-1',label:'USB-A 1',type:'USB-A',relayGpio:26,status:'available',relayOn:false,isPaused:false,remainingSeconds:0,currentTx:null},
@@ -2769,41 +2768,31 @@ setupDrop('dropTR','fTR','prevTR','btnTR');
 async function submitSlip(method){
   const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
   if(!file){alert('กรุณาเลือกรูปสลิป');return;}
-  stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่าน EasySlip…';
+  stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่านระบบความปลอดภัย…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   let res=null;
-  try{const fd=new FormData();fd.append('portId',S.portId);fd.append('image',file);res=await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd}).then(r=>r.json()).catch(()=>null);}catch(e){}
+  try{
+    const fd=new FormData();
+    fd.append('portId',S.portId);
+    fd.append('image',file);
+    const r = await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd});
+    res = await r.json().catch(()=>null);
+    if(!r.ok){
+      showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง');
+      return;
+    }
+  }catch(e){
+    showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ตรวจสอบสลิปได้ กรุณาลองใหม่อีกครั้ง');
+    return;
+  }
   if(res&&res.success){
     const cs=res.transaction?.chargeSeconds||S.amount*SPB;
     const localP=currentPorts.find(x=>x.id===S.portId);
     if(localP){localP.status='in-use';localP.remainingSeconds=cs;localP.totalSeconds=cs;localP.currentTx={amount:S.amount,chargeSeconds:cs,method:S.method};savePersistentPorts(currentPorts);renderPorts(currentPorts);}
-    showOK(cs,res.sender,res.isDev);return;
+    showOK(cs,res.sender,res.isDev);
+    return;
   }
-  try{
-    const form=new FormData();form.append('image',file,'slip.jpg');form.append('checkDuplicate','true');form.append('matchAmount',String(S.amount));
-    const resp=await fetch('https://api.easyslip.com/v2/verify/bank',{method:'POST',headers:{Authorization:`Bearer ${EASYSLIP_KEY}`},body:form});
-    const data=await resp.json();
-    if(!data.success){const codeMap={SLIP_NOT_FOUND:'ไม่พบ QR Code ในรูป กรุณาถ่ายให้เห็น QR ชัดเจน',IMAGE_SIZE_TOO_LARGE:'รูปใหญ่เกิน 4 MB',INVALID_IMAGE_FORMAT:'รูปแบบไฟล์ไม่ถูกต้อง',SLIP_PENDING:'สลิปรอดำเนินการ กรุณารอ 1-2 นาทีแล้วลองใหม่'};showErr(codeMap[data.error?.code]||data.error?.message||'ตรวจสอบสลิปไม่ผ่าน');return;}
-    const raw=data.data?.rawSlip;const slipAmount=data.data?.amountInSlip??raw?.amount?.amount??0;
-    if(slipAmount<S.amount){showErr(`ยอดเงินในสลิปไม่พอ (ในสลิป: ฿${slipAmount} — ต้องการ: ฿${S.amount})`);return;}
-    const rProxy=raw?.receiver?.account?.proxy?.account||raw?.receiver?.proxy?.account||'';
-    const rAcc=raw?.receiver?.account?.bank?.account||raw?.receiver?.account?.account||'';
-    const rName=raw?.receiver?.account?.name?.th||raw?.receiver?.name||'';
-    let rValid=false;
-    if(rName&&(rName.includes('ศุภกฤต')||rName.includes('supakit')))rValid=true;
-    if(!rValid&&rProxy&&rProxy.replace(/\D/g,'').endsWith('9951'))rValid=true;
-    if(!rValid&&rAcc&&rAcc.replace(/\D/g,'').endsWith('86131'))rValid=true;
-    if((rProxy||rAcc||rName)&&!rValid){showErr('สลิปไม่ได้โอนเข้าพร้อมเพย์หรือบัญชีของตู้ชาร์จนี้');return;}
-    const usedSlips=JSON.parse(localStorage.getItem('usb_charger_used_slips')||'[]');
-    const transRef=raw?.transRef||data.data?.transRef||`REF-${Date.now()}`;
-    if(data.data?.isDuplicate||usedSlips.includes(transRef)){showErr('สลิปนี้ถูกใช้งานไปแล้ว ไม่สามารถใช้ซ้ำได้');return;}
-    usedSlips.push(transRef);localStorage.setItem('usb_charger_used_slips',JSON.stringify(usedSlips));
-    const cs=S.amount*SPB;const localP=currentPorts.find(x=>x.id===S.portId);
-    if(localP){localP.status='in-use';localP.remainingSeconds=cs;localP.totalSeconds=cs;localP.currentTx={amount:S.amount,chargeSeconds:cs,method:S.method};savePersistentPorts(currentPorts);renderPorts(currentPorts);}
-    const senderName=raw?.sender?.account?.name?.th||raw?.sender?.account?.name?.en||raw?.sender?.name||'ผู้โอน';
-    try{const txs=JSON.parse(localStorage.getItem('usb_charger_transactions')||'[]');txs.unshift({id:transRef,portId:S.portId,amount:Number(slipAmount||S.amount),method:S.method,status:'finished',createdAt:raw?.date||new Date().toISOString(),verification:{sender:senderName,transRef,verifiedAt:new Date().toLocaleString('th-TH')}});if(txs.length>200)txs.pop();localStorage.setItem('usb_charger_transactions',JSON.stringify(txs));}catch(e){}
-    showOK(cs,`${senderName} (฿${slipAmount})`);
-  }catch(err){console.error('EasySlip error:',err);showErr('ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิป กรุณาลองใหม่');}
+  showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน');
 }
 
 function retrySlip(){Sound.click();if(!S.session){goPage('pg-amount');return;}goPage(S.method==='qr'?'pg-qr':'pg-transfer');}
@@ -2827,7 +2816,15 @@ function startExpire(spanId,isoStr){
   fn();_expTimer=setInterval(fn,1000);
 }
 function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
-async function cancelSession(){Sound.click();stopTimers();if(S.portId&&S.session)await apiFetch('POST','/api/payment/cancel',{portId:S.portId}).catch(()=>{});S.session=null;closeSheet();}
+async function cancelSession(){
+  Sound.click();
+  stopTimers();
+  if(S.portId&&S.session){
+    await apiFetch('POST','/api/payment/cancel',{portId:S.portId,sessionId:S.session.id}).catch(()=>{});
+  }
+  S.session=null;
+  closeSheet();
+}
 
 /* ───────────────────────────────────────────────
    SUPPORT & ISSUE REPORTING ENGINE
@@ -3097,7 +3094,7 @@ function renderPublicQA() {
   container.innerHTML = filtered.map(item => {
     const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const replyTimeStr = item.reply?.repliedAt ? new Date(item.reply.repliedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-    const imgHtml = item.imageUrl ? `<img src="${item.imageUrl}" class="qa-img-thumb" alt="หลักฐาน" onclick="previewImageFullscreen('${item.imageUrl}')"/>` : '';
+    const imgHtml = item.imageUrl ? `<img src="${encodeURI(item.imageUrl)}" class="qa-img-thumb" alt="หลักฐาน" onclick="previewImageFullscreen(this.src)"/>` : '';
     const cleanCat = (item.categoryLabel || item.category || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
 
     return `
@@ -3130,10 +3127,17 @@ function escapeHtml(str) {
 
 function previewImageFullscreen(src) {
   if (!src) return;
-  const w = window.open('');
-  if (w) {
-    w.document.write(`<body style="margin:0;background:#090d16;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${src}" style="max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.8)"/><script>document.body.onclick=()=>window.close()<\/script></body>`);
-  }
+  if (!src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('data:image/')) return;
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.title = 'รูปภาพหลักฐาน';
+  w.document.body.style.cssText = 'margin:0;background:#090d16;display:flex;align-items:center;justify-content:center;min-height:100vh;cursor:pointer;padding:1rem;box-sizing:border-box';
+  const img = w.document.createElement('img');
+  img.src = src;
+  img.alt = 'รูปภาพหลักฐาน';
+  img.style.cssText = 'max-width:95vw;max-height:95vh;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.8);object-fit:contain';
+  w.document.body.appendChild(img);
+  w.document.body.onclick = () => w.close();
 }
 
 // Initial setup for Support
