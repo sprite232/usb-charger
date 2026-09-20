@@ -1029,72 +1029,14 @@ app.post("/api/esp32/report", requireEsp32Auth, (req, res) => {
 // ─── ISSUES & SUPPORT TICKETS ────────────────────────────────────────────────
 const ISSUES_FILE = path.join(DATA_DIR, "issues.json");
 
-const DEFAULT_SERVER_ISSUES = [
-  {
-    id: "ISSUE-1001",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    category: "coin",
-    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
-    portId: "usb-a-1",
-    portLabel: "USB-A 1",
-    amount: 10,
-    contact: "081-999-xxxx",
-    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1002",
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    category: "transfer",
-    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
-    portId: "usb-c-1",
-    portLabel: "USB-C 1",
-    amount: 5,
-    contact: "Line: student_test",
-    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1003",
-    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-    category: "power",
-    categoryLabel: "อุปกรณ์และสายชาร์จ",
-    portId: "usb-c-2",
-    portLabel: "USB-C 2",
-    amount: 10,
-    contact: "095-123-xxxx",
-    description: "หัวสายชาร์จ Type-C หลวม เสียบแล้วไฟเข้าๆ ออกๆ ครับ",
-    imageUrl: "",
-    status: "pending",
-    reply: null
-  }
-];
-
 function loadIssuesFile() {
   try {
     if (fs.existsSync(ISSUES_FILE)) {
       const data = JSON.parse(fs.readFileSync(ISSUES_FILE, "utf8"));
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data)) return data;
     }
   } catch(_) {}
-  try {
-    fs.writeFileSync(ISSUES_FILE, JSON.stringify(DEFAULT_SERVER_ISSUES, null, 2), "utf8");
-  } catch(_) {}
-  return DEFAULT_SERVER_ISSUES;
+  return [];
 }
 
 function saveIssuesFile(issues) {
@@ -1190,10 +1132,14 @@ app.post("/api/issues/:id/reply", requireAdmin, (req, res) => {
 app.delete("/api/issues/:id", requireAdmin, (req, res) => {
   const id = req.params.id;
   let issues = loadIssuesFile();
-  issues = issues.filter(x => x.id !== id);
+  if (id === 'all') {
+    issues = [];
+  } else {
+    issues = issues.filter(x => x.id !== id);
+  }
   saveIssuesFile(issues);
-  console.log(`[💬 Issue] Deleted issue: ${id}`);
-  res.json({ success: true });
+  console.log(`[💬 Issue] Deleted issue(s): ${id}`);
+  res.json({ success: true, count: issues.length });
 });
 
 // ─── Error Handler ────────────────────────────────────────────────────────────

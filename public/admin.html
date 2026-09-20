@@ -1355,10 +1355,16 @@ tr:hover td{background: var(--card-hover);}
         <option value="in_progress">กำลังตรวจสอบ (In Progress)</option>
         <option value="resolved">แก้ไขเสร็จสิ้น (Resolved)</option>
       </select>
-      <button class="btn-sm btn-primary" onclick="renderAdminIssues()" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px">
-        <i class="pic-icon ic-refresh" style="font-size:13px"></i>
-        <span>รีเฟรชรายการ</span>
-      </button>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button class="btn-sm btn-danger" onclick="clearAllAdminIssues()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)" title="ลบรายการแจ้งปัญหาทั้งหมด">
+          <i class="pic-icon ic-trash" style="font-size:13px"></i>
+          <span>ลบทั้งหมด</span>
+        </button>
+        <button class="btn-sm btn-primary" onclick="renderAdminIssues()" style="display:inline-flex;align-items:center;gap:6px">
+          <i class="pic-icon ic-refresh" style="font-size:13px"></i>
+          <span>รีเฟรชรายการ</span>
+        </button>
+      </div>
     </div>
 
     <!-- Issues Card Grid -->
@@ -2960,80 +2966,26 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-const DEFAULT_ADMIN_ISSUES = [
-  {
-    id: "ISSUE-1001",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    category: "coin",
-    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
-    portId: "usb-a-1",
-    portLabel: "USB-A 1",
-    amount: 10,
-    contact: "081-999-xxxx",
-    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1002",
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    category: "transfer",
-    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
-    portId: "usb-c-1",
-    portLabel: "USB-C 1",
-    amount: 5,
-    contact: "Line: student_test",
-    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1003",
-    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-    category: "power",
-    categoryLabel: "อุปกรณ์และสายชาร์จ",
-    portId: "usb-c-2",
-    portLabel: "USB-C 2",
-    amount: 10,
-    contact: "095-123-xxxx",
-    description: "หัวสายชาร์จ Type-C หลวม เสียบแล้วไฟเข้าๆ ออกๆ ครับ",
-    imageUrl: "",
-    status: "pending",
-    reply: null
-  }
-];
-
 let currentAdminIssues = [];
 let activeEditingIssueId = null;
 
 function loadAdminIssues() {
   try {
     const raw = localStorage.getItem('usb_charger_issues');
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        currentAdminIssues = parsed;
+      if (Array.isArray(parsed)) {
+        // Purge legacy mock issues if any
+        currentAdminIssues = parsed.filter(x => !['ISSUE-1001', 'ISSUE-1002', 'ISSUE-1003'].includes(x.id));
+        if (currentAdminIssues.length !== parsed.length) {
+          try { localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues)); } catch(_) {}
+        }
         updateAdminIssuesBadge();
         return currentAdminIssues;
       }
     }
   } catch(e) {}
-  currentAdminIssues = JSON.parse(JSON.stringify(DEFAULT_ADMIN_ISSUES));
-  try {
-    localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues));
-  } catch(_) {}
+  currentAdminIssues = [];
   updateAdminIssuesBadge();
   return currentAdminIssues;
 }
@@ -3041,8 +2993,8 @@ function loadAdminIssues() {
 async function syncAdminIssuesFromBackend() {
   try {
     const res = await adminApi('GET', '/api/issues');
-    if (res && res.issues && Array.isArray(res.issues) && res.issues.length > 0) {
-      currentAdminIssues = res.issues;
+    if (res && Array.isArray(res.issues)) {
+      currentAdminIssues = res.issues.filter(x => !['ISSUE-1001', 'ISSUE-1002', 'ISSUE-1003'].includes(x.id));
       try {
         localStorage.setItem('usb_charger_issues', JSON.stringify(currentAdminIssues));
       } catch(_) {}
@@ -3104,7 +3056,10 @@ function renderAdminIssues() {
   if (!grid) return;
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1">ไม่พบรายการแจ้งปัญหาตามเงื่อนไขที่เลือก</div>';
+    grid.innerHTML = `<div style="text-align:center;padding:3.5rem 1rem;color:var(--muted);grid-column:1/-1;background:var(--card-gradient);border:1px dashed var(--border);border-radius:var(--r)">
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:6px">ไม่มีรายการแจ้งปัญหา</div>
+      <div style="font-size:0.82rem;color:var(--muted)">ระบบจะแสดงข้อมูลจริงเมื่อมีผู้ใช้งานส่งเรื่องแจ้งปัญหาเข้ามา</div>
+    </div>`;
     return;
   }
 
@@ -3163,10 +3118,15 @@ function renderAdminIssues() {
       ${imgHtml ? `<div style="margin-top:0.25rem">${imgHtml}</div>` : ''}
       <div class="itc-footer">
         <span class="itc-time">${timeStr}</span>
-        <button class="btn-sm btn-primary" style="padding:.4rem .9rem;font-size:.78rem;min-height:34px" onclick="openIssueReplyModal('${item.id}')">
-          <i class="pic-icon ic-message-square" style="font-size:13px"></i>
-          ${item.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ'}
-        </button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn-sm btn-danger" style="padding:.4rem .75rem;font-size:.78rem;min-height:34px;background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.3)" onclick="deleteAdminIssue('${item.id}')" title="ลบรายการแจ้งปัญหานี้">
+            <i class="pic-icon ic-trash" style="font-size:13px"></i> ลบ
+          </button>
+          <button class="btn-sm btn-primary" style="padding:.4rem .9rem;font-size:.78rem;min-height:34px" onclick="openIssueReplyModal('${item.id}')">
+            <i class="pic-icon ic-message-square" style="font-size:13px"></i>
+            ${item.reply ? 'แก้ไขคำตอบ' : 'ตอบกลับ'}
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3293,6 +3253,45 @@ async function saveAdminReply() {
   hideIssueDetailModal();
   renderAdminIssues();
   setActionNotice(`บันทึกคำตอบ Ticket ${issue.id} เรียบร้อย (${isPublic ? 'สาธารณะ' : 'ส่วนตัว'})`);
+}
+
+async function deleteAdminIssue(id) {
+  if (!id) return;
+  if (!confirm(`ต้องการลบ Ticket ${id} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+
+  loadAdminIssues();
+  currentAdminIssues = currentAdminIssues.filter(x => x.id !== id);
+  saveAdminIssues();
+
+  try {
+    await adminApi('DELETE', `/api/issues/${encodeURIComponent(id)}`);
+  } catch(err) {
+    console.warn('Backend delete issue error:', err);
+  }
+
+  renderAdminIssues();
+  setActionNotice(`ลบรายการ ${id} เรียบร้อย`);
+}
+
+async function clearAllAdminIssues() {
+  loadAdminIssues();
+  if (currentAdminIssues.length === 0) {
+    alert('ไม่มีรายการแจ้งปัญหาให้ลบ');
+    return;
+  }
+  if (!confirm(`ต้องการลบรายการแจ้งปัญหาทั้งหมด (${currentAdminIssues.length} รายการ)? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+
+  currentAdminIssues = [];
+  saveAdminIssues();
+
+  try {
+    await adminApi('DELETE', '/api/issues/all');
+  } catch(err) {
+    console.warn('Backend delete all issues error:', err);
+  }
+
+  renderAdminIssues();
+  setActionNotice('ลบรายการแจ้งปัญหาทั้งหมดเรียบร้อยแล้ว');
 }
 
 async function deleteCurrentIssue() {

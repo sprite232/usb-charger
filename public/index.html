@@ -2028,56 +2028,24 @@ function savePersistentPorts(ports){
 }
 let currentPorts=loadPersistentPorts();
 
-const DEFAULT_ISSUES = [
-  {
-    id: "ISSUE-1001",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    category: "coin",
-    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
-    portId: "usb-a-1",
-    portLabel: "USB-A 1",
-    amount: 10,
-    contact: "081-999-xxxx",
-    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1002",
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    category: "transfer",
-    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
-    portId: "usb-c-1",
-    portLabel: "USB-C 1",
-    amount: 5,
-    contact: "Line: student_test",
-    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
-      isPublic: true
-    }
-  }
-];
+const DEFAULT_ISSUES = [];
 
 function getStoredIssues() {
   try {
     const raw = localStorage.getItem('usb_charger_issues');
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        // Purge legacy mock issues
+        const clean = parsed.filter(x => !['ISSUE-1001', 'ISSUE-1002', 'ISSUE-1003'].includes(x.id));
+        if (clean.length !== parsed.length) {
+          saveStoredIssues(clean);
+        }
+        return clean;
+      }
     }
   } catch(e){}
-  return DEFAULT_ISSUES;
+  return [];
 }
 
 function saveStoredIssues(issues) {
