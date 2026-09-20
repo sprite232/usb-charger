@@ -980,6 +980,25 @@ footer{
 }
 .qa-reply-text{font-size:.8rem;color:var(--dark);line-height:1.5}
 .qa-empty{text-align:center;padding:36px 16px;color:var(--g3);font-size:.85rem}
+/* ── BANK LOGOS STRIP (Infinite Auto-Scroll – pure CSS, GPU) ── */
+.bank-strip-wrap{overflow:hidden;position:relative;margin:8px 0 12px;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);}
+.bank-strip-track{display:flex;align-items:center;gap:10px;width:max-content;
+  animation:bankScroll 28s linear infinite;will-change:transform;}
+@keyframes bankScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.bank-logo-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:50px;}
+.bank-logo-item img{width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--g2);}
+.bank-logo-item span{font-size:.55rem;color:var(--g3);font-weight:600;white-space:nowrap;text-align:center;}
+.bank-strip-lbl{font-size:.65rem;color:var(--g3);text-align:center;margin-bottom:4px;font-weight:600;letter-spacing:.04em;}
+/* TrueMoney voucher page */
+.tmn-voucher-input{width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid var(--g2);border-radius:12px;
+  background:var(--off);color:var(--dark);font-size:.85rem;font-family:var(--mono);outline:none;
+  transition:border-color .2s;margin-bottom:10px;}
+.tmn-voucher-input:focus{border-color:var(--blue);}
+.tmn-steps{background:var(--off);border:1px solid var(--g2);border-radius:12px;padding:12px 14px;
+  margin-bottom:14px;font-size:.78rem;color:var(--g3);line-height:1.75;}
+.tmn-steps strong{color:var(--dark);font-weight:700;}
 </style>
 </head>
 <body>
@@ -1349,7 +1368,39 @@ footer{
 
     <!-- Method -->
     <div class="page" id="pg-method">
-      <p style="font-size:.82rem;color:var(--g3);margin-bottom:14px;text-align:center">ยอดชำระ: <strong style="color:var(--green)">฿<span id="mAmt">—</span></strong> (<span id="mTime">—</span>)</p>
+      <p style="font-size:.82rem;color:var(--g3);margin-bottom:6px;text-align:center">ยอดชำระ: <strong style="color:var(--green)">฿<span id="mAmt">—</span></strong> (<span id="mTime">—</span>)</p>
+      <div class="bank-strip-lbl">รองรับแอปธนาคาร 15+ แห่ง &amp; กระเป๋าเงินดิจิทัล</div>
+      <div class="bank-strip-wrap">
+        <div class="bank-strip-track">
+          <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bbl.png" alt="BBL"/><span>BBL</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ktb.jpg" alt="KTB"/><span>KTB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bay.png" alt="Krungsri"/><span>Krungsri</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ttb.jpg" alt="ttb"/><span>ttb</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
+          <!-- duplicate for seamless loop -->
+          <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bbl.png" alt="BBL"/><span>BBL</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ktb.jpg" alt="KTB"/><span>KTB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bay.png" alt="Krungsri"/><span>Krungsri</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ttb.jpg" alt="ttb"/><span>ttb</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
+        </div>
+      </div>
       <div class="method-list" id="methodList">
         <button class="method-item" id="btnMethodQR" onclick="createSession('qr')">
           <img src="assets/promptpay-logo.png" alt="PromptPay" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
@@ -1375,6 +1426,14 @@ footer{
           </div>
           <span class="method-badge" id="coinMethodBadge">รับเหรียญ</span>
         </button>
+        <button class="method-item" id="btnMethodTMN" onclick="createSession('truemoney')">
+          <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
+          <div>
+            <div class="ml">TrueMoney ซองของขวัญ</div>
+            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป</div>
+          </div>
+          <span class="method-badge" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">ทรูมันนี่</span>
+        </button>
       </div>
       <div id="coinOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
         ยอด 1-4 บาท ชำระผ่าน พร้อมเพย์ / โอนเงิน เท่านั้น
@@ -1395,6 +1454,37 @@ footer{
       </div>
       <div class="expire-row">หมดอายุใน <strong id="qrCD">10:00</strong></div>
       <div class="qr-wrap"><img id="qrImg" src="" alt="PromptPay QR"/></div>
+      <div class="bank-strip-lbl" style="margin-top:2px">รองรับทุกแอปธนาคาร — สแกนได้เลย</div>
+      <div class="bank-strip-wrap">
+        <div class="bank-strip-track">
+          <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bbl.png" alt="BBL"/><span>BBL</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ktb.jpg" alt="KTB"/><span>KTB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bay.png" alt="Krungsri"/><span>Krungsri</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ttb.jpg" alt="ttb"/><span>ttb</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bbl.png" alt="BBL"/><span>BBL</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ktb.jpg" alt="KTB"/><span>KTB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/bay.png" alt="Krungsri"/><span>Krungsri</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ttb.jpg" alt="ttb"/><span>ttb</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
+          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
+        </div>
+      </div>
       <p class="slip-lbl">อัปโหลดสลิปยืนยัน</p>
       <div class="slip-zone" id="dropQR" onclick="pickFile('fQR')" ondrop="handleDrop(event,'fQR','prevQR','btnQR')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
         <p>กดเพื่อเลือกไฟล์หรือถ่ายรูป<br/><small>JPEG · PNG · WebP · ไม่เกิน 4 MB</small></p>
@@ -1428,6 +1518,34 @@ footer{
       <input type="file" id="fTR" accept="image/*" hidden onchange="onFile('fTR','prevTR','btnTR','dropTR')"/>
       <button class="btn btn-green" id="btnTR" disabled onclick="submitSlip('transfer')">ส่งสลิปตรวจสอบ</button>
       <button class="btn btn-ghost" onclick="cancelSession()">ยกเลิก</button>
+    </div>
+
+    <!-- TrueMoney Gift Voucher -->
+    <div class="page" id="pg-truemoney">
+      <div class="pay-row">
+        <div class="pay-cell"><div class="pay-lbl">พอร์ต</div><div class="pay-val" id="tmn-port">—</div></div>
+        <div class="pay-cell"><div class="pay-lbl">จำนวน</div><div class="pay-val" id="tmn-amt">—</div></div>
+        <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="tmn-time">—</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px;padding:10px 12px;background:var(--off);border:1px solid var(--g2);border-radius:12px">
+        <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:38px;height:38px;border-radius:9px;object-fit:contain;flex-shrink:0"/>
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--dark)">TrueMoney ซองของขวัญ</div>
+          <div style="font-size:.72rem;color:var(--g3)">วางลิงก์ซองอั่งเปา แล้วกดยืนยัน</div>
+        </div>
+      </div>
+      <div class="tmn-steps">
+        <strong>วิธีสร้างซองของขวัญ:</strong><br/>
+        1. เปิดแอป TrueMoney Wallet<br/>
+        2. เลือก <strong>ซองของขวัญ</strong> (อั่งเปา)<br/>
+        3. กำหนดยอดเงิน <strong>฿<span id="tmn-amt-hint">—</span></strong> &gt; สร้างลิงก์<br/>
+        4. คัดลอกลิงก์ แล้ววางด้านล่าง
+      </div>
+      <input class="tmn-voucher-input" id="tmnVoucherUrl" type="url"
+        placeholder="https://gift.truemoney.com/campaign/?v=XXXXXXXXXX..."
+        autocomplete="off" autocorrect="off" spellcheck="false"/>
+      <button class="btn btn-green" id="btnTMN" onclick="submitTruemoneyVoucher()">ยืนยันซองของขวัญ — เปิดไฟชาร์จ</button>
+      <button class="btn btn-ghost" onclick="goPage('pg-method')">ย้อนกลับ</button>
     </div>
 
     <!-- Coin -->
@@ -2178,7 +2296,23 @@ function handleCashMethodClick(){
 
 /* ── Create Session ── */
 async function createSession(method){
-  S.method=method;goPage('pg-proc');$('procMsg').textContent='กำลังเตรียมข้อมูล…';
+  S.method=method;
+  // TrueMoney voucher: go directly to input page (no session needed from backend)
+  if(method==='truemoney'){
+    const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
+    const cs=S.amount*SPB;
+    S.session={id:`tmn_${Date.now()}`,portId:S.portId,amount:S.amount,chargeSeconds:cs};
+    $('tmn-port').textContent=S.portLabel;
+    $('tmn-amt').textContent=`฿${S.amount}`;
+    $('tmn-time').textContent=Math.round(cs/60);
+    $('tmn-amt-hint').textContent=S.amount;
+    $('tmnVoucherUrl').value='';
+    $('btnTMN').disabled=false;
+    $('sheetTitle').textContent='TrueMoney ซองของขวัญ';
+    goPage('pg-truemoney');
+    return;
+  }
+  goPage('pg-proc');$('procMsg').textContent='กำลังเตรียมข้อมูล…';
   let res=await apiFetch('POST','/api/payment/create',{portId:S.portId,amount:S.amount,method});
   if(!res||!res.session){
     const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
@@ -2189,6 +2323,31 @@ async function createSession(method){
   }
   S.session=res.session;
   if(method==='qr')setupQR(res.session);else if(method==='transfer')setupTR(res.session);else setupCash(res.session);
+}
+
+async function submitTruemoneyVoucher(){
+  const url=($('tmnVoucherUrl').value||'').trim();
+  if(!url){showErr('กรุณาวางลิงก์ซองของขวัญก่อน');return;}
+  if(!url.includes('gift.truemoney.com')){showErr('ลิงก์ไม่ถูกต้อง — ต้องเป็นลิงก์จาก gift.truemoney.com');return;}
+  Sound.click();
+  $('btnTMN').disabled=true;
+  $('btnTMN').textContent='กำลังตรวจสอบ…';
+  goPage('pg-proc');$('procMsg').textContent='กำลังตรวจสอบซองของขวัญ…';
+  const res=await apiFetch('POST','/api/payment/truemoney-voucher',{
+    portId:S.portId,amount:S.amount,voucherUrl:url
+  });
+  $('btnTMN').disabled=false;
+  $('btnTMN').textContent='ยืนยันซองของขวัญ — เปิดไฟชาร์จ';
+  if(!res){showErr('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');return;}
+  if(res.ok){
+    const sec=res.chargeSeconds||S.session?.chargeSeconds||S.amount*(180);
+    const sender=res.sender||'TrueMoney';
+    Voice.speak('ชำระเงินสำเร็จ กำลังเปิดไฟชาร์จค่ะ');
+    showOK(sec,sender,false);
+  } else {
+    goPage('pg-truemoney');
+    showErr(res.message||res.error||'ซองของขวัญใช้ไม่ได้ กรุณาลองใหม่');
+  }
 }
 
 function getAppConfig(){
