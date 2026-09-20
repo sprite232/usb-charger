@@ -53,6 +53,7 @@ async function pushToFirestore(payload) {
 // ─── Config (all from .env) ───────────────────────────────────────────────────
 const CFG = {
   promptpayPhone:   process.env.PROMPTPAY_PHONE     || "0969679951",
+  truemoneyPhone:   process.env.TRUEMONEY_PHONE     || process.env.PROMPTPAY_PHONE || "0969679951",
   secondsPerBaht:   Number(process.env.SECONDS_PER_BAHT || 180), // 1 ฿ = 180 วิ = 3 นาที
   // Hash รหัสผ่านแอดมินด้วย bcrypt (ไม่มี plain text ในโค้ด)
   adminPinHash:     process.env.ADMIN_PIN_HASH || (process.env.ADMIN_PIN ? bcrypt.hashSync(String(process.env.ADMIN_PIN), 10) : "$2b$10$rHV5FympGk4lK.g4Mnom5e1p6lcW5q5eW21bYZ/nQ/vhmEmLC0OFm"),
@@ -137,6 +138,7 @@ function saveState() {
         supportPhone: CFG.supportPhone,
         supportLine: CFG.supportLine,
         supportLocation: CFG.supportLocation,
+        truemoneyPhone: CFG.truemoneyPhone,
       },
       updatedAt: state.updatedAt,
     };
@@ -149,6 +151,7 @@ function saveState() {
       supportPhone: CFG.supportPhone,
       supportLine: CFG.supportLine,
       supportLocation: CFG.supportLocation,
+      truemoneyPhone: CFG.truemoneyPhone,
       updatedAt: state.updatedAt,
       deviceId: state.deviceId,
     });
@@ -653,6 +656,97 @@ app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), 
 });
 
 /**
+ * POST /api/payment/truemoney-voucher
+ * Body: { portId, amount, voucherUrl }
+ */
+app.post("/api/payment/truemoney-voucher", limiterPaymentCreate, async (req, res) => {
+  const { portId, amount, voucherUrl } = req.body;
+  const port = getPort(portId);
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (port.status === "in-use") return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่" });
+
+  if (!voucherUrl || typeof voucherUrl !== "string") {
+    return res.status(400).json({ error: "กรุณาระบุลิงก์ซองของขวัญ TrueMoney" });
+  }
+
+  const expectedAmount = Number(amount);
+  if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+    return res.status(400).json({ error: "ยอดเงินไม่ถูกต้อง" });
+  }
+
+  // Extract hash (35 characters)
+  const hashMatch = (voucherUrl.split("v=")[1] || voucherUrl).match(/[0-9A-Za-z]{35}/);
+  if (!hashMatch) {
+    return res.status(400).json({ error: "ลิงก์ซองของขวัญไม่ถูกต้อง (ต้องเป็นลิงก์ gift.truemoney.com)" });
+  }
+  const hash = hashMatch[0];
+  const targetMobile = CFG.truemoneyPhone || CFG.promptpayPhone || "0969679951";
+
+  try {
+    const { execFile } = require("child_process");
+    const curlBin = process.platform === "win32" ? "curl.exe" : "curl";
+    const payload = JSON.stringify({ mobile: targetMobile, voucher_hash: hash });
+
+    execFile(curlBin, [
+      "-s",
+      "-X", "POST",
+      `https://gift.truemoney.com/campaign/vouchers/${hash}/redeem`,
+      "-H", "Content-Type: application/json",
+      "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "-d", payload
+    ], { timeout: 15000 }, (err, stdout, stderr) => {
+      if (err) {
+        return res.status(502).json({ error: "เชื่อมต่อเซิร์ฟเวอร์ TrueMoney ไม่สำเร็จ: " + err.message });
+      }
+
+      let data;
+      try {
+        data = JSON.parse(stdout);
+      } catch(e) {
+        return res.status(502).json({ error: "TrueMoney ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง" });
+      }
+
+      if (data?.status?.code === "SUCCESS" || data?.status?.message === "success") {
+        const redeemedAmt = parseFloat(data.data?.my_ticket?.amount_baht || data.data?.voucher?.redeemed_amount_baht || 0);
+        if (redeemedAmt < expectedAmount) {
+          return res.status(422).json({
+            error: `ยอดเงินในซองของขวัญไม่เพียงพอ (ต้องการ ฿${expectedAmount} แต่ในซองมี ฿${redeemedAmt})`
+          });
+        }
+
+        const senderName = data.data?.owner_profile?.full_name || "TrueMoney Wallet";
+        const tx = activatePort(port.id, redeemedAmt, "truemoney_voucher", {
+          sender: senderName,
+          voucherHash: hash,
+        });
+
+        console.log(`[🧧 TrueMoney OK] port=${port.id} ฿${redeemedAmt} from=${senderName}`);
+        return res.json({
+          success: true,
+          transaction: tx,
+          sender: senderName,
+          amount: redeemedAmt,
+          chargeSeconds: tx.chargeSeconds
+        });
+      }
+
+      // Handle specific TrueMoney error codes
+      const code = data?.status?.code;
+      let errMsg = "รับซองของขวัญไม่สำเร็จ";
+      if (code === "VOUCHER_OUT_OF_STOCK") errMsg = "ซองของขวัญนี้ถูกรับเงินไปแล้ว หรือซองหมดอายุ";
+      else if (code === "VOUCHER_NOT_FOUND") errMsg = "ไม่พบซองของขวัญนี้ กรุณาตรวจสอบลิงก์อีกครั้ง";
+      else if (code === "CANNOT_GET_OWN_VOUCHER") errMsg = "ไม่สามารถรับซองของขวัญของตนเองได้";
+      else if (code === "TARGET_USER_REDEEMED") errMsg = "คุณได้รับซองของขวัญนี้ไปแล้ว";
+      else if (data?.status?.message) errMsg = `TrueMoney: ${data.status.message}`;
+
+      return res.status(400).json({ error: errMsg, code });
+    });
+  } catch(e) {
+    return res.status(500).json({ error: "เกิดข้อผิดพลาดในการประมวลผล: " + e.message });
+  }
+});
+
+/**
  * POST /api/coin/insert  (จากตัวรับเหรียญ ESP32 เท่านั้น — ต้องมี Hardware Secret)
  * Body: { portId, amount }
  * Headers: X-ESP32-Secret
@@ -796,8 +890,9 @@ app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
 
 // POST /api/admin/config — update settings (admin only)
 app.post("/api/admin/config", requireAdmin, (req, res) => {
-  const { promptpayPhone, bankName, bankAccount, bankAccountName, secondsPerBaht, easyslipKey, supportPhone, supportLine, supportLocation } = req.body;
+  const { promptpayPhone, truemoneyPhone, bankName, bankAccount, bankAccountName, secondsPerBaht, easyslipKey, supportPhone, supportLine, supportLocation } = req.body;
   if (promptpayPhone !== undefined) CFG.promptpayPhone = promptpayPhone.trim();
+  if (truemoneyPhone !== undefined) CFG.truemoneyPhone = truemoneyPhone.trim();
   if (bankName !== undefined) CFG.bankName = bankName.trim();
   if (bankAccount !== undefined) CFG.bankAccount = bankAccount.trim();
   if (bankAccountName !== undefined) CFG.bankAccountName = bankAccountName.trim();
@@ -808,12 +903,13 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
   if (supportLocation !== undefined) CFG.supportLocation = supportLocation.trim();
   
   saveState();
-  console.log(`[⚙️ Admin] Updated config: phone=${CFG.promptpayPhone} rate=${CFG.secondsPerBaht}s loc=${CFG.supportLocation}`);
+  console.log(`[⚙️ Admin] Updated config: phone=${CFG.promptpayPhone} tmn=${CFG.truemoneyPhone} rate=${CFG.secondsPerBaht}s loc=${CFG.supportLocation}`);
   res.json({
     success: true,
     message: "บันทึกการตั้งค่าระบบเรียบร้อย",
     config: {
       promptpayPhone: CFG.promptpayPhone,
+      truemoneyPhone: CFG.truemoneyPhone,
       bankName: CFG.bankName,
       bankAccount: CFG.bankAccount,
       bankAccountName: CFG.bankAccountName,

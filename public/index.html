@@ -1912,6 +1912,21 @@ document.addEventListener('keydown',e=>{
 /* ───────────────────────────────────────────────
    CORE APP LOGIC (preserved 100%)
 ─────────────────────────────────────────────── */
+function $(id){return document.getElementById(id);}
+function fmtSecs(s){
+  if(s>=3600){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return `${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
+  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+function fmtTime(s){
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
+  if(h&&m)return `${h} ชม. ${m} นาที`;
+  if(h)return `${h} ชม.`;
+  if(m&&sc)return `${m} นาที ${sc} วิ`;
+  if(m)return `${m} นาที`;
+  return `${sc} วิ`;
+}
+function denomImg(a){return ({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);}
+
 const BASE=window.API_BASE||'';
 const apiFetch=(m,url,b)=>{
   const o={method:m,headers:{'Content-Type':'application/json'}};
@@ -1954,122 +1969,127 @@ function savePersistentPorts(ports){
 }
 let currentPorts=loadPersistentPorts();
 
-/* ── Firestore Real-time Cloud Sync Listener ── */
-window._onFsUpdate = function(d) {
-  if (!d) return;
-  // 1. Rate & secondsPerBaht
-  const rate = d.secondsPerBaht || d.config?.secondsPerBaht;
-  if (rate && !isNaN(Number(rate))) {
-    SPB = Number(rate);
-    const rateLbl = $('rateLabel');
-    if (rateLbl) rateLbl.textContent = `1฿ = ${SPB/60} นาที`;
-    document.querySelectorAll('[data-for]').forEach(el => el.textContent = fmtTime(Number(el.dataset.for) * SPB));
-  }
-
-  // 2. Support Contact & Payment Config
-  const srcCfg = d.config || d;
-  try {
-    const localCfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
-    let hasCfgUpdate = false;
-    ['promptpayPhone', 'bankName', 'bankAccount', 'bankAccountName', 'supportPhone', 'supportLine', 'supportLocation'].forEach(k => {
-      if (srcCfg[k]) {
-        localCfg[k] = srcCfg[k];
-        hasCfgUpdate = true;
-      }
-    });
-    if (rate) {
-      localCfg.secondsPerBaht = Number(rate);
-      hasCfgUpdate = true;
+const DEFAULT_ISSUES = [
+  {
+    id: "ISSUE-1001",
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    category: "coin",
+    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
+    portId: "usb-a-1",
+    portLabel: "USB-A 1",
+    amount: 10,
+    contact: "081-999-xxxx",
+    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+      isPublic: true
     }
-    if (hasCfgUpdate) {
-      localStorage.setItem('usb_charger_config', JSON.stringify(localCfg));
+  },
+  {
+    id: "ISSUE-1002",
+    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+    category: "transfer",
+    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
+    portId: "usb-c-1",
+    portLabel: "USB-C 1",
+    amount: 5,
+    contact: "Line: student_test",
+    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
+    imageUrl: "",
+    status: "resolved",
+    reply: {
+      adminName: "ผู้ดูแลระบบ (Admin)",
+      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
+      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
+      isPublic: true
+    }
+  }
+];
+
+function getStoredIssues() {
+  try {
+    const raw = localStorage.getItem('usb_charger_issues');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch(e){}
-  updateSupportContactInfo();
-
-  // 3. Ports State
-  if (d.ports && Array.isArray(d.ports) && d.ports.length > 0) {
-    currentPorts = d.ports;
-    savePersistentPorts(d.ports);
-    renderPorts(d.ports);
-    if (S.session && _cashPoll) checkCash(d.ports);
-  }
-};
-
-// Check if initial snapshot data already arrived before script loaded
-if (window._fsData) {
-  window._onFsUpdate(window._fsData);
+  return DEFAULT_ISSUES;
 }
 
-const $=id=>document.getElementById(id);
-const fmtSecs=s=>{
-  if(s>=3600){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return `${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
-  return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-};
-const fmtTime=s=>{
-  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
-  if(h&&m)return `${h} ชม. ${m} นาที`;
-  if(h)return `${h} ชม.`;
-  if(m&&sc)return `${m} นาที ${sc} วิ`;
-  if(m)return `${m} นาที`;
-  return `${sc} วิ`;
-};
-const denomImg=a=>({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);
-
-async function refreshPorts(){
-  const d=await apiFetch('GET','/api/state');
-  if(!d||!d.ports){
-    if (window._fsData) {
-      window._onFsUpdate(window._fsData);
-      return;
-    }
-    currentPorts=loadPersistentPorts();
-    renderPorts(currentPorts);
-    updateSupportContactInfo();
-    return;
-  }
-  SPB=d.secondsPerBaht||180;
-  $('rateLabel').textContent=`1฿ = ${SPB/60} นาที`;
-  document.querySelectorAll('[data-for]').forEach(el=>el.textContent=fmtTime(Number(el.dataset.for)*SPB));
-  if (d.supportLocation || d.supportPhone || d.supportLine) {
-    try {
-      const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
-      if (d.supportLocation) cfg.supportLocation = d.supportLocation;
-      if (d.supportPhone) cfg.supportPhone = d.supportPhone;
-      if (d.supportLine) cfg.supportLine = d.supportLine;
-      localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
-    } catch(e) {}
-  }
-  currentPorts=d.ports;savePersistentPorts(d.ports);renderPorts(d.ports);
-  updateSupportContactInfo();
-  if(S.session&&_cashPoll)checkCash(d.ports);
+function saveStoredIssues(issues) {
+  try {
+    localStorage.setItem('usb_charger_issues', JSON.stringify(issues));
+  } catch(e){}
 }
-renderPorts(currentPorts);
-setInterval(refreshPorts,3000);
-refreshPorts();
 
-window.addEventListener('storage', e => {
-  if (e.key === 'usb_charger_config') {
-    updateSupportContactInfo();
+function getAppConfig(){
+  const fsCfg = window._fsData?.config || window._fsData || {};
+  try{
+    const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');
+    return{
+      promptpayPhone: fsCfg.promptpayPhone || s.promptpayPhone || '0969679951',
+      truemoneyPhone: fsCfg.truemoneyPhone || s.truemoneyPhone || fsCfg.promptpayPhone || s.promptpayPhone || '0969679951',
+      bankName: fsCfg.bankName || s.bankName || 'กสิกรไทย (kbank)',
+      bankAccount: fsCfg.bankAccount || s.bankAccount || '193-3-86131-3',
+      bankAccountName: fsCfg.bankAccountName || s.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      secondsPerBaht: Number(fsCfg.secondsPerBaht || s.secondsPerBaht) || 180,
+      easyslipKey: fsCfg.easyslipKey || s.easyslipKey || '',
+      supportPhone: fsCfg.supportPhone || s.supportPhone || '0969679951',
+      supportLine: fsCfg.supportLine || s.supportLine || '@smartcharger',
+      supportLocation: fsCfg.supportLocation || s.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
+    };
   }
-  if (e.key === 'usb_charger_ports_state') {
-    currentPorts = loadPersistentPorts();
-    renderPorts(currentPorts);
+  catch(e){
+    return{
+      promptpayPhone: fsCfg.promptpayPhone || '0969679951',
+      truemoneyPhone: fsCfg.truemoneyPhone || fsCfg.promptpayPhone || '0969679951',
+      bankName: fsCfg.bankName || 'กสิกรไทย (kbank)',
+      bankAccount: fsCfg.bankAccount || '193-3-86131-3',
+      bankAccountName: fsCfg.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      secondsPerBaht: Number(fsCfg.secondsPerBaht) || 180,
+      easyslipKey: fsCfg.easyslipKey || '',
+      supportPhone: fsCfg.supportPhone || '0969679951',
+      supportLine: fsCfg.supportLine || '@smartcharger',
+      supportLocation: fsCfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
+    };
   }
-  if (e.key === 'usb_charger_issues') {
-    updateSupportContactInfo();
-    if (typeof renderPublicQA === 'function') renderPublicQA();
-  }
-});
+}
 
-(function checkUrlPortParam(){
-  const p=new URLSearchParams(location.search).get('port');
-  if(p)setTimeout(()=>{const port=currentPorts.find(x=>x.id===p);if(port&&port.status==='available')openSheet(port.id,port.label);},400);
-})();
+function updateSupportContactInfo() {
+  const cfg = getAppConfig();
+  const phone = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
+  const phoneFormatted = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const line = cfg.supportLine || '@smartcharger';
+  const loc = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
 
-/* ── Render Ports ── */
+  const pBtn = $('contactPhoneBtn');
+  const pTxt = $('contactPhoneText');
+  if (pBtn) pBtn.href = `tel:${phone.replace(/\D/g, '')}`;
+  if (pTxt) pTxt.textContent = phoneFormatted || phone;
+
+  const lBtn = $('contactLineBtn');
+  const lTxt = $('contactLineText');
+  if (lBtn) lBtn.href = line.startsWith('http') ? line : `https://line.me/ti/p/~${line.replace('@', '')}`;
+  if (lTxt) lTxt.textContent = line;
+
+  const locTxt = $('contactLocText');
+  if (locTxt) locTxt.textContent = loc;
+
+  // Update public QA badge count
+  const allIssues = getStoredIssues();
+  const publicCount = allIssues.filter(x => x.reply && x.reply.isPublic).length;
+  const badge = $('qaPublicBadge');
+  if (badge) badge.textContent = String(publicCount);
+}
+
 function renderPorts(ports){
   const g=$('portGrid');
+  if(!g)return;
   const existing=g.querySelectorAll('.port-card');
   const canUpdate=existing.length===ports.length&&Array.from(existing).every((c,i)=>c.dataset.portId===ports[i].id&&c.dataset.status===ports[i].status);
 
@@ -2158,6 +2178,113 @@ function renderPorts(ports){
     el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
   });
 }
+
+/* ── Firestore Real-time Cloud Sync Listener ── */
+window._onFsUpdate = function(d) {
+  if (!d) return;
+  // 1. Rate & secondsPerBaht
+  const rate = d.secondsPerBaht || d.config?.secondsPerBaht;
+  if (rate && !isNaN(Number(rate))) {
+    SPB = Number(rate);
+    const rateLbl = $('rateLabel');
+    if (rateLbl) rateLbl.textContent = `1฿ = ${SPB/60} นาที`;
+    document.querySelectorAll('[data-for]').forEach(el => el.textContent = fmtTime(Number(el.dataset.for) * SPB));
+  }
+
+  // 2. Support Contact & Payment Config
+  const srcCfg = d.config || d;
+  try {
+    const localCfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
+    let hasCfgUpdate = false;
+    ['promptpayPhone', 'truemoneyPhone', 'bankName', 'bankAccount', 'bankAccountName', 'supportPhone', 'supportLine', 'supportLocation'].forEach(k => {
+      if (srcCfg[k]) {
+        localCfg[k] = srcCfg[k];
+        hasCfgUpdate = true;
+      }
+    });
+    if (rate) {
+      localCfg.secondsPerBaht = Number(rate);
+      hasCfgUpdate = true;
+    }
+    if (hasCfgUpdate) {
+      localStorage.setItem('usb_charger_config', JSON.stringify(localCfg));
+    }
+  } catch(e){}
+  updateSupportContactInfo();
+
+  // 3. Ports State
+  if (d.ports && Array.isArray(d.ports) && d.ports.length > 0) {
+    currentPorts = d.ports;
+    savePersistentPorts(d.ports);
+    renderPorts(d.ports);
+    if (S.session && _cashPoll) checkCash(d.ports);
+  }
+};
+
+// Check if initial snapshot data already arrived before script loaded
+if (window._fsData) {
+  window._onFsUpdate(window._fsData);
+}
+
+async function refreshPorts(){
+  const d=await apiFetch('GET','/api/state');
+  if(!d||!d.ports){
+    if (window._fsData) {
+      window._onFsUpdate(window._fsData);
+      return;
+    }
+    currentPorts=loadPersistentPorts();
+    renderPorts(currentPorts);
+    updateSupportContactInfo();
+    return;
+  }
+  SPB=d.secondsPerBaht||180;
+  $('rateLabel').textContent=`1฿ = ${SPB/60} นาที`;
+  document.querySelectorAll('[data-for]').forEach(el=>el.textContent=fmtTime(Number(el.dataset.for)*SPB));
+  if (d.supportLocation || d.supportPhone || d.supportLine) {
+    try {
+      const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
+      if (d.supportLocation) cfg.supportLocation = d.supportLocation;
+      if (d.supportPhone) cfg.supportPhone = d.supportPhone;
+      if (d.supportLine) cfg.supportLine = d.supportLine;
+      localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+    } catch(e) {}
+  }
+  currentPorts=d.ports;savePersistentPorts(d.ports);renderPorts(d.ports);
+  updateSupportContactInfo();
+  if(S.session&&_cashPoll)checkCash(d.ports);
+}
+renderPorts(currentPorts);
+setInterval(refreshPorts,3000);
+refreshPorts();
+
+window.addEventListener('storage', e => {
+  if (e.key === 'usb_charger_config') {
+    updateSupportContactInfo();
+  }
+  if (e.key === 'usb_charger_ports_state') {
+    currentPorts = loadPersistentPorts();
+    renderPorts(currentPorts);
+  }
+  if (e.key === 'usb_charger_issues') {
+    updateSupportContactInfo();
+    if (typeof renderPublicQA === 'function') renderPublicQA();
+  }
+});
+
+(function checkUrlPortParam(){
+  const p=new URLSearchParams(location.search).get('port');
+  if(p){
+    setTimeout(()=>{
+      const port=currentPorts.find(x=>x.id===p);
+      if(port&&port.status==='available')openSheet(port.id,port.label);
+      if(window.history&&window.history.replaceState){
+        window.history.replaceState({},'',window.location.pathname);
+      }
+    },400);
+  }
+})();
+
 
 /* ── Live countdown ── */
 setInterval(()=>{
@@ -2350,36 +2477,6 @@ async function submitTruemoneyVoucher(){
   }
 }
 
-function getAppConfig(){
-  const fsCfg = window._fsData?.config || window._fsData || {};
-  try{
-    const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');
-    return{
-      promptpayPhone: fsCfg.promptpayPhone || s.promptpayPhone || '0969679951',
-      bankName: fsCfg.bankName || s.bankName || 'กสิกรไทย (kbank)',
-      bankAccount: fsCfg.bankAccount || s.bankAccount || '193-3-86131-3',
-      bankAccountName: fsCfg.bankAccountName || s.bankAccountName || 'ศุภกฤต สอนบุญมา',
-      secondsPerBaht: Number(fsCfg.secondsPerBaht || s.secondsPerBaht) || 180,
-      easyslipKey: fsCfg.easyslipKey || s.easyslipKey || EASYSLIP_KEY,
-      supportPhone: fsCfg.supportPhone || s.supportPhone || '0969679951',
-      supportLine: fsCfg.supportLine || s.supportLine || '@smartcharger',
-      supportLocation: fsCfg.supportLocation || s.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
-    };
-  }
-  catch(e){
-    return{
-      promptpayPhone: fsCfg.promptpayPhone || '0969679951',
-      bankName: fsCfg.bankName || 'กสิกรไทย (kbank)',
-      bankAccount: fsCfg.bankAccount || '193-3-86131-3',
-      bankAccountName: fsCfg.bankAccountName || 'ศุภกฤต สอนบุญมา',
-      secondsPerBaht: Number(fsCfg.secondsPerBaht) || 180,
-      easyslipKey: fsCfg.easyslipKey || EASYSLIP_KEY,
-      supportPhone: fsCfg.supportPhone || '0969679951',
-      supportLine: fsCfg.supportLine || '@smartcharger',
-      supportLocation: fsCfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
-    };
-  }
-}
 
 function setupQR(s){
   Voice.speak('สแกนคิวอาร์โค้ด และแนบสลิปเพื่อเริ่มชาร์จค่ะ');
@@ -2521,94 +2618,9 @@ async function cancelSession(){
 /* ───────────────────────────────────────────────
    SUPPORT & ISSUE REPORTING ENGINE
 ─────────────────────────────────────────────── */
-const DEFAULT_ISSUES = [
-  {
-    id: "ISSUE-1001",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    category: "coin",
-    categoryLabel: "ระบบรับเงิน (หยอดเหรียญ)",
-    portId: "usb-a-1",
-    portLabel: "USB-A 1",
-    amount: 10,
-    contact: "081-999-xxxx",
-    description: "หยอดเหรียญ 10 บาทแล้วเครื่องไม่อ่านเวลา พอร์ตไม่ขึ้นกำลังใช้งานครับ",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "ตรวจสอบบันทึกเซ็นเซอร์แล้วพบเหรียญติดในราง ได้ทำการเปิดเวลาชดเชยให้ที่พอร์ต USB-A 1 เรียบร้อย 30 นาที และทำความสะอาดรางเหรียญเรียบร้อยครับ หากต้องการรับเงินคืนสามารถติดต่อได้ที่ห้องคอมพิวเตอร์ อาคาร 1 ครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-      isPublic: true
-    }
-  },
-  {
-    id: "ISSUE-1002",
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    category: "transfer",
-    categoryLabel: "ระบบรับเงิน (โอนเงิน / QR)",
-    portId: "usb-c-1",
-    portLabel: "USB-C 1",
-    amount: 5,
-    contact: "Line: student_test",
-    description: "สแกนจ่ายเงินผ่านพร้อมเพย์แล้ว สลิปไม่ผ่านขึ้นว่า 'ไม่พบ QR ในรูป' ครับ เงินตัดไปแล้ว 5 บาท",
-    imageUrl: "",
-    status: "resolved",
-    reply: {
-      adminName: "ผู้ดูแลระบบ (Admin)",
-      message: "แนะนำให้ใช้รูปบันทึกสลิปต้นฉบับจากแอปธนาคารโดยตรง ไม่ครอปหรือแคปจอจน QR แตกครับ ทั้งนี้แอดมินได้ตรวจสอบยอดเงิน ฿5 เข้าบัญชีแล้ว จึงสั่งเปิดจ่ายไฟที่ช่อง USB-C 1 ให้ทันทีเรียบร้อยครับ ขอบคุณที่แจ้งปัญหาครับ",
-      repliedAt: new Date(Date.now() - 3600000 * 7).toISOString(),
-      isPublic: true
-    }
-  }
-];
-
-function getStoredIssues() {
-  try {
-    const raw = localStorage.getItem('usb_charger_issues');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch(e){}
-  localStorage.setItem('usb_charger_issues', JSON.stringify(DEFAULT_ISSUES));
-  return DEFAULT_ISSUES;
-}
-
-function saveStoredIssues(issues) {
-  try {
-    localStorage.setItem('usb_charger_issues', JSON.stringify(issues));
-  } catch(e){}
-}
-
 let currentSelectedIssueCat = 'power';
 let currentIssueBase64Image = '';
 
-function updateSupportContactInfo() {
-  const cfg = getAppConfig();
-  const phone = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
-  const phoneFormatted = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const line = cfg.supportLine || '@smartcharger';
-  const loc = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
-
-  const pBtn = $('contactPhoneBtn');
-  const pTxt = $('contactPhoneText');
-  if (pBtn) pBtn.href = `tel:${phone.replace(/\D/g, '')}`;
-  if (pTxt) pTxt.textContent = phoneFormatted || phone;
-
-  const lBtn = $('contactLineBtn');
-  const lTxt = $('contactLineText');
-  if (lBtn) lBtn.href = line.startsWith('http') ? line : `https://line.me/ti/p/~${line.replace('@', '')}`;
-  if (lTxt) lTxt.textContent = line;
-
-  const locTxt = $('contactLocText');
-  if (locTxt) locTxt.textContent = loc;
-
-  // Update public QA badge count
-  const allIssues = getStoredIssues();
-  const publicCount = allIssues.filter(x => x.reply && x.reply.isPublic).length;
-  const badge = $('qaPublicBadge');
-  if (badge) badge.textContent = String(publicCount);
-}
 
 function openIssueModal() {
   Sound.click();

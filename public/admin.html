@@ -1406,9 +1406,13 @@ tr:hover td{background: var(--card-hover);}
           <label>จุดบริการ / ห้องคอมพิวเตอร์:</label>
           <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ห้องคอมพิวเตอร์ อาคาร 1" />
         </div>
+        <div class="field-row">
+          <label>เบอร์ TrueMoney Wallet รับซองอั่งเปา:</label>
+          <input type="text" id="cfgTruemoneyPhone" class="form-input" placeholder="0969679951" />
+        </div>
       </div>
       <div style="margin-top:1rem">
-        <button class="btn-sm btn-primary" onclick="saveSupportSettings()">บันทึกข้อมูลช่องทางติดต่อ</button>
+        <button class="btn-sm btn-primary" onclick="saveSupportSettings()">บันทึกข้อมูลช่องทางติดต่อ &amp; ทรูมันนี่</button>
       </div>
     </div>
 
@@ -1736,7 +1740,8 @@ function getLocalSavedConfig() {
       bankName: saved.bankName || 'กสิกรไทย (kbank)',
       bankAccount: saved.bankAccount || '193-3-86131-3',
       bankAccountName: saved.bankAccountName || 'ศุภกฤต สอนบุญมา',
-      secondsPerBaht: Number(saved.secondsPerBaht) || 180
+      secondsPerBaht: Number(saved.secondsPerBaht) || 180,
+      truemoneyPhone: saved.truemoneyPhone || saved.promptpayPhone || '0969679951'
     };
   } catch(e) {
     return {
@@ -1747,7 +1752,8 @@ function getLocalSavedConfig() {
       bankName: 'กสิกรไทย (kbank)',
       bankAccount: '193-3-86131-3',
       bankAccountName: 'ศุภกฤต สอนบุญมา',
-      secondsPerBaht: 180
+      secondsPerBaht: 180,
+      truemoneyPhone: '0969679951'
     };
   }
 }
@@ -3307,36 +3313,49 @@ async function deleteCurrentIssue() {
   setActionNotice('ลบรายการปัญหาเรียบร้อย');
 }
 
-/* ── Support Contact Settings in Admin ── */
+/* ── Support Contact & TrueMoney Settings in Admin ── */
 function loadSupportSettings() {
   const cfg = getLocalSavedConfig();
   if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
   if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '@smartcharger';
   if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
+  if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = cfg.truemoneyPhone || cfg.promptpayPhone || '0969679951';
 }
 
 async function saveSupportSettings() {
   const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '0969679951';
   const line = document.getElementById('cfgSupportLine')?.value?.trim() || '@smartcharger';
   const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || 'ห้องคอมพิวเตอร์ อาคาร 1';
+  const truemoneyPhone = document.getElementById('cfgTruemoneyPhone')?.value?.trim() || phone;
 
   const cfg = getLocalSavedConfig();
   cfg.supportPhone = phone;
   cfg.supportLine = line;
   cfg.supportLocation = loc;
+  cfg.truemoneyPhone = truemoneyPhone;
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  // Sync to Firestore Cloud for instant multi-device update
+  syncAdminToFirestore({
+    config: cfg,
+    supportPhone: phone,
+    supportLine: line,
+    supportLocation: loc,
+    truemoneyPhone: truemoneyPhone
+  });
 
   // Sync to backend API if available
   try {
     await adminApi('POST', '/api/admin/config', {
       supportPhone: phone,
       supportLine: line,
-      supportLocation: loc
+      supportLocation: loc,
+      truemoneyPhone: truemoneyPhone
     });
   } catch(e) {}
 
-  setActionNotice('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อย');
-  alert('บันทึกข้อมูลช่องทางติดต่อฉุกเฉินเรียบร้อยแล้ว ข้อมูลจะอัปเดตบนหน้าเว็บหลักทันที');
+  setActionNotice('บันทึกข้อมูลช่องทางติดต่อ & TrueMoney เรียบร้อย');
+  alert('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney รับซองอั่งเปาเรียบร้อยแล้วค่ะ');
 }
 
 // Initial load for admin issues badge
