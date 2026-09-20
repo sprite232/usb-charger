@@ -981,16 +981,41 @@ footer{
 .qa-reply-text{font-size:.8rem;color:var(--dark);line-height:1.5}
 .qa-empty{text-align:center;padding:36px 16px;color:var(--g3);font-size:.85rem}
 /* ── BANK LOGOS STRIP (Infinite Auto-Scroll – pure CSS, GPU) ── */
-.bank-strip-wrap{overflow:hidden;position:relative;margin:8px 0 12px;
+.bank-strip-wrap{overflow:hidden;position:relative;margin:6px 0 10px;
   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
   mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);}
 .bank-strip-track{display:flex;align-items:center;gap:10px;width:max-content;
-  animation:bankScroll 28s linear infinite;will-change:transform;}
+  animation:bankScroll 24s linear infinite;will-change:transform;}
 @keyframes bankScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .bank-logo-item{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;width:50px;}
 .bank-logo-item img{width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--g2);}
 .bank-logo-item span{font-size:.55rem;color:var(--g3);font-weight:600;white-space:nowrap;text-align:center;}
 .bank-strip-lbl{font-size:.65rem;color:var(--g3);text-align:center;margin-bottom:4px;font-weight:600;letter-spacing:.04em;}
+
+/* ── Method Section Headers ── */
+.method-section-hdr{display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px;padding:0 2px;}
+.msh-left{display:flex;align-items:center;gap:6px;}
+.msh-icon{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;color:var(--g3);flex-shrink:0;}
+.msh-title{font-size:.78rem;font-weight:700;color:var(--dark);letter-spacing:.02em;}
+.msh-badge{font-size:.64rem;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.02em;}
+.bank-badge{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);}
+.wallet-badge{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);}
+.cash-badge{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+
+/* ── Digital Wallet Notice Card ── */
+.wallet-notice-box{background:var(--off);border:1px solid rgba(239,68,68,.22);border-left:3.5px solid var(--red);border-radius:10px;padding:10px 12px;margin:8px 0 10px;text-align:left;}
+.wnb-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.wnb-logos{display:flex;align-items:center;gap:5px;}
+.wnb-logos img{width:22px;height:22px;border-radius:5px;object-fit:contain;border:1px solid var(--g2);background:#fff;padding:1px;}
+.wnb-tag{font-size:.65rem;font-weight:700;color:var(--red);background:rgba(239,68,68,.12);padding:1px 6px;border-radius:4px;}
+.wnb-body{font-size:.73rem;color:var(--g3);line-height:1.5;}
+.wnb-body strong{color:var(--dark);font-weight:700;}
+
+/* ── QR Page Bank & Wallet Notices ── */
+.qr-wallet-warn{display:flex;align-items:flex-start;gap:7px;background:var(--off);border:1px solid rgba(245,158,11,.25);border-left:3.5px solid var(--amber);border-radius:9px;padding:8px 11px;margin:8px 0 12px;font-size:.73rem;color:var(--g3);line-height:1.45;text-align:left;}
+.qr-wallet-warn svg{flex-shrink:0;color:var(--amber);margin-top:1px;}
+.qr-wallet-warn strong{color:var(--dark);font-weight:700;}
+
 /* TrueMoney voucher page */
 .tmn-voucher-input{width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid var(--g2);border-radius:12px;
   background:var(--off);color:var(--dark);font-size:.85rem;font-family:var(--mono);outline:none;
@@ -1368,8 +1393,16 @@ footer{
 
     <!-- Method -->
     <div class="page" id="pg-method">
-      <p style="font-size:.82rem;color:var(--g3);margin-bottom:6px;text-align:center">ยอดชำระ: <strong style="color:var(--green)">฿<span id="mAmt">—</span></strong> (<span id="mTime">—</span>)</p>
-      <div class="bank-strip-lbl">รองรับแอปธนาคาร 15+ แห่ง &amp; กระเป๋าเงินดิจิทัล</div>
+      <p style="font-size:.82rem;color:var(--g3);margin-bottom:10px;text-align:center">ยอดชำระ: <strong style="color:var(--green)">฿<span id="mAmt">—</span></strong> (<span id="mTime">—</span>)</p>
+
+      <!-- หมวดที่ 1: แอปธนาคาร (มีสลิปยืนยัน) -->
+      <div class="method-section-hdr">
+        <div class="msh-left">
+          <svg class="msh-icon" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3L2 10h20L12 3z"/></svg>
+          <span class="msh-title">แอปธนาคาร</span>
+        </div>
+        <span class="msh-badge bank-badge">ตรวจสลิปอัตโนมัติ</span>
+      </div>
       <div class="bank-strip-wrap">
         <div class="bank-strip-track">
           <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
@@ -1381,10 +1414,6 @@ footer{
           <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
           <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
           <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
           <!-- duplicate for seamless loop -->
           <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
           <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
@@ -1395,10 +1424,6 @@ footer{
           <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
           <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
           <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
         </div>
       </div>
       <div class="method-list" id="methodList">
@@ -1414,10 +1439,55 @@ footer{
           <img src="assets/bank.png" alt="โอนธนาคาร" style="width:32px;height:32px;object-fit:contain;opacity:.75;flex-shrink:0"/>
           <div>
             <div class="ml">โอนเงินเข้าบัญชีธนาคาร</div>
-            <div class="ms">โอนผ่านเลขบัญชีหรือพร้อมเพย์</div>
+            <div class="ms">โอนผ่านเลขบัญชีหรือพร้อมเพย์ แล้วแนบสลิป</div>
           </div>
           <span class="method-badge">ตรวจสลิป</span>
         </button>
+      </div>
+
+      <!-- หมวดที่ 2: กระเป๋าเงินดิจิทัล (Digital Wallet) -->
+      <div class="method-section-hdr" style="margin-top:14px">
+        <div class="msh-left">
+          <svg class="msh-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span class="msh-title">กระเป๋าเงินดิจิทัล</span>
+        </div>
+        <span class="msh-badge wallet-badge">Digital Wallet</span>
+      </div>
+      <div class="method-list" style="margin-bottom:8px">
+        <button class="method-item" id="btnMethodTMN" onclick="createSession('truemoney')">
+          <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
+          <div>
+            <div class="ml">TrueMoney ซองของขวัญ</div>
+            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป</div>
+          </div>
+          <span class="method-badge" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">ไม่ต้องใช้สลิป</span>
+        </button>
+      </div>
+
+      <!-- กล่องเตือนกระเป๋าเงินดิจิทัล (ShopeePay, LINE Pay) ที่ไม่มีสลิปธนาคารมาตรฐาน -->
+      <div class="wallet-notice-box">
+        <div class="wnb-header">
+          <div class="wnb-logos">
+            <img src="assets/banks/truemoney.png" alt="TrueMoney"/>
+            <img src="assets/banks/shopeepay.png" alt="ShopeePay"/>
+            <img src="assets/banks/linepay.png" alt="LINE Pay"/>
+          </div>
+          <span class="wnb-tag">ข้อควรระวัง</span>
+        </div>
+        <div class="wnb-body">
+          กระเป๋าเงินดิจิทัล (เช่น ShopeePay, LINE Pay) ไม่มีสลิปธนาคารมาตรฐาน (BOT QR) ทำให้ระบบตรวจสลิปไม่ผ่าน แนะนำให้ใช้ <strong>แอปธนาคาร</strong> สแกนจ่าย หรือผู้ใช้ TrueMoney เลือก <strong>ซองของขวัญ</strong> ด้านบน
+        </div>
+      </div>
+
+      <!-- หมวดที่ 3: เงินสด (Cash) -->
+      <div class="method-section-hdr" style="margin-top:14px">
+        <div class="msh-left">
+          <svg class="msh-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg>
+          <span class="msh-title">เงินสด</span>
+        </div>
+        <span class="msh-badge cash-badge">หน้าตู้</span>
+      </div>
+      <div class="method-list">
         <button class="method-item" id="btnMethodCoin" onclick="handleCoinMethodClick()">
           <img src="assets/coin.png" alt="เหรียญ" style="width:36px;height:36px;object-fit:contain;opacity:.75;flex-shrink:0"/>
           <div>
@@ -1425,14 +1495,6 @@ footer{
             <div class="ms" id="coinMethodSub">รองรับเหรียญ 5 และ 10 บาท</div>
           </div>
           <span class="method-badge" id="coinMethodBadge">รับเหรียญ</span>
-        </button>
-        <button class="method-item" id="btnMethodTMN" onclick="createSession('truemoney')">
-          <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
-          <div>
-            <div class="ml">TrueMoney ซองของขวัญ</div>
-            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป</div>
-          </div>
-          <span class="method-badge" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">ทรูมันนี่</span>
         </button>
       </div>
       <div id="coinOnlyWarn" style="font-size:.72rem;color:var(--amber);margin-top:6px;display:none;text-align:center">
@@ -1454,7 +1516,7 @@ footer{
       </div>
       <div class="expire-row">หมดอายุใน <strong id="qrCD">10:00</strong></div>
       <div class="qr-wrap"><img id="qrImg" src="" alt="PromptPay QR"/></div>
-      <div class="bank-strip-lbl" style="margin-top:2px">รองรับทุกแอปธนาคาร — สแกนได้เลย</div>
+      <div class="bank-strip-lbl" style="margin-top:4px">สแกนด้วยแอปธนาคาร (มีสลิปยืนยันอัตโนมัติ)</div>
       <div class="bank-strip-wrap">
         <div class="bank-strip-track">
           <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
@@ -1466,10 +1528,7 @@ footer{
           <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
           <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
           <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
+          <!-- duplicate for seamless loop -->
           <div class="bank-logo-item"><img src="assets/banks/kbank.jpg" alt="K+"/><span>K+</span></div>
           <div class="bank-logo-item"><img src="assets/banks/scb.jpg" alt="SCB"/><span>SCB</span></div>
           <div class="bank-logo-item"><img src="assets/banks/bbl.png" alt="BBL"/><span>BBL</span></div>
@@ -1479,11 +1538,11 @@ footer{
           <div class="bank-logo-item"><img src="assets/banks/gsb.png" alt="ออมสิน"/><span>ออมสิน</span></div>
           <div class="bank-logo-item"><img src="assets/banks/ghb.png" alt="ธอส."/><span>ธอส.</span></div>
           <div class="bank-logo-item"><img src="assets/banks/uob.jpg" alt="UOB"/><span>UOB</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/mymo.jpg" alt="MyMo"/><span>MyMo</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/truemoney.png" alt="TrueMoney"/><span>TrueMoney</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/shopeepay.png" alt="ShopeePay"/><span>ShopeePay</span></div>
-          <div class="bank-logo-item"><img src="assets/banks/linepay.png" alt="LINE Pay"/><span>LINE Pay</span></div>
         </div>
+      </div>
+      <div class="qr-wallet-warn">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>กรุณาสแกนจ่ายด้วย <strong>แอปธนาคาร</strong> เพื่อให้ได้สลิปยืนยัน (ไม่รองรับการสแกนด้วย ShopeePay / LINE Pay เนื่องจากไม่มีสลิปธนาคารมาตรฐาน)</span>
       </div>
       <p class="slip-lbl">อัปโหลดสลิปยืนยัน</p>
       <div class="slip-zone" id="dropQR" onclick="pickFile('fQR')" ondrop="handleDrop(event,'fQR','prevQR','btnQR')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
