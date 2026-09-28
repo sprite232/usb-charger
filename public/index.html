@@ -1365,7 +1365,7 @@ footer{
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
-        <input type="number" id="customIn" min="1" step="1" placeholder="ระบุจำนวนบาท" oninput="onCustomIn()"/>
+        <input type="number" id="customIn" min="1" step="1" inputmode="numeric" placeholder="ระบุจำนวนบาท" onkeydown="if(event.key==='.'||event.key===',')event.preventDefault()" oninput="onCustomIn()"/>
         <span class="cp" id="customPrev"></span>
       </div>
       <div id="customHint" style="font-size:.72rem;color:var(--g3);margin-top:6px;display:none"></div>
@@ -2405,7 +2405,11 @@ function focusCustom(){
   $('dcCustom').classList.add('sel');$('customRow').style.display='flex';$('customIn').focus();
 }
 function onCustomIn(){
-  const v=Number($('customIn').value);const hint=$('customHint');
+  let raw=Number($('customIn').value);
+  // บังคับจำนวนเต็มเท่านั้น — ตัดทศนิยมทิ้ง
+  const v=Math.floor(raw);
+  if(raw!==v)$('customIn').value=v; // เขียนกลับทันที
+  const hint=$('customHint');
   if(v>=1){
     S.amount=v;$('customPrev').textContent='= '+fmtTime(v*SPB);$('customMinPreview').textContent=fmtTime(v*SPB);$('btnNext').disabled=false;
     if(hint){hint.style.display='block';hint.textContent=(v<5||v%5!==0)?`ยอด ฿${v} ชำระผ่าน PromptPay / โอนเงินเท่านั้น`:`ยอด ฿${v} ชำระได้ทั้งเงินสดและโอนจ่าย`;}
