@@ -2441,6 +2441,21 @@ function goMethod(){
       if(warn)warn.style.display='block';
     }
   }
+  // ── TrueMoney: บังคับขั้นต่ำ ฿10 ──
+  const btnTMN=$('btnMethodTMN');
+  if(btnTMN){
+    const tmnSub=btnTMN.querySelector('.ms');
+    const tmnBadge=btnTMN.querySelector('.method-badge');
+    if(S.amount<10){
+      btnTMN.style.opacity='.45';btnTMN.style.cursor='not-allowed';btnTMN.style.pointerEvents='none';
+      if(tmnSub){tmnSub.textContent=`ยอด ฿${S.amount} ต่ำกว่าขั้นต่ำ (ต้องการ ฿10 ขึ้นไป)`;tmnSub.style.color='var(--amber)';}
+      if(tmnBadge){tmnBadge.textContent='ขั้นต่ำ ฿10';tmnBadge.style.cssText='color:var(--amber);background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.35)';}
+    } else {
+      btnTMN.style.opacity='1';btnTMN.style.cursor='pointer';btnTMN.style.pointerEvents='';
+      if(tmnSub){tmnSub.textContent='วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป \u2022 ขั้นต่ำ ฿10';tmnSub.style.color='';}
+      if(tmnBadge){tmnBadge.textContent='ไม่ต้องใช้สลิป';tmnBadge.style.cssText='color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)';}
+    }
+  }
   $('sheetTitle').textContent='วิธีชำระเงิน';goPage('pg-method');
 }
 
