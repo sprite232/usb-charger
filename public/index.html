@@ -1458,7 +1458,7 @@ footer{
           <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
           <div>
             <div class="ml">TrueMoney ซองของขวัญ</div>
-            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป</div>
+            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป &bull; ขั้นต่ำ ฿10</div>
           </div>
           <span class="method-badge" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">ไม่ต้องใช้สลิป</span>
         </button>
@@ -1656,8 +1656,12 @@ footer{
       <div class="result-box">
         <h2>ตรวจสอบไม่ผ่าน</h2>
         <div class="err-box" id="errMsg">—</div>
-        <button class="btn btn-primary" onclick="retrySlip()">ลองใหม่</button>
-        <button class="btn btn-ghost" style="margin-top:6px" onclick="cancelSession()">ยกเลิก</button>
+        <div id="errRetryHint" style="display:none;font-size:.78rem;color:var(--g3);line-height:1.55;margin:10px 0;padding:10px 12px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:10px;text-align:left">
+          หากคุณโอนเงินไปแล้วแต่สลิปอัปโหลดไม่ผ่าน — กรุณากด <strong>ลองส่งสลิปอีกครั้ง</strong> ด้านล่างนี้<br/>
+          อย่าเริ่มรายการใหม่ เพราะระบบจะไม่นับยอดโอนที่ผ่านมา
+        </div>
+        <button class="btn btn-primary" onclick="retrySlip()">ลองส่งสลิปอีกครั้ง</button>
+        <button class="btn btn-ghost" style="margin-top:6px" onclick="cancelSession()">ยกเลิกรายการ</button>
       </div>
     </div>
 
@@ -2453,6 +2457,7 @@ async function createSession(method){
   S.method=method;
   // TrueMoney voucher: go directly to input page (no session needed from backend)
   if(method==='truemoney'){
+    if(S.amount<10){showErr('TrueMoney ซองของขวัญต้องมียอดขั้นต่ำ ฿10 ขึ้นไป\nกรุณาเลือกยอดเงิน ฿10 หรือมากกว่า');return;}
     const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
     const cs=S.amount*SPB;
     S.session={id:`tmn_${Date.now()}`,portId:S.portId,amount:S.amount,chargeSeconds:cs};
@@ -2594,11 +2599,11 @@ async function submitSlip(method){
     const r = await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd});
     res = await r.json().catch(()=>null);
     if(!r.ok){
-      showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง');
+      showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง', true);
       return;
     }
   }catch(e){
-    showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ตรวจสอบสลิปได้ กรุณาลองใหม่อีกครั้ง');
+    showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ตรวจสอบสลิปได้ กรุณาลองใหม่อีกครั้ง', true);
     return;
   }
   if(res&&res.success){
@@ -2608,7 +2613,7 @@ async function submitSlip(method){
     showOK(cs,res.sender,res.isDev);
     return;
   }
-  showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน');
+  showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน', true);
 }
 
 function retrySlip(){Sound.click();if(!S.session){goPage('pg-amount');return;}goPage(S.method==='qr'?'pg-qr':'pg-transfer');}
@@ -2620,10 +2625,13 @@ function showOK(cs,sender,isDev){
   $('okTime').textContent=fmtTime(cs);$('okSender').textContent=sender?`ผู้โอน: ${sender}`:'';
   $('sheetTitle').textContent='สำเร็จ';goPage('pg-ok');
 }
-function showErr(msg){
+function showErr(msg, isSlipError){
   Sound.error();
   Voice.speak('ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้งนะคะ');
-  $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';goPage('pg-err');
+  $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';
+  const hint=$('errRetryHint');
+  if(hint) hint.style.display=(isSlipError && S.session)?'block':'none';
+  goPage('pg-err');
 }
 
 function startExpire(spanId,isoStr){

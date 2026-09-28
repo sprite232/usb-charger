@@ -673,6 +673,9 @@ app.post("/api/payment/truemoney-voucher", limiterPaymentCreate, async (req, res
   if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
     return res.status(400).json({ error: "ยอดเงินไม่ถูกต้อง" });
   }
+  if (expectedAmount < 10) {
+    return res.status(400).json({ error: "TrueMoney ซองของขวัญต้องมียอดขั้นต่ำ ฿10 ขึ้นไป" });
+  }
 
   // Extract hash (35 characters)
   const hashMatch = (voucherUrl.split("v=")[1] || voucherUrl).match(/[0-9A-Za-z]{35}/);
