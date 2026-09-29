@@ -1375,6 +1375,24 @@ tr:hover td{background: var(--card-hover);}
 
   <!-- ─── TAB: Testing ────────────────────────── -->
   <div id="tab-testing" class="content" style="display:none">
+    <!-- Server Connection Config -->
+    <div class="test-panel" style="border-left:4px solid var(--green);margin-bottom:1.5rem" id="serverBasePanel">
+      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--green);stroke-width:2;fill:none"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span>เชื่อมต่อเซิร์ฟเวอร์ตู้ชาร์จ</span>
+        <span id="serverConnBadge" style="font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(100,100,100,.2);color:var(--muted)">ยังไม่ได้ตั้งค่า</span>
+      </div>
+      <div class="test-panel-desc">ถ้าเปิดหน้าแอดมินผ่าน Firebase (web.app) ต้องกรอก URL/IP ของตู้ชาร์จเพื่อให้ระบบดึงข้อมูลการแจ้งปัญหาและควบคุมตู้ได้ เช่น <code style="font-family:monospace;background:var(--card2);padding:2px 6px;border-radius:4px">http://192.168.1.100:3000</code></div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+        <input type="url" id="serverBaseInput" class="form-input" style="flex:1;min-width:220px;font-family:monospace" placeholder="http://192.168.x.x:3000" />
+        <button class="btn-sm btn-primary" onclick="saveServerBase()" style="white-space:nowrap">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          บันทึกและเชื่อมต่อ
+        </button>
+        <button class="btn-sm" style="white-space:nowrap;background:var(--card2);border:1px solid var(--border);color:var(--muted)" onclick="clearServerBase()">ล้าง</button>
+      </div>
+      <div id="serverBaseMsg" style="display:none;margin-top:0.75rem;font-size:0.82rem"></div>
+    </div>
     <!-- Admin Whitelist Manager -->
     <div class="test-panel" style="border-left:4px solid var(--purple);margin-bottom:1.5rem">
       <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
@@ -1960,12 +1978,84 @@ function showUserInfo() {
 
 
 // ─── Admin API Helper ─────────────────────────
+// SERVER_BASE: IP/URL ของตู้ชาร์จ (เช่น http://192.168.1.100:3000)
+// ถ้าว่างจะใช้ same-origin (สำหรับกรณีเปิดหน้า admin บนตู้โดยตรง)
+let SERVER_BASE = localStorage.getItem('usb_charger_server_base') || '';
+
+function setServerBase(url) {
+  SERVER_BASE = (url || '').replace(/\/$/, '').trim();
+  if (SERVER_BASE) localStorage.setItem('usb_charger_server_base', SERVER_BASE);
+  else localStorage.removeItem('usb_charger_server_base');
+}
+
+function updateServerBadge() {
+  const badge = document.getElementById('serverConnBadge');
+  const input = document.getElementById('serverBaseInput');
+  if (badge) {
+    if (SERVER_BASE) {
+      badge.textContent = 'เชื่อมต่อ: ' + SERVER_BASE;
+      badge.style.background = 'rgba(34,197,94,.15)';
+      badge.style.color = 'var(--green)';
+    } else {
+      badge.textContent = 'ยังไม่ได้ตั้งค่า (ใช้ same-origin)';
+      badge.style.background = 'rgba(100,100,100,.2)';
+      badge.style.color = 'var(--muted)';
+    }
+  }
+  if (input && SERVER_BASE) input.value = SERVER_BASE;
+}
+
+async function saveServerBase() {
+  const input = document.getElementById('serverBaseInput');
+  const msg = document.getElementById('serverBaseMsg');
+  const url = (input?.value || '').trim().replace(/\/$/, '');
+  if (!url) { showServerBaseMsg('กรุณากรอก URL เซิร์ฟเวอร์', 'var(--red)'); return; }
+  if (!url.startsWith('http')) { showServerBaseMsg('URL ต้องขึ้นต้นด้วย http:// หรือ https://', 'var(--red)'); return; }
+  setServerBase(url);
+  updateServerBadge();
+  showServerBaseMsg('บันทึกแล้ว กำลังทดสอบการเชื่อมต่อ...', 'var(--cyan)');
+  // ทดสอบ ping
+  try {
+    const r = await fetch(SERVER_BASE + '/api/ping', { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      showServerBaseMsg('เชื่อมต่อสำเร็จ กำลังโหลดข้อมูล...', 'var(--green)');
+      syncAdminIssuesFromBackend();
+    } else {
+      showServerBaseMsg(`ตอบกลับแล้วแต่ status ${r.status} — ตรวจสอบ URL อีกครั้ง`, 'var(--yellow)');
+    }
+  } catch(e) {
+    showServerBaseMsg('เชื่อมต่อไม่ได้ — ตรวจสอบ IP และ Port ให้ถูกต้อง', 'var(--red)');
+  }
+}
+
+function clearServerBase() {
+  setServerBase('');
+  const input = document.getElementById('serverBaseInput');
+  if (input) input.value = '';
+  updateServerBadge();
+  showServerBaseMsg('ล้างแล้ว ระบบจะใช้ same-origin (เปิดตรงบนตู้)', 'var(--muted)');
+}
+
+function showServerBaseMsg(text, color) {
+  const el = document.getElementById('serverBaseMsg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color || 'var(--muted)';
+  el.textContent = text;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
 async function adminApi(method, path, body) {
   try {
+    // Refresh Firebase token ถ้ามี user (expire ทุก 1 ชั่วโมง)
+    if (currentUser) {
+      try { token = await currentUser.getIdToken(false); } catch(_) {}
+    }
+    const fullUrl = SERVER_BASE + path;
     const opt = { method, headers: authHdr() };
     if (body) opt.body = JSON.stringify(body);
-    const res = await fetch(path, opt);
+    const res = await fetch(fullUrl, opt);
     if (res.status === 401) { logout(); return {}; }
     return await res.json();
   } catch(e) {
@@ -2103,6 +2193,7 @@ async function tryLoadDashboard() {
   }
 
   renderAll(data);
+  syncAdminIssuesFromBackend(); // ดึง issues จาก backend ทันทีตอน login
   if (!refreshInterval) refreshInterval = setInterval(autoRefresh, 3000);
 }
 
@@ -2118,6 +2209,12 @@ async function autoRefresh() {
     dashData.ports = loadAdminPersistentPorts();
     dashData.summary.activeCount = dashData.ports.filter(p => p.status === 'in-use').length;
     renderAll(dashData);
+  }
+  // sync issues ทุก 30 วิ (autoRefresh ทำงานทุก 3 วิ = ทุก 10 รอบ)
+  if (!autoRefresh._issueCount) autoRefresh._issueCount = 0;
+  autoRefresh._issueCount++;
+  if (autoRefresh._issueCount % 10 === 0) {
+    syncAdminIssuesFromBackend();
   }
 }
 
@@ -2948,6 +3045,7 @@ function switchTab(name) {
   } else if (name === 'testing') {
     loadSupportSettings();
     loadWhitelistUI();
+    updateServerBadge();
     const ports = (dashData && dashData.ports) ? dashData.ports : loadAdminPersistentPorts();
     renderTestingTab(ports);
   }
