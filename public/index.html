@@ -21,7 +21,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import{initializeApp}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-  import{getFirestore,doc,onSnapshot}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+  import{getFirestore,doc,collection,setDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
   window._fbApp=initializeApp({
     apiKey:"AIzaSyB_vTfWp4iygpGpqPWZzQmQzLM6zGdBtFI",
     authDomain:"usb-charger-project.firebaseapp.com",
@@ -41,6 +41,21 @@
     }
   },err=>{
     console.warn('[Firestore listener notice]',err.message);
+  });
+  // real-time listener สำหรับรายการแจ้งปัญหา (Issues)
+  window._saveIssueToCloud=async(issue)=>{
+    try{await setDoc(doc(fdb,'issues',issue.id),issue);}catch(e){console.warn('[Firestore issue save]',e.message);}
+  };
+  onSnapshot(collection(fdb,'issues'),snap=>{
+    const list=[];
+    snap.forEach(d=>{const x=d.data();if(x&&x.id&&!['ISSUE-1001','ISSUE-1002','ISSUE-1003'].includes(x.id))list.push(x);});
+    list.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    window._fsIssues=list;
+    try{localStorage.setItem('usb_charger_issues',JSON.stringify(list));}catch(e){}
+    if(typeof window.updateSupportContactInfo==='function')window.updateSupportContactInfo();
+    if(typeof window.renderPublicQA==='function')window.renderPublicQA();
+  },err=>{
+    console.warn('[Firestore issues notice]',err.message);
   });
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -1225,7 +1240,7 @@ footer{
         </div>
         <div class="form-field">
           <label class="form-lbl" for="issueAmount">จำนวนเงิน (ถ้ามี)</label>
-          <input type="number" id="issueAmount" class="form-control" placeholder="บาท เช่น 10, 20" min="0" step="1" inputmode="numeric" onkeydown="if(event.key==='.'||event.key===',')event.preventDefault()" oninput="this.value=Math.floor(Number(this.value))||''"/>
+          <input type="text" id="issueAmount" class="form-control" placeholder="บาท เช่น 10, 20" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
         </div>
       </div>
 
@@ -1365,7 +1380,7 @@ footer{
       </div>
       <div class="custom-row" id="customRow">
         <label>฿</label>
-        <input type="number" id="customIn" min="1" step="1" inputmode="numeric" placeholder="ระบุจำนวนบาท" onkeydown="if(event.key==='.'||event.key===',')event.preventDefault()" oninput="onCustomIn()"/>
+        <input type="text" id="customIn" inputmode="numeric" pattern="[0-9]*" placeholder="ระบุจำนวนบาท" oninput="onCustomIn()"/>
         <span class="cp" id="customPrev"></span>
       </div>
       <div id="customHint" style="font-size:.72rem;color:var(--g3);margin-top:6px;display:none"></div>
@@ -2113,7 +2128,7 @@ function updateSupportContactInfo() {
 
   // Update public QA badge count
   const allIssues = getStoredIssues();
-  const publicCount = allIssues.filter(x => x.reply && x.reply.isPublic).length;
+  const publicCount = allIssues.filter(x => x.reply && x.reply.message).length;
   const badge = $('qaPublicBadge');
   if (badge) badge.textContent = String(publicCount);
 }
@@ -2405,10 +2420,9 @@ function focusCustom(){
   $('dcCustom').classList.add('sel');$('customRow').style.display='flex';$('customIn').focus();
 }
 function onCustomIn(){
-  let raw=Number($('customIn').value);
-  // บังคับจำนวนเต็มเท่านั้น — ตัดทศนิยมทิ้ง
-  const v=Math.floor(raw);
-  if(raw!==v)$('customIn').value=v; // เขียนกลับทันที
+  const clean=String($('customIn').value).replace(/[^0-9]/g,'');
+  if($('customIn').value!==clean)$('customIn').value=clean;
+  const v=parseInt(clean,10)||0;
   const hint=$('customHint');
   if(v>=1){
     S.amount=v;$('customPrev').textContent='= '+fmtTime(v*SPB);$('customMinPreview').textContent=fmtTime(v*SPB);$('btnNext').disabled=false;
@@ -2709,8 +2723,8 @@ function onIssueImageSelected(ev) {
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      // Resize to max 1024px to keep localStorage safe and fast
-      const maxDim = 1024;
+      // Resize to max 720px to keep Firestore & localStorage fast and under limits
+      const maxDim = 720;
       let w = img.width, h = img.height;
       if (w > maxDim || h > maxDim) {
         if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
@@ -2720,7 +2734,7 @@ function onIssueImageSelected(ev) {
       cvs.width = w; cvs.height = h;
       const ctx = cvs.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      currentIssueBase64Image = cvs.toDataURL('image/jpeg', 0.8);
+      currentIssueBase64Image = cvs.toDataURL('image/jpeg', 0.72);
 
       $('issueImgPreview').src = currentIssueBase64Image;
       $('issueImgPreviewBox').style.display = 'block';
@@ -2769,7 +2783,7 @@ async function submitIssue() {
   const portEl = $('issuePort');
   const portId = portEl.value;
   const portLabel = portEl.options[portEl.selectedIndex].text;
-  const amount = Number($('issueAmount').value) || 0;
+  const amount = parseInt(String($('issueAmount').value).replace(/[^0-9]/g, ''), 10) || 0;
 
   const ticketId = `ISSUE-${Date.now().toString().slice(-4)}`;
   const newIssue = {
@@ -2791,6 +2805,11 @@ async function submitIssue() {
   const all = getStoredIssues();
   all.unshift(newIssue);
   saveStoredIssues(all);
+
+  // Sync to Firestore Cloud for instant real-time notification in Admin across all devices
+  if (typeof window._saveIssueToCloud === 'function') {
+    window._saveIssueToCloud(newIssue);
+  }
 
   // Send to backend API if running
   apiFetch('POST', '/api/issues', newIssue).catch(() => null);
@@ -2834,7 +2853,7 @@ function renderPublicQA() {
   if (!container) return;
 
   const issues = getStoredIssues();
-  const publicIssues = issues.filter(x => x.reply && x.reply.isPublic);
+  const publicIssues = issues.filter(x => x.reply && x.reply.message);
   const filtered = currentQAFilter === 'all' ? publicIssues : publicIssues.filter(x => x.category === currentQAFilter);
 
   if (filtered.length === 0) {

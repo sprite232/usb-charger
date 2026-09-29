@@ -27,6 +27,12 @@ service cloud.firestore {
       allow list, write: if isAdmin();
     }
 
+    // Issues & Support Tickets — customers can create and read status; authorized admins can update/delete
+    match /issues/{issueId} {
+      allow read, create: if true;
+      allow update, delete: if isAdmin();
+    }
+
     // Default deny all other paths
     match /{document=**} {
       allow read, write: if false;
