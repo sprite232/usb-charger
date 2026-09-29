@@ -1599,19 +1599,7 @@ tr:hover td{background: var(--card-hover);}
             <textarea id="admReplyMessage" class="form-input" rows="3" placeholder="พิมพ์ข้อความตอบกลับหรือคำชี้แจง เช่น คืนเงินแล้ว หรือเปิดชดเชยเวลาให้เรียบร้อยแล้ว"></textarea>
           </div>
 
-          <!-- Public Toggle -->
-          <div style="background:var(--card2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-            <div>
-              <strong style="font-size:.85rem;display:flex;align-items:center;gap:6px">
-                <i class="pic-icon ic-info" style="font-size:14px;color:var(--cyan)"></i>
-                <span>แสดงเป็นสาธารณะ (Public Q&A)</span>
-              </strong>
-              <small style="font-size:.72rem;color:var(--muted)">อนุญาตให้ผู้ใช้คนอื่นเห็นปัญหานี้และคำตอบของแอดมินบนหน้าเว็บหลัก</small>
-            </div>
-            <label style="display:flex;align-items:center;cursor:pointer">
-              <input type="checkbox" id="admReplyIsPublic" style="width:20px;height:20px;accent-color:var(--cyan);cursor:pointer" />
-            </label>
-          </div>
+
 
           <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap">
             <button class="btn-sm btn-primary" onclick="saveAdminReply()" style="flex:1;padding:.65rem">บันทึกคำตอบและสถานะ</button>
@@ -1658,7 +1646,7 @@ tr:hover td{background: var(--card-hover);}
         </div>
         <div class="slip-info-row">
           <span class="lbl">จำนวนเงิน:</span>
-          <span class="val" style="color:var(--green);font-size:.95rem" id="modalAmount">฿0.00</span>
+          <span class="val" style="color:var(--green);font-size:.95rem" id="modalAmount">฿0</span>
         </div>
         <div class="slip-info-row">
           <span class="lbl">พอร์ตที่เลือก:</span>
@@ -1677,6 +1665,34 @@ tr:hover td{background: var(--card-hover);}
 </div>
 
 <script>
+
+// ─── Toast Notification (แทน alert()) ──────────
+function adminToast(msg, type) {
+  // type: 'success' | 'error' | 'info' | 'warn'
+  const colors = { success:'var(--green)', error:'var(--red)', warn:'var(--yellow)', info:'var(--cyan)' };
+  const icons  = { success:'✓', error:'✕', warn:'!', info:'i' };
+  const c = colors[type] || colors.info;
+  const ic = icons[type]  || icons.info;
+
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed;bottom:24px;right:24px;z-index:99999;
+    display:flex;align-items:center;gap:12px;
+    background:var(--card);border:1px solid ${c};border-left:4px solid ${c};
+    border-radius:12px;padding:14px 18px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    font-size:.88rem;color:var(--text);max-width:360px;
+    animation:slideUpFade .3s cubic-bezier(.16,1,.3,1) both;
+    transition:opacity .3s;
+  `;
+  t.innerHTML = `
+    <span style="width:22px;height:22px;border-radius:50%;background:${c};color:#000;font-weight:900;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
+    <span style="flex:1;line-height:1.45">${msg}</span>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0;line-height:1">×</button>
+  `;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),320); }, 4000);
+}
 
 // ─── Firebase Init ─────────────────────────────
 const firebaseConfig = {
@@ -1972,7 +1988,7 @@ function showWhitelistMsg(text, color) {
 
 function showUserInfo() {
   if (currentUser) {
-    alert(`ผู้ดูแลระบบ: ${currentUser.displayName || currentUser.email}\nอีเมล: ${currentUser.email}`);
+    adminToast(`ผู้ดูแล: <strong>${currentUser.displayName || currentUser.email}</strong><br/><span style="font-size:.78rem;opacity:.7">${currentUser.email}</span>`, 'info');
   }
 }
 
@@ -2278,8 +2294,8 @@ function renderAll(d) {
     }
   }
 
-  document.getElementById('stRevenue').textContent = `฿${totalRev.toFixed(2)}`;
-  document.getElementById('stToday').textContent   = `฿${todayRev.toFixed(2)}`;
+  document.getElementById('stRevenue').textContent = `฿${Math.round(totalRev)}`;
+  document.getElementById('stToday').textContent   = `฿${Math.round(todayRev)}`;
   document.getElementById('stTodayVisits').textContent = `${todayVisits} ครั้ง`;
   document.getElementById('stTotalVisits').textContent = `${visits.length} ครั้ง`;
   document.getElementById('stCount').textContent   = txs.length;
@@ -2299,11 +2315,11 @@ function renderAll(d) {
   const cashAmt = txs.filter(t => t.method === 'cash').reduce((sum, t) => sum + (t.amount || 0), 0);
   const convRate = visits.length > 0 ? Math.min(100, Math.round((txs.length / visits.length) * 100)) : 0;
 
-  document.getElementById('stAvgTx').textContent = `฿${avg.toFixed(2)}`;
+  document.getElementById('stAvgTx').textContent = `฿${Math.round(avg)}`;
   document.getElementById('stTotalHours').textContent = `${totalHours} ชม.`;
   document.getElementById('stConversion').textContent = `${convRate}%`;
-  document.getElementById('stOnlineAmt').textContent = `฿${onlineAmt.toFixed(2)}`;
-  document.getElementById('stCashAmt').textContent = `฿${cashAmt.toFixed(2)}`;
+  document.getElementById('stOnlineAmt').textContent = `฿${Math.round(onlineAmt)}`;
+  document.getElementById('stCashAmt').textContent = `฿${Math.round(cashAmt)}`;
   document.getElementById('stVisitsCount').textContent = `${visits.length} ครั้ง`;
 
   renderPortGrid(d.ports);
@@ -2471,7 +2487,7 @@ function txRowHtml(t, withActions=false) {
   return `<tr>
     <td><strong style="font-family:'JetBrains Mono',monospace">${t.id}</strong></td>
     <td><strong style="font-family:'JetBrains Mono',sans-serif">${t.portId}</strong></td>
-    <td><strong style="color:var(--green);font-family:'JetBrains Mono',monospace">฿${Number(t.amount||0).toFixed(2)}</strong></td>
+    <td><strong style="color:var(--green);font-family:'JetBrains Mono',monospace">฿${Number(t.amount||0)}</strong></td>
     <td>${mBadge}</td>
     <td>${stBadge}</td>
     <td>${escapeHtml(sender)}</td>
@@ -2501,7 +2517,7 @@ function viewTxDetail(id) {
   document.getElementById('modalSender').textContent = t.verification?.sender || (t.method === 'cash' ? 'เงินสดที่ตู้' : 'ผู้ใช้งาน');
   document.getElementById('modalSenderBank').textContent = t.verification?.senderBank || (t.method === 'cash' ? 'กล่องหยอดเงิน' : 'พร้อมเพย์');
   document.getElementById('modalReceiver').textContent = t.verification?.receiver || (dashData?.config?.bankAccountName ? `${dashData.config.bankAccountName} (PROMPTPAY)` : 'ด.ช. ศุภกฤต ส. (PROMPTPAY)');
-  document.getElementById('modalAmount').textContent = `฿${Number(t.amount || 0).toFixed(2)}`;
+  document.getElementById('modalAmount').textContent = `฿${Number(t.amount || 0)}`;
   document.getElementById('modalPort').textContent = t.portId || '—';
   
   document.getElementById('slipModal').style.display = 'flex';
@@ -2518,7 +2534,7 @@ function closeSlipModal(e) {
 // ─── Export CSV (Excel) ────────────────────────
 function exportTransactionsCSV() {
   if (!allTransactions.length) {
-    alert('ไม่มีข้อมูลรายการชำระเงินจริงให้ส่งออก');
+    adminToast('ไม่มีข้อมูลรายการชำระเงินจริงให้ส่งออก', 'warn');
     return;
   }
   let csv = '\uFEFFID,พอร์ต,ยอดเงิน (บาท),วิธีชำระ,สถานะ,ผู้โอน / รายละเอียด,เวลา\n';
@@ -3324,14 +3340,13 @@ async function saveAdminReply() {
 
   const status = document.getElementById('admReplyStatus').value;
   const message = document.getElementById('admReplyMessage').value.trim();
-  const isPublic = document.getElementById('admReplyIsPublic').checked;
 
   issue.status = status;
   issue.reply = {
     adminName: 'ผู้ดูแลระบบ (Admin)',
     message: message || (status === 'resolved' ? 'ผู้ดูแลได้ตรวจสอบและดำเนินการแก้ไขเรียบร้อยแล้วครับ' : 'กำลังดำเนินการตรวจสอบครับ'),
     repliedAt: new Date().toISOString(),
-    isPublic: isPublic
+    isPublic: false
   };
 
   saveAdminIssues();
@@ -3374,7 +3389,7 @@ async function deleteAdminIssue(id) {
 async function clearAllAdminIssues() {
   loadAdminIssues();
   if (currentAdminIssues.length === 0) {
-    alert('ไม่มีรายการแจ้งปัญหาให้ลบ');
+    adminToast('ไม่มีรายการแจ้งปัญหาให้ลบ', 'info');
     return;
   }
   if (!confirm(`ต้องการลบรายการแจ้งปัญหาทั้งหมด (${currentAdminIssues.length} รายการ)? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
@@ -3452,7 +3467,7 @@ async function saveSupportSettings() {
   } catch(e) {}
 
   setActionNotice('บันทึกข้อมูลช่องทางติดต่อ & TrueMoney เรียบร้อย');
-  alert('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney รับซองอั่งเปาเรียบร้อยแล้วค่ะ');
+  adminToast('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney เรียบร้อยแล้ว', 'success');
 }
 
 // Initial load for admin issues badge

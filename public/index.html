@@ -1225,7 +1225,7 @@ footer{
         </div>
         <div class="form-field">
           <label class="form-lbl" for="issueAmount">จำนวนเงิน (ถ้ามี)</label>
-          <input type="number" id="issueAmount" class="form-control" placeholder="บาท เช่น 10, 20" min="0"/>
+          <input type="number" id="issueAmount" class="form-control" placeholder="บาท เช่น 10, 20" min="0" step="1" inputmode="numeric" onkeydown="if(event.key==='.'||event.key===',')event.preventDefault()" oninput="this.value=Math.floor(Number(this.value))||''"/>
         </div>
       </div>
 
