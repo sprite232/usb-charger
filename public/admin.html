@@ -3665,7 +3665,8 @@ function startRealtimeIssuesListener() {
           _lastKnownIssueIds.delete(removedId);
         }
       });
-      // After processing all changes, re-render and update badge
+      // After processing all changes, persist, update badge and re-render
+      saveAdminIssues();
       updateAdminIssuesBadge();
       renderAdminIssues(true);
       // Also notify for genuinely new pending issues

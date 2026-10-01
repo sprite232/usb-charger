@@ -1039,6 +1039,32 @@ footer{
 .tmn-steps{background:var(--off);border:1px solid var(--g2);border-radius:12px;padding:12px 14px;
   margin-bottom:14px;font-size:.78rem;color:var(--g3);line-height:1.75;}
 .tmn-steps strong{color:var(--dark);font-weight:700;}
+
+/* Kiosk Toast Notification */
+@keyframes toastPop {
+  from { opacity: 0; transform: translate(-50%, -15px) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+.kiosk-toast-item {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  font-size: .85rem;
+  max-width: 90vw;
+  width: max-content;
+  font-weight: 500;
+  animation: toastPop 0.3s cubic-bezier(0.16,1,0.3,1) both;
+}
 </style>
 </head>
 <body>
@@ -2013,6 +2039,33 @@ function fmtTime(s){
 }
 function denomImg(a){return ({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);}
 
+function kioskToast(msg, type='info'){
+  const colors = { success:'#10b981', error:'#ef4444', warn:'#f59e0b', info:'#3b82f6' };
+  const icons  = { success:'✓', error:'✕', warn:'!', info:'i' };
+  const c = colors[type] || colors.info;
+  const ic = icons[type] || icons.info;
+
+  const old = document.querySelector('.kiosk-toast-item');
+  if (old) old.remove();
+
+  const t = document.createElement('div');
+  t.className = 'kiosk-toast-item';
+  t.style.border = `1.5px solid ${c}`;
+  t.style.borderLeft = `5px solid ${c}`;
+  t.innerHTML = `
+    <span style="width:20px;height:20px;border-radius:50%;background:${c};color:#000;font-weight:900;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
+    <span style="line-height:1.45;flex:1">${String(msg).replace(/\n/g, '<br/>')}</span>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1.1rem;padding:0;line-height:1;margin-left:4px">×</button>
+  `;
+  document.body.appendChild(t);
+  setTimeout(() => {
+    t.style.transition = 'opacity .3s, transform .3s';
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, -10px)';
+    setTimeout(() => t.remove(), 320);
+  }, 4000);
+}
+
 const BASE=window.API_BASE||'';
 const apiFetch=(m,url,b)=>{
   const o={method:m,headers:{'Content-Type':'application/json'}};
@@ -2457,14 +2510,14 @@ function goMethod(){
   const btnC=$('btnMethodCoin')||$('btnMethodCash'),subC=$('coinMethodSub')||$('cashMethodSub'),badgeC=$('coinMethodBadge')||$('cashMethodBadge'),warn=$('coinOnlyWarn')||$('cashOnlyWarn');
   if(btnC){
     if(isCashOk){
-      btnC.style.opacity='1';btnC.style.cursor='pointer';
+      btnC.style.opacity='1';btnC.style.cursor='pointer';btnC.style.pointerEvents='';
       if(subC){subC.textContent='หยอดเหรียญ 5 หรือ 10 บาท';subC.style.color='';}
-      if(badgeC){badgeC.textContent='รับเหรียญ';badgeC.className='method-badge';}
+      if(badgeC){badgeC.textContent='รับเหรียญ';badgeC.className='method-badge';badgeC.style.cssText='';}
       if(warn)warn.style.display='none';
     } else {
-      btnC.style.opacity='.5';
+      btnC.style.opacity='.45';btnC.style.cursor='not-allowed';btnC.style.pointerEvents='none';
       if(subC){subC.textContent=`ยอด ฿${S.amount} มีเศษ (ตู้รับเฉพาะเหรียญ 5฿, 10฿)`;subC.style.color='var(--amber)';}
-      if(badgeC){badgeC.textContent='เงินโอนเท่านั้น';badgeC.className='method-badge';}
+      if(badgeC){badgeC.textContent='เงินโอนเท่านั้น';badgeC.className='method-badge';badgeC.style.cssText='color:var(--amber);background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.35)';}
       if(warn)warn.style.display='block';
     }
   }
@@ -2487,7 +2540,11 @@ function goMethod(){
 }
 
 function handleCoinMethodClick(){
-  if(S.amount<5||S.amount%5!==0){showErr(`ยอด ฿${S.amount} ไม่รองรับการหยอดเหรียญ\nตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินแทนค่ะ`);return;}
+  if(S.amount<5||S.amount%5!==0){
+    Sound.error();
+    kioskToast(`ยอด ฿${S.amount} ไม่รองรับการหยอดเหรียญ\nตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินแทนค่ะ`, 'warn');
+    return;
+  }
   createSession('cash');
 }
 function handleCashMethodClick(){
@@ -2528,8 +2585,16 @@ async function createSession(method){
 
 async function submitTruemoneyVoucher(){
   const url=($('tmnVoucherUrl').value||'').trim();
-  if(!url){showErr('กรุณาวางลิงก์ซองของขวัญก่อน');return;}
-  if(!url.includes('gift.truemoney.com')){showErr('ลิงก์ไม่ถูกต้อง — ต้องเป็นลิงก์จาก gift.truemoney.com');return;}
+  if(!url){
+    Sound.error();
+    kioskToast('กรุณาวางลิงก์ซองของขวัญ TrueMoney ก่อนกดยืนยันค่ะ', 'warn');
+    return;
+  }
+  if(!url.includes('gift.truemoney.com')){
+    Sound.error();
+    kioskToast('ลิงก์ไม่ถูกต้อง — ต้องเป็นลิงก์จาก gift.truemoney.com เท่านั้นค่ะ', 'warn');
+    return;
+  }
   Sound.click();
   $('btnTMN').disabled=true;
   $('btnTMN').textContent='กำลังตรวจสอบ…';
@@ -2630,7 +2695,11 @@ setupDrop('dropTR','fTR','prevTR','btnTR');
 
 async function submitSlip(method){
   const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
-  if(!file){showErr('กรุณาเลือกรูปสลิปก่อนส่งค่ะ');return;}
+  if(!file){
+    Sound.error();
+    kioskToast('กรุณาเลือกหรือถ่ายรูปสลิปก่อนส่งตรวจสอบค่ะ', 'warn');
+    return;
+  }
   stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่านระบบความปลอดภัย…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   let res=null;
@@ -2669,7 +2738,11 @@ function showOK(cs,sender,isDev){
 }
 function showErr(msg, isSlipError){
   Sound.error();
-  Voice.speak('ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้งนะคะ');
+  if(isSlipError){
+    Voice.speak('ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้งนะคะ');
+  } else {
+    Voice.speak(msg || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งค่ะ');
+  }
   $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';
   const hint=$('errRetryHint');
   if(hint) hint.style.display=(isSlipError && S.session)?'block':'none';

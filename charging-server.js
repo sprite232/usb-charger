@@ -1083,18 +1083,25 @@ app.post("/api/issues", limiterIssues, (req, res) => {
   }
   const issues = loadIssuesFile();
 
-  // Validate and sanitize imageUrl (ป้องกัน Stored XSS)
+  // Validate and sanitize imageUrl (ป้องกัน Stored XSS และรองรับ Base64 รูปภาพจากมือถือ)
   let safeImageUrl = "";
   if (issue.imageUrl && typeof issue.imageUrl === "string") {
     const trimmed = issue.imageUrl.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:image/")) {
+    if (trimmed.startsWith("data:image/")) {
+      // อนุญาต base64 data URL ได้สูงสุด 1.5MB
+      if (trimmed.length <= 1.5 * 1024 * 1024) safeImageUrl = trimmed;
+    } else if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
       safeImageUrl = trimmed.slice(0, 2048);
     }
   }
 
+  const issueId = (typeof issue.id === "string" && /^ISSUE-\d{4,10}$/.test(issue.id))
+    ? issue.id
+    : `ISSUE-${Date.now().toString().slice(-4)}`;
+
   const newIssue = {
-    id: `ISSUE-${Date.now().toString().slice(-4)}`,
-    createdAt: new Date().toISOString(),
+    id: issueId,
+    createdAt: issue.createdAt || new Date().toISOString(),
     category: String(issue.category || "other").slice(0, 30),
     categoryLabel: String(issue.categoryLabel || "ทั่วไป").slice(0, 50),
     portId: String(issue.portId || "all").slice(0, 20),
