@@ -863,7 +863,8 @@ tr:hover td{background: var(--card-hover);}
 
 @media(max-width: 560px){
   .topbar{padding: 0.75rem 1rem;}
-  .session-badge, .btn-logout{display: none;}
+  .session-badge{display: none;}
+  .btn-logout{font-size:.72rem;padding:.35rem .65rem;}
   .tabs{padding: 0.5rem 1rem;}
   .tab{padding: 0.5rem 0.85rem; font-size: 0.82rem;}
   .content{padding: 1.25rem 1rem;}
@@ -3646,18 +3647,39 @@ function startRealtimeIssuesListener() {
   // 2. Firestore Real-Time Cloud Listener (cross-device: customer phone -> admin iPad/mobile/PC)
   if (typeof fbDb !== 'undefined' && fbDb) {
     fbDb.collection('issues').onSnapshot(snap => {
-      const cloudList = [];
-      snap.forEach(doc => {
-        const d = doc.data();
-        if (d && d.id) cloudList.push(d);
+      // Use docChanges() so deletes propagate across all devices in real-time
+      snap.docChanges().forEach(change => {
+        const d = change.doc.data();
+        if (change.type === 'added' || change.type === 'modified') {
+          if (d && d.id) {
+            const idx = currentAdminIssues.findIndex(x => x.id === d.id);
+            if (idx >= 0) {
+              currentAdminIssues[idx] = d;
+            } else {
+              currentAdminIssues.push(d);
+            }
+          }
+        } else if (change.type === 'removed') {
+          const removedId = change.doc.id;
+          currentAdminIssues = currentAdminIssues.filter(x => x.id !== removedId);
+          _lastKnownIssueIds.delete(removedId);
+        }
       });
-      // Merge with any local issues not yet in cloud
-      const map = new Map();
-      currentAdminIssues.forEach(x => map.set(x.id, x));
-      cloudList.forEach(x => map.set(x.id, x));
-      // If cloud had deletions while we are synced, prefer cloud state if snap was not empty or after sync
-      const finalArr = cloudList.length > 0 ? Array.from(map.values()) : cloudList;
-      ingestIncomingIssues(finalArr, false);
+      // After processing all changes, re-render and update badge
+      updateAdminIssuesBadge();
+      renderAdminIssues(true);
+      // Also notify for genuinely new pending issues
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          if (d && d.id && d.status === 'pending' && !_lastKnownIssueIds.has(d.id) && _issuesInitialized) {
+            _lastKnownIssueIds.add(d.id);
+            showNativeIssueBanner(d);
+          } else if (d && d.id) {
+            _lastKnownIssueIds.add(d.id);
+          }
+        }
+      });
     }, err => {
       console.warn('[Firestore issues listener]', err.message);
     });

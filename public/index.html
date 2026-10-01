@@ -1180,8 +1180,8 @@ footer{
           <i class="pic-icon ic-message-square" style="color:var(--blue)"></i>
         </span>
         <div class="btn-text-group">
-          <strong>กระดานปัญหาที่ตอบแล้ว (Public Q&A)</strong>
-          <small>ดูคำตอบจากแอดมิน <span id="qaPublicBadge" class="qa-badge">0</span></small>
+          <strong>ติดตามสถานะแจ้งปัญหา &amp; คำตอบจากแอดมิน</strong>
+          <small>ดูสถานะ / คำตอบจากทีมงาน <span id="qaPublicBadge" class="qa-badge">0</span></small>
         </div>
       </button>
     </div>
@@ -1298,23 +1298,31 @@ footer{
 </div>
 </div>
 
-<!-- MODAL: PUBLIC Q&A -->
+<!-- MODAL: PUBLIC Q&A / STATUS TRACKER -->
 <div class="overlay" id="publicQAModalOverlay">
 <div class="sheet" id="sheetPublicQA">
   <div class="sheet-drag"></div>
   <div class="sheet-top">
     <h2>
       <i class="pic-icon ic-message-square" style="color:var(--blue);font-size:20px;margin-right:6px"></i>
-      กระดานปัญหาที่ตอบแล้ว (Public Q&A)
+      ติดตามสถานะแจ้งปัญหา
     </h2>
     <button class="sheet-close" onclick="closePublicQAModal()" aria-label="ปิด">
       <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none;display:block"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
   </div>
   <div class="sheet-body">
-    <p style="font-size:.78rem;color:var(--g3);margin-bottom:14px">
-      รวมข้อสงสัยและปัญหาที่ได้รับการชี้แจงและแก้ไขแล้วจากผู้ดูแล เพื่อเป็นประโยชน์แก่ผู้ใช้งานทุกท่าน
+    <p style="font-size:.78rem;color:var(--g3);margin-bottom:10px">
+      ดูสถานะและคำตอบจากทีมงาน ค้นหาด้วยรหัสการแจ้ง ISSUE-XXXX
     </p>
+
+    <!-- Search box -->
+    <div style="position:relative;margin-bottom:12px">
+      <svg viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--g3);stroke-width:2;fill:none;pointer-events:none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="qaSearchInput" class="form-control" placeholder="ค้นหา ISSUE-XXXX หรือคำค้นหา..." inputmode="search"
+        style="padding-left:34px;font-size:.82rem"
+        oninput="onQASearch(this.value)" />
+    </div>
 
     <!-- Category Filters -->
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;scrollbar-width:none">
@@ -2126,9 +2134,10 @@ function updateSupportContactInfo() {
   const locTxt = $('contactLocText');
   if (locTxt) locTxt.textContent = loc;
 
-  // Update public QA badge count
+  // Update public QA badge count (all issues, excluding legacy mocks)
   const allIssues = getStoredIssues();
-  const publicCount = allIssues.filter(x => x.reply && x.reply.message).length;
+  const legacyIds = ['ISSUE-1001', 'ISSUE-1002', 'ISSUE-1003'];
+  const publicCount = allIssues.filter(x => !legacyIds.includes(x.id)).length;
   const badge = $('qaPublicBadge');
   if (badge) badge.textContent = String(publicCount);
 }
@@ -2478,7 +2487,7 @@ function goMethod(){
 }
 
 function handleCoinMethodClick(){
-  if(S.amount<5||S.amount%5!==0){alert(`ยอด ฿${S.amount} ไม่สามารถหยอดด้วยเหรียญได้ (ตู้รับเฉพาะเหรียญ 5฿ และ 10฿)\n\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินค่ะ`);return;}
+  if(S.amount<5||S.amount%5!==0){showErr(`ยอด ฿${S.amount} ไม่รองรับการหยอดเหรียญ\nตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินแทนค่ะ`);return;}
   createSession('cash');
 }
 function handleCashMethodClick(){
@@ -2621,7 +2630,7 @@ setupDrop('dropTR','fTR','prevTR','btnTR');
 
 async function submitSlip(method){
   const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
-  if(!file){alert('กรุณาเลือกรูปสลิป');return;}
+  if(!file){showErr('กรุณาเลือกรูปสลิปก่อนส่งค่ะ');return;}
   stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่านระบบความปลอดภัย…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   let res=null;
@@ -2823,14 +2832,18 @@ async function submitIssue() {
   updateSupportContactInfo();
 }
 
-/* ── PUBLIC Q&A MODAL ── */
+/* ── PUBLIC Q&A / STATUS TRACKER MODAL ── */
 let currentQAFilter = 'all';
+let currentQASearch = '';
 
 function openPublicQAModal() {
   Sound.click();
   currentQAFilter = 'all';
+  currentQASearch = '';
   document.querySelectorAll('#sheetPublicQA .cat-chip').forEach(c => c.classList.remove('active'));
   $('qaFilterAll')?.classList.add('active');
+  const si = $('qaSearchInput');
+  if (si) si.value = '';
   renderPublicQA();
   $('publicQAModalOverlay').classList.add('open');
 }
@@ -2848,51 +2861,106 @@ function filterQA(cat, btn) {
   renderPublicQA();
 }
 
+function onQASearch(val) {
+  currentQASearch = (val || '').trim().toLowerCase();
+  renderPublicQA();
+}
+
+function censorContact(str) {
+  if (!str) return '—';
+  // Censor phone numbers: keep first 3 and last 2 digits, mask middle
+  return String(str)
+    .replace(/(\d{3})(\d{3,5})(\d{2})/, (_, a, b, c) => a + b.replace(/\d/g, 'x') + c)
+    .replace(/([\w.+-]{2})([\w.+-]{2,})(@[\w.-]+)/, (_, a, b, c) => a + b.replace(/[\w.+-]/g, 'x') + c);
+}
+
 function renderPublicQA() {
   const container = $('qaListContainer');
   if (!container) return;
 
-  const issues = getStoredIssues();
-  const publicIssues = issues.filter(x => x.reply && x.reply.message);
-  const filtered = currentQAFilter === 'all' ? publicIssues : publicIssues.filter(x => x.category === currentQAFilter);
+  const legacyIds = ['ISSUE-1001', 'ISSUE-1002', 'ISSUE-1003'];
+  let issues = getStoredIssues().filter(x => !legacyIds.includes(x.id));
 
-  if (filtered.length === 0) {
+  // Category filter
+  if (currentQAFilter !== 'all') {
+    issues = issues.filter(x => x.category === currentQAFilter);
+  }
+
+  // Search filter
+  if (currentQASearch) {
+    const q = currentQASearch;
+    issues = issues.filter(x =>
+      (x.id || '').toLowerCase().includes(q) ||
+      (x.description || '').toLowerCase().includes(q) ||
+      (x.categoryLabel || x.category || '').toLowerCase().includes(q)
+    );
+  }
+
+  // Sort: pending first, then in_progress, then resolved; newest first within each group
+  const statusOrder = { pending: 0, in_progress: 1, resolved: 2 };
+  issues.sort((a, b) => {
+    const so = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+    if (so !== 0) return so;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  if (issues.length === 0) {
     container.innerHTML = `
       <div class="qa-empty">
         <div style="margin-bottom:8px">
           <i class="pic-icon ic-message-square" style="width:36px;height:36px;color:var(--g3);margin:0 auto;display:block"></i>
         </div>
-        <p>ยังไม่มีข้อสงสัยในหมวดหมู่นี้ที่เผยแพร่</p>
-        <small style="color:var(--g3)">เมื่อผู้ดูแลระบบตอบกลับและอนุมัติ จะแสดงบนกระดานนี้ค่ะ</small>
+        <p>${currentQASearch ? 'ไม่พบรายการที่ตรงกับคำค้นหา' : 'ยังไม่มีการแจ้งปัญหาในหมวดหมู่นี้'}</p>
+        <small style="color:var(--g3)">แจ้งปัญหาได้ที่ปุ่ม "แจ้งปัญหาการใช้งาน" ด้านบน</small>
       </div>`;
     return;
   }
 
-  container.innerHTML = filtered.map(item => {
+  const statusLabel = { pending: 'รอดำเนินการ', in_progress: 'กำลังตรวจสอบ', resolved: 'แก้ไขแล้ว' };
+  const statusColor = {
+    pending:     { bg: 'rgba(234,179,8,.12)',   color: '#eab308', border: 'rgba(234,179,8,.35)' },
+    in_progress: { bg: 'rgba(59,130,246,.12)',  color: '#3b82f6', border: 'rgba(59,130,246,.35)' },
+    resolved:    { bg: 'rgba(16,185,129,.12)',  color: '#10b981', border: 'rgba(16,185,129,.35)' },
+  };
+  const statusIcon = {
+    pending:     '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2.5;fill:none;display:inline-block;margin-right:3px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    in_progress: '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2.5;fill:none;display:inline-block;margin-right:3px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    resolved:    '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2.5;fill:none;display:inline-block;margin-right:3px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  };
+
+  container.innerHTML = issues.map(item => {
     const timeStr = new Date(item.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const replyTimeStr = item.reply?.repliedAt ? new Date(item.reply.repliedAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     const imgHtml = item.imageUrl ? `<img src="${encodeURI(item.imageUrl)}" class="qa-img-thumb" alt="หลักฐาน" onclick="previewImageFullscreen(this.src)"/>` : '';
     const cleanCat = (item.categoryLabel || item.category || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+    const st = item.status || 'pending';
+    const sc = statusColor[st] || statusColor.pending;
+    const replyBlock = item.reply?.message
+      ? `<div class="qa-reply-box">
+           <div class="qa-reply-title">
+             <span style="display:inline-flex;align-items:center;gap:5px"><i class="pic-icon ic-shield-check" style="font-size:14px;color:#10b981;margin-right:2px"></i>${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ')}</span>
+             <span style="font-size:.65rem;color:var(--g3);margin-left:auto">${replyTimeStr}</span>
+           </div>
+           <div class="qa-reply-text">${escapeHtml(item.reply.message)}</div>
+         </div>`
+      : `<div style="font-size:.78rem;color:var(--g3);font-style:italic;padding:.5rem 0">รอการตอบกลับจากผู้ดูแลระบบ...</div>`;
 
     return `
-      <div class="qa-card">
+      <div class="qa-card" style="border-left:3px solid ${sc.color}">
         <div class="qa-card-head">
-          <div style="display:flex;align-items:center;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-family:var(--font-mono,monospace);font-size:.72rem;font-weight:700;color:var(--blue)">${escapeHtml(item.id)}</span>
             <span class="qa-cat-badge">${escapeHtml(cleanCat)}</span>
-            <span class="qa-port-badge">${item.portLabel || item.portId}</span>
             ${item.amount ? `<span style="font-size:.7rem;font-weight:700;color:var(--green)">฿${item.amount}</span>` : ''}
           </div>
-          <span class="qa-time">${timeStr}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;background:${sc.bg};color:${sc.color};border:1px solid ${sc.border}">${statusIcon[st] || ''}${statusLabel[st] || st}</span>
+          </div>
         </div>
         <div class="qa-question"><strong>ปัญหาที่พบ:</strong> ${escapeHtml(item.description)}</div>
         ${imgHtml}
-        <div class="qa-reply-box">
-          <div class="qa-reply-title">
-            <span style="display:inline-flex;align-items:center;gap:5px"><i class="pic-icon ic-shield-check" style="font-size:14px;color:#10b981;margin-right:2px"></i>${escapeHtml(item.reply?.adminName || 'ผู้ดูแลระบบ (Admin)')}</span>
-            <span style="font-size:.65rem;color:var(--g3);margin-left:auto">${replyTimeStr}</span>
-          </div>
-          <div class="qa-reply-text">${escapeHtml(item.reply?.message || '—')}</div>
-        </div>
+        ${replyBlock}
+        <div style="font-size:.68rem;color:var(--g3);margin-top:4px">แจ้งเมื่อ ${timeStr}</div>
       </div>`;
   }).join('');
 }
