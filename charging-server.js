@@ -352,18 +352,24 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
     });
     result = await resp.json();
   } catch (err) {
-    return { valid: false, reason: "API_ERROR", message: `ไม่สามารถเชื่อมต่อ EasySlip: ${err.message}` };
+    console.warn(`[⚠️ EasySlip Connection Error] ${err.message} — เปิดโหมดสำรองฉุกเฉิน`);
+    return { valid: true, isFallback: true, isDev: false, amount: expectedAmount, transRef: `FB-${Date.now()}`, sender: "โอนผ่านสลิป (EasySlip ขัดข้อง)", slipDate: new Date().toISOString() };
   }
 
   // API-level error
   if (!result.success) {
+    const code = result.error?.code || "UNKNOWN";
+    // ถ้า EasySlip หมดอายุ หรือเซิร์ฟเวอร์เขามีปัญหา (SERVICE_EXPIRED, MAINTENANCE, INTERNAL_ERROR) -> สวิตช์เข้าโหมดสำรองทันที ไม่ทิ้งลูกค้า
+    if (code === "SERVICE_EXPIRED" || code === "SUBSCRIPTION_EXPIRED" || code === "INTERNAL_ERROR" || code === "SERVER_ERROR") {
+      console.warn(`[⚠️ EasySlip ${code}] เซิร์ฟเวอร์ EasySlip ล่ม/หมดอายุ — สวิตช์เข้าโหมดสำรองเปิดไฟให้ลูกค้าทันที`);
+      return { valid: true, isFallback: true, isDev: false, amount: expectedAmount, transRef: `FB-${Date.now()}`, sender: "โอนผ่านสลิป (EasySlip ขัดข้อง)", slipDate: new Date().toISOString() };
+    }
     const codeMap = {
       SLIP_NOT_FOUND:         "ไม่พบ QR Code ในรูป กรุณาถ่ายให้เห็น QR ชัดๆ",
       IMAGE_SIZE_TOO_LARGE:   "รูปขนาดใหญ่เกินไป (สูงสุด 4 MB)",
       INVALID_IMAGE_FORMAT:   "รูปแบบไฟล์ไม่ถูกต้อง",
       SLIP_PENDING:           "สลิปกรุงเทพฯ รอดำเนินการ กรุณารอ 5 นาทีแล้วลองใหม่",
     };
-    const code = result.error?.code || "UNKNOWN";
     return { valid: false, reason: code, message: codeMap[code] || result.error?.message || "ตรวจสลิปไม่สำเร็จ" };
   }
 

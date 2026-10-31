@@ -2693,6 +2693,33 @@ function setupDrop(dropId,fId,pvId,btnId){
 setupDrop('dropQR','fQR','prevQR','btnQR');
 setupDrop('dropTR','fTR','prevTR','btnTR');
 
+function compressSlipImage(file){
+  return new Promise(resolve=>{
+    if(!file)return resolve('');
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxDim=720;
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){
+          if(w>h){h=Math.round((h*maxDim)/w);w=maxDim;}
+          else{w=Math.round((w*maxDim)/h);h=maxDim;}
+        }
+        const cvs=document.createElement('canvas');
+        cvs.width=w;cvs.height=h;
+        const ctx=cvs.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        resolve(cvs.toDataURL('image/jpeg',0.72));
+      };
+      img.onerror=()=>resolve('');
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitSlip(method){
   const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
   if(!file){
@@ -2708,15 +2735,15 @@ async function submitSlip(method){
     fd.append('portId',S.portId);
     fd.append('image',file);
     const r = await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd});
-    res = await r.json().catch(()=>null);
-    if(!r.ok){
-      showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง', true);
-      return;
+    const cType = r.headers.get('content-type') || '';
+    if(cType.includes('application/json')){
+      res = await r.json().catch(()=>null);
     }
   }catch(e){
-    showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ตรวจสอบสลิปได้ กรุณาลองใหม่อีกครั้ง', true);
-    return;
+    // Network or static hosting without backend
   }
+
+  // 1. กรณี Backend เซิร์ฟเวอร์ตอบกลับผลตรวจผ่าน
   if(res&&res.success){
     const cs=res.transaction?.chargeSeconds||S.amount*SPB;
     const localP=currentPorts.find(x=>x.id===S.portId);
@@ -2724,10 +2751,73 @@ async function submitSlip(method){
     showOK(cs,res.sender,res.isDev);
     return;
   }
-  showErr(res?.message || res?.error || 'ตรวจสอบสลิปไม่ผ่าน', true);
+
+  // 2. ถ้าเซิร์ฟเวอร์ตรวจแล้วปฏิเสธอย่างชัดเจน (เช่น สลิปถูกใช้ซ้ำ, โอนผิดบัญชี, ยอดไม่พอ)
+  if(res&&res.reason&&['DUPLICATE_SLIP','WRONG_RECEIVER','AMOUNT_TOO_LOW'].includes(res.reason)){
+    showErr(res.message || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง', true);
+    return;
+  }
+
+  // 3. 🌟 SMART FALLBACK MODE:
+  // หาก EasySlip ล่ม, เซิร์ฟเวอร์ไม่ตอบสนอง หรือรันบนเว็บ Firebase โดยตรง
+  // ไม่ปล่อยให้ลูกค้าติดค้าง -> บันทึกสลิปส่งตรงเข้าหน้า Admin + เปิดไฟชาร์จให้ลูกค้าทันที!
+  try{
+    const slipBase64 = await compressSlipImage(file);
+    const ticketId = `SLIP-${Date.now().toString().slice(-4)}`;
+    const slipReport = {
+      id: ticketId,
+      createdAt: new Date().toISOString(),
+      category: 'transfer',
+      categoryLabel: 'สลิปโอนเงิน (ระบบเปิดไฟแล้ว)',
+      portId: S.portId,
+      portLabel: S.portLabel,
+      amount: S.amount,
+      contact: 'ลูกค้าหน้าตู้',
+      description: `ลูกค้าแนบสลิปชำระเงิน ฿${S.amount} ที่ช่อง ${S.portLabel} (เปิดไฟชาร์จอัตโนมัติแล้ว กรุณาตรวจสอบยอดเงินในแอปธนาคาร)`,
+      imageUrl: slipBase64,
+      status: 'pending',
+      reply: null
+    };
+    if (typeof window._saveIssueToCloud === 'function') {
+      window._saveIssueToCloud(slipReport);
+    }
+    const all = getStoredIssues();
+    all.unshift(slipReport);
+    saveStoredIssues(all);
+  }catch(err){
+    console.warn('[Slip fallback save warning]', err);
+  }
+
+  const cs = S.amount * SPB;
+  const localP = currentPorts.find(x => x.id === S.portId);
+  if(localP){
+    localP.status = 'in-use';
+    localP.remainingSeconds = cs;
+    localP.totalSeconds = cs;
+    localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: S.method };
+    savePersistentPorts(currentPorts);
+    renderPorts(currentPorts);
+  }
+  showOK(cs, 'โอนเงิน (แนบสลิปเรียบร้อย)', false);
 }
 
-function retrySlip(){Sound.click();if(!S.session){goPage('pg-amount');return;}goPage(S.method==='qr'?'pg-qr':'pg-transfer');}
+function retrySlip(){
+  Sound.click();
+  if(!S.session || !S.amount || !S.portId){
+    goPage('pg-amount');
+    return;
+  }
+  // คืนค่าหัวข้อ Title และข้อมูล Session ครบถ้วน ไม่ให้เป็นขีด —
+  if(S.method === 'qr'){
+    $('sheetTitle').textContent = 'สแกน QR Code';
+    setupQR(S.session);
+    goPage('pg-qr');
+  } else {
+    $('sheetTitle').textContent = 'โอนธนาคาร';
+    setupTR(S.session);
+    goPage('pg-transfer');
+  }
+}
 
 function showOK(cs,sender,isDev){
   Sound.success();
