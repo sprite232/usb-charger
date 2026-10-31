@@ -1663,6 +1663,7 @@ footer{
         <div class="pay-cell"><div class="pay-lbl">จำนวน</div><div class="pay-val" id="coin-amt">—</div></div>
         <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="coin-time">—</div></div>
       </div>
+      <div class="expire-row">หมดอายุใน <strong id="coinCD">10:00</strong></div>
       <div class="cash-box">
         <h3>หยอดเหรียญที่ช่องรับเหรียญของตู้</h3>
         <div class="cash-live" id="coin-live-status">หยอดแล้ว: ฿0 / ฿—</div>
@@ -1703,13 +1704,13 @@ footer{
     <!-- Error -->
     <div class="page" id="pg-err">
       <div class="result-box">
-        <h2>ตรวจสอบไม่ผ่าน</h2>
+        <h2 id="errTitle">ตรวจสอบไม่ผ่าน</h2>
         <div class="err-box" id="errMsg">—</div>
         <div id="errRetryHint" style="display:none;font-size:.78rem;color:var(--g3);line-height:1.55;margin:10px 0;padding:10px 12px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:10px;text-align:left">
           หากคุณโอนเงินไปแล้วแต่สลิปอัปโหลดไม่ผ่าน — กรุณากด <strong>ลองส่งสลิปอีกครั้ง</strong> ด้านล่างนี้<br/>
           อย่าเริ่มรายการใหม่ เพราะระบบจะไม่นับยอดโอนที่ผ่านมา
         </div>
-        <button class="btn btn-primary" onclick="retrySlip()">ลองส่งสลิปอีกครั้ง</button>
+        <button class="btn btn-primary" id="btnErrRetry" onclick="handleErrorRetry()">ลองส่งสลิปอีกครั้ง</button>
         <button class="btn btn-ghost" style="margin-top:6px" onclick="cancelSession()">ยกเลิกรายการ</button>
       </div>
     </div>
@@ -2545,7 +2546,7 @@ function handleCoinMethodClick(){
     kioskToast(`ยอด ฿${S.amount} ไม่รองรับการหยอดเหรียญ\nตู้รับเฉพาะเหรียญ 5฿ และ 10฿ เท่านั้น\nกรุณาชำระผ่าน PromptPay QR หรือโอนเงินแทนค่ะ`, 'warn');
     return;
   }
-  createSession('cash');
+  createSession('coin');
 }
 function handleCashMethodClick(){
   handleCoinMethodClick();
@@ -2637,12 +2638,14 @@ let liveCashInserted=0;
 let _lastSpokenCash=0;
 function setupCash(s){
   liveCashInserted=0;_lastSpokenCash=0;
+  S.method='coin';
   const pEl=$('coin-port')||$('cash-port');if(pEl)pEl.textContent=S.portLabel;
   const aEl=$('coin-amt')||$('cash-amt');if(aEl)aEl.textContent=`฿${s.amount}`;
   const tEl=$('coin-time')||$('cash-time');if(tEl)tEl.textContent=Math.round(s.chargeSeconds/60);
   updateCashUI(s.amount);$('sheetTitle').textContent='หยอดเหรียญ';
   goPage($('pg-coin')?'pg-coin':'pg-cash');
   Voice.speak('กรุณาหยอดเหรียญ 5 หรือ 10 บาท ที่ช่องรับเงินค่ะ');
+  startExpire('coinCD', s.expiresAt);
   _cashPoll=setInterval(()=>apiFetch('GET','/api/state').then(d=>d&&checkCash(d.ports)),3000);
 }
 function updateCashUI(t){
@@ -2668,10 +2671,22 @@ function updateCashUI(t){
   }
 }
 function checkCash(ports){
-  if(!S.session)return;
+  if(!S.session || (S.method !== 'coin' && S.method !== 'cash'))return;
   const p=ports?.find(x=>x.id===S.portId);
-  if(p?.status==='in-use'){stopTimers();showOK(p.remainingSeconds,null);}
-  else if(p?.status==='available'&&!p.hasSession){stopTimers();showErr('Session หมดอายุ กรุณาเริ่มใหม่');}
+  if(p?.status==='in-use'){
+    stopTimers();
+    showOK(p.remainingSeconds || (S.amount * SPB), null);
+    return;
+  }
+  const inserted = p?.currentTx?.coinsInserted || p?.coinsInserted;
+  if(inserted !== undefined && inserted > liveCashInserted){
+    liveCashInserted = inserted;
+    updateCashUI(S.amount);
+    if(liveCashInserted >= S.amount){
+      stopTimers();
+      showOK(S.amount * SPB, null);
+    }
+  }
 }
 
 /* ── Slip Upload ── */
@@ -2802,21 +2817,7 @@ async function submitSlip(method){
 }
 
 function retrySlip(){
-  Sound.click();
-  if(!S.session || !S.amount || !S.portId){
-    goPage('pg-amount');
-    return;
-  }
-  // คืนค่าหัวข้อ Title และข้อมูล Session ครบถ้วน ไม่ให้เป็นขีด —
-  if(S.method === 'qr'){
-    $('sheetTitle').textContent = 'สแกน QR Code';
-    setupQR(S.session);
-    goPage('pg-qr');
-  } else {
-    $('sheetTitle').textContent = 'โอนธนาคาร';
-    setupTR(S.session);
-    goPage('pg-transfer');
-  }
+  handleErrorRetry();
 }
 
 function showOK(cs,sender,isDev){
@@ -2828,15 +2829,52 @@ function showOK(cs,sender,isDev){
 }
 function showErr(msg, isSlipError){
   Sound.error();
+  const titleEl = $('errTitle');
+  const retryBtn = $('btnErrRetry');
+  const hint = $('errRetryHint');
+
   if(isSlipError){
     Voice.speak('ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้งนะคะ');
+    if(titleEl) titleEl.textContent = 'ตรวจสอบไม่ผ่าน';
+    if(retryBtn){ retryBtn.textContent = 'ลองส่งสลิปอีกครั้ง'; retryBtn.style.display = 'block'; }
+    if(hint) hint.style.display = (S.session) ? 'block' : 'none';
   } else {
     Voice.speak(msg || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งค่ะ');
+    if(titleEl) titleEl.textContent = 'เกิดข้อผิดพลาด';
+    if(hint) hint.style.display = 'none';
+    if(retryBtn){
+      if(S.method === 'coin' || S.method === 'cash'){
+        retryBtn.textContent = 'ลองหยอดเหรียญอีกครั้ง';
+        retryBtn.style.display = 'block';
+      } else {
+        retryBtn.textContent = 'ลองใหม่อีกครั้ง';
+        retryBtn.style.display = 'block';
+      }
+    }
   }
-  $('errMsg').textContent=msg;$('sheetTitle').textContent='ไม่สำเร็จ';
-  const hint=$('errRetryHint');
-  if(hint) hint.style.display=(isSlipError && S.session)?'block':'none';
+  $('errMsg').textContent = msg;
+  $('sheetTitle').textContent = 'ไม่สำเร็จ';
   goPage('pg-err');
+}
+
+function handleErrorRetry(){
+  Sound.click();
+  if(!S.session || !S.amount || !S.portId){
+    goPage('pg-amount');
+    return;
+  }
+  if(S.method === 'coin' || S.method === 'cash'){
+    $('sheetTitle').textContent = 'หยอดเหรียญ';
+    setupCash(S.session);
+  } else if(S.method === 'qr'){
+    $('sheetTitle').textContent = 'สแกน QR Code';
+    setupQR(S.session);
+    goPage('pg-qr');
+  } else {
+    $('sheetTitle').textContent = 'โอนธนาคาร';
+    setupTR(S.session);
+    goPage('pg-transfer');
+  }
 }
 
 function startExpire(spanId,isoStr){

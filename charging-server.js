@@ -575,13 +575,14 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   const { portId, method } = req.body;
   const amount = Number(req.body.amount);
 
-  if (!["qr", "transfer", "coin"].includes(method)) {
-    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | coin)" });
+  if (!["qr", "transfer", "coin", "cash"].includes(method)) {
+    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | coin | cash)" });
   }
+  const normMethod = (method === "cash" ? "coin" : method);
   if (!Number.isFinite(amount) || amount < 1) {
     return res.status(400).json({ error: "จำนวนเงินต้องไม่น้อยกว่า 1 บาท" });
   }
-  if (method === "coin" && (amount < 5 || amount % 5 !== 0)) {
+  if (normMethod === "coin" && (amount < 5 || amount % 5 !== 0)) {
     return res.status(400).json({ error: "รับชำระด้วยเหรียญเฉพาะยอด 5 บาทขึ้นไป และเป็นทวีคูณของ 5 บาท" });
   }
 
@@ -595,7 +596,7 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
 
   const session = {
     id: `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-    portId, amount: rounded, method, chargeSeconds,
+    portId, amount: rounded, method: normMethod, chargeSeconds,
     createdAt: now(), expiresAt,
   };
 
@@ -764,7 +765,7 @@ app.post("/api/coin/insert", requireEsp32Auth, limiterCoin, (req, res) => {
   const port = getPort(req.body.portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
   if (expirePaymentSession(port)) return res.status(410).json({ error: "หมดเวลาชำระเงิน กรุณาเริ่มรายการใหม่" });
-  if (port.status !== "pending_payment" || port.paymentSession?.method !== "coin") {
+  if (port.status !== "pending_payment" || !["coin", "cash"].includes(port.paymentSession?.method)) {
     return res.status(409).json({ error: "พอร์ตนี้ไม่ได้รอการหยอดเหรียญ" });
   }
 
