@@ -18,8 +18,8 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "Plam_tawan_2.4G"
+#define WIFI_PASSWORD "0626097440"
 #define SERVER_URL "http://192.168.1.50:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
 #define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Authentication Secret
 
@@ -64,15 +64,19 @@ void fetchRelayCommands() {
   int httpCode = http.GET();
   if (httpCode == 200) {
     String payload = http.getString();
+    #if ARDUINOJSON_VERSION_MAJOR >= 7
+    JsonDocument doc;
+    #else
     StaticJsonDocument<1024> doc;
+    #endif
     DeserializationError error = deserializeJson(doc, payload);
 
-    if (!error && doc.containsKey("relays")) {
-      JsonObject relays = doc["relays"];
+    if (!error && !doc["relays"].isNull()) {
+      JsonObject relays = doc["relays"].as<JsonObject>();
       
       for (int i = 0; i < 4; i++) {
         const char* key = PORT_KEYS[i];
-        if (relays.containsKey(key)) {
+        if (!relays[key].isNull()) {
           bool isOn = relays[key]["on"] | false;
           int gpio = RELAY_PINS[i];
           
