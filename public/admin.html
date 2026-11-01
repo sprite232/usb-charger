@@ -2588,8 +2588,8 @@ function renderAll(d) {
   // Analytics Stats
   const avg = txs.length > 0 ? (totalRev / txs.length) : 0;
   const totalHours = Math.round((totalRev * (d.config.secondsPerBaht || 180)) / 3600);
-  const onlineAmt = txs.filter(t => t.method !== 'cash').reduce((sum, t) => sum + (t.amount || 0), 0);
-  const cashAmt = txs.filter(t => t.method === 'cash').reduce((sum, t) => sum + (t.amount || 0), 0);
+  const onlineAmt = txs.filter(t => t.method !== 'cash' && t.method !== 'coin').reduce((sum, t) => sum + (t.amount || 0), 0);
+  const cashAmt = txs.filter(t => t.method === 'cash' || t.method === 'coin').reduce((sum, t) => sum + (t.amount || 0), 0);
   const convRate = visits.length > 0 ? Math.min(100, Math.round((txs.length / visits.length) * 100)) : 0;
 
   document.getElementById('stAvgTx').textContent = `฿${Math.round(avg)}`;
@@ -2757,9 +2757,10 @@ function renderTxTableAll(txs) {
 }
 
 function txRowHtml(t, withActions=false) {
-  const mBadge = t.method==='qr'?'<span class="badge b-qr">พร้อมเพย์</span>':t.method==='transfer'?'<span class="badge b-transfer">โอนเงิน</span>':t.method==='cash'?'<span class="badge b-cash">เงินสด</span>':'<span class="badge b-test">ทดสอบ</span>';
+  const isCash = (t.method === 'cash' || t.method === 'coin');
+  const mBadge = t.method === 'qr' ? '<span class="badge b-qr">พร้อมเพย์</span>' : t.method === 'transfer' ? '<span class="badge b-transfer">โอนเงิน</span>' : isCash ? '<span class="badge b-cash">หยอดเหรียญ</span>' : t.method === 'truemoney' ? '<span class="badge" style="background:#ff5800;color:#fff">TrueMoney</span>' : '<span class="badge b-test">ทดสอบ</span>';
   const stBadge = t.status==='active'?'<span class="badge b-active">กำลังชาร์จ</span>':'<span class="badge b-finished"><i class="pic-icon ic-checked" style="font-size:11px"></i> สำเร็จ</span>';
-  const sender = t.verification?.sender || (t.method==='cash'?'เงินสด':'ผู้ใช้');
+  const sender = t.verification?.sender || (isCash ? 'หยอดเหรียญที่ตู้' : t.method === 'truemoney' ? 'TrueMoney' : 'ผู้ใช้');
   
   return `<tr>
     <td><strong style="font-family:'JetBrains Mono',monospace">${t.id}</strong></td>
@@ -2791,8 +2792,8 @@ function viewTxDetail(id) {
   
   document.getElementById('modalVerifyDate').textContent = `ตรวจสอบวันที่ ${fmtDate(t.createdAt)}`;
   document.getElementById('modalTransRef').textContent = t.id || t.verification?.transRef || '—';
-  document.getElementById('modalSender').textContent = t.verification?.sender || (t.method === 'cash' ? 'เงินสดที่ตู้' : 'ผู้ใช้งาน');
-  document.getElementById('modalSenderBank').textContent = t.verification?.senderBank || (t.method === 'cash' ? 'กล่องหยอดเงิน' : 'พร้อมเพย์');
+  document.getElementById('modalSender').textContent = t.verification?.sender || ((t.method === 'cash' || t.method === 'coin') ? 'หยอดเหรียญที่ตู้' : (t.method === 'truemoney' ? 'TrueMoney ซองของขวัญ' : 'ผู้ใช้งาน'));
+  document.getElementById('modalSenderBank').textContent = t.verification?.senderBank || ((t.method === 'cash' || t.method === 'coin') ? 'ช่องหยอดเหรียญ' : (t.method === 'truemoney' ? 'TrueMoney Wallet' : 'พร้อมเพย์'));
   document.getElementById('modalReceiver').textContent = t.verification?.receiver || (dashData?.config?.bankAccountName ? `${dashData.config.bankAccountName} (PROMPTPAY)` : 'ด.ช. ศุภกฤต ส. (PROMPTPAY)');
   document.getElementById('modalAmount').textContent = `฿${Number(t.amount || 0)}`;
   document.getElementById('modalPort').textContent = t.portId || '—';
@@ -2858,7 +2859,7 @@ function updateCharts(txs, visits = []) {
   // 2. Group by payment method
   const qrCount = txs.filter(t => t.method === 'qr').length;
   const trCount = txs.filter(t => t.method === 'transfer').length;
-  const cashCount = txs.filter(t => t.method === 'cash').length;
+  const cashCount = txs.filter(t => t.method === 'cash' || t.method === 'coin').length;
   const hasMethodData = (qrCount + trCount + cashCount) > 0;
 
   // 3. Group by port usage
@@ -2887,7 +2888,7 @@ function updateCharts(txs, visits = []) {
 
   // Chart 2: Dashboard Method Doughnut (No spinning loop)
   createOrUpdateChart('dashMethodChart', 'doughnut', hasMethodData ? {
-    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'เงินสด'],
+    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'หยอดเหรียญ'],
     datasets: [{
       data: [qrCount, trCount, cashCount],
       backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
@@ -2939,7 +2940,7 @@ function updateCharts(txs, visits = []) {
 
   // Chart 5: Analytics Method Pie (No spinning loop)
   createOrUpdateChart('analyticsMethodPie', 'pie', hasMethodData ? {
-    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'เงินสด'],
+    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'หยอดเหรียญ'],
     datasets: [{
       data: [qrCount, trCount, cashCount],
       backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],

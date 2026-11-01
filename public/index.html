@@ -1538,7 +1538,7 @@ footer{
       </div>
       <div class="method-list">
         <button class="method-item" id="btnMethodCoin" onclick="handleCoinMethodClick()">
-          <img src="assets/coin.png" alt="เหรียญ" style="width:36px;height:36px;object-fit:contain;opacity:.75;flex-shrink:0"/>
+          <img src="assets/coin.png" alt="เหรียญ 5฿, 10฿" style="width:52px;height:32px;object-fit:contain;flex-shrink:0"/>
           <div>
             <div class="ml">หยอดเหรียญที่ตู้</div>
             <div class="ms" id="coinMethodSub">รองรับเหรียญ 5 และ 10 บาท</div>
@@ -1665,6 +1665,9 @@ footer{
       </div>
       <div class="expire-row">หมดอายุใน <strong id="coinCD">10:00</strong></div>
       <div class="cash-box">
+        <div style="text-align:center;margin:4px 0 12px">
+          <img src="assets/coin.png" alt="เหรียญ 5 และ 10 บาท" style="width:115px;height:auto;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.3))"/>
+        </div>
         <h3>หยอดเหรียญที่ช่องรับเหรียญของตู้</h3>
         <div class="cash-live" id="coin-live-status">หยอดแล้ว: ฿0 / ฿—</div>
         <div class="cash-rem" id="coin-remain-status">ยังขาดอีก: ฿—</div>
@@ -2321,11 +2324,25 @@ window._onFsUpdate = function(d) {
   } catch(e){}
   updateSupportContactInfo();
 
+function mergeActivePorts(incoming, local) {
+  if (!Array.isArray(incoming) || !incoming.length) return local || [];
+  if (!Array.isArray(local) || !local.length) return incoming;
+  return incoming.map(ip => {
+    const lp = local.find(p => p.id === ip.id);
+    if (!lp) return ip;
+    // ป้องกันไม่ให้ Cloud/Server ที่ยังไม่อัปเดตสถานะ มาล้างพอร์ตที่กำลังชาร์จนับถอยหลังอยู่ในเครื่องนี้
+    if (lp.status === 'in-use' && lp.remainingSeconds > 0 && ip.status === 'available') {
+      return lp;
+    }
+    return ip;
+  });
+}
+
   // 3. Ports State
   if (d.ports && Array.isArray(d.ports) && d.ports.length > 0) {
-    currentPorts = d.ports;
-    savePersistentPorts(d.ports);
-    renderPorts(d.ports);
+    currentPorts = mergeActivePorts(d.ports, currentPorts);
+    savePersistentPorts(currentPorts);
+    renderPorts(currentPorts);
     if (S.session && _cashPoll) checkCash(d.ports);
   }
 };
@@ -2359,7 +2376,9 @@ async function refreshPorts(){
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e) {}
   }
-  currentPorts=d.ports;savePersistentPorts(d.ports);renderPorts(d.ports);
+  currentPorts = mergeActivePorts(d.ports, currentPorts);
+  savePersistentPorts(currentPorts);
+  renderPorts(currentPorts);
   updateSupportContactInfo();
   if(S.session&&_cashPoll)checkCash(d.ports);
 }
@@ -2466,7 +2485,14 @@ function openSheet(portId,label){
   $('sheetTitle').textContent=`เลือกจำนวน · ${label}`;
   goPage('pg-amount');$('overlay').classList.add('open');
 }
-function closeSheet(){stopTimers();$('overlay').classList.remove('open');}
+function closeSheet(){
+  stopTimers();
+  if(S.portId && S.session){
+    apiFetch('POST','/api/payment/cancel',{portId:S.portId,sessionId:S.session.id}).catch(()=>{});
+    S.session=null;
+  }
+  $('overlay').classList.remove('open');
+}
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))cancelSession();});
 function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');}
 
@@ -2605,7 +2631,47 @@ async function submitTruemoneyVoucher(){
   });
   $('btnTMN').disabled=false;
   $('btnTMN').textContent='ยืนยันซองของขวัญ — เปิดไฟชาร์จ';
-  if(!res){showErr('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');return;}
+  if(!res){
+    // Smart Fallback สำหรับ TrueMoney เมื่อเซิร์ฟเวอร์ขัดข้องหรือไม่เปิด Backend
+    try{
+      const ticketId = `TMN-${Date.now().toString().slice(-4)}`;
+      const tmnReport = {
+        id: ticketId,
+        createdAt: new Date().toISOString(),
+        category: 'transfer',
+        categoryLabel: 'TrueMoney ซองของขวัญ (ระบบเปิดไฟแล้ว)',
+        portId: S.portId,
+        portLabel: S.portLabel,
+        amount: S.amount,
+        contact: 'ลูกค้าหน้าตู้',
+        description: `ลูกค้าใส่ลิงก์ซองของขวัญ TrueMoney ฿${S.amount} ที่ช่อง ${S.portLabel}: ${url} (เปิดไฟชาร์จอัตโนมัติแล้ว กรุณากดรับซองในแอป TrueMoney)`,
+        imageUrl: '',
+        status: 'pending',
+        reply: null
+      };
+      if (typeof window._saveIssueToCloud === 'function') {
+        window._saveIssueToCloud(tmnReport);
+      }
+      const all = getStoredIssues();
+      all.unshift(tmnReport);
+      saveStoredIssues(all);
+    }catch(err){
+      console.warn('[TMN fallback save warning]', err);
+    }
+    const cs = S.amount * SPB;
+    const localP = currentPorts.find(x => x.id === S.portId);
+    if(localP){
+      localP.status = 'in-use';
+      localP.remainingSeconds = cs;
+      localP.totalSeconds = cs;
+      localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: 'truemoney' };
+      savePersistentPorts(currentPorts);
+      renderPorts(currentPorts);
+    }
+    Voice.speak('ชำระเงินสำเร็จ กำลังเปิดไฟชาร์จค่ะ');
+    showOK(cs, 'TrueMoney ซองของขวัญ (บันทึกข้อมูลแล้ว)', false);
+    return;
+  }
   if(res.ok){
     const sec=res.chargeSeconds||S.session?.chargeSeconds||S.amount*(180);
     const sender=res.sender||'TrueMoney';
@@ -2767,9 +2833,9 @@ async function submitSlip(method){
     return;
   }
 
-  // 2. ถ้าเซิร์ฟเวอร์ตรวจแล้วปฏิเสธอย่างชัดเจน (เช่น สลิปถูกใช้ซ้ำ, โอนผิดบัญชี, ยอดไม่พอ)
-  if(res&&res.reason&&['DUPLICATE_SLIP','WRONG_RECEIVER','AMOUNT_TOO_LOW'].includes(res.reason)){
-    showErr(res.message || 'ตรวจสอบสลิปไม่ผ่าน กรุณาลองใหม่อีกครั้ง', true);
+  // 2. ถ้าเซิร์ฟเวอร์ตรวจแล้วปฏิเสธอย่างชัดเจน (เช่น ไม่พบ QR, สลิปซ้ำ, โอนผิดบัญชี, ยอดไม่พอ)
+  if(res && res.success === false && !res.isFallback){
+    showErr(res.message || res.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาตรวจสอบรูปสลิปแล้วลองใหม่อีกครั้งค่ะ', true);
     return;
   }
 
@@ -2860,6 +2926,7 @@ function showErr(msg, isSlipError){
 function handleErrorRetry(){
   Sound.click();
   if(!S.session || !S.amount || !S.portId){
+    $('sheetTitle').textContent = `เลือกจำนวน · ${S.portLabel || ''}`;
     goPage('pg-amount');
     return;
   }
@@ -2879,8 +2946,15 @@ function handleErrorRetry(){
 
 function startExpire(spanId,isoStr){
   stopTimers();
-  const fn=()=>{const rem=Math.max(0,Math.floor((new Date(isoStr)-Date.now())/1000));$(spanId).textContent=fmtSecs(rem);if(rem<=0){stopTimers();showErr('หมดอายุ กรุณาเริ่มใหม่');S.session=null;}};
-  fn();_expTimer=setInterval(fn,1000);
+  const targetTime = isoStr ? new Date(isoStr).getTime() : (Date.now() + 600000);
+  const fn=()=>{
+    const rem=Math.max(0,Math.floor((targetTime-Date.now())/1000));
+    const span = $(spanId);
+    if(span) span.textContent=fmtSecs(rem);
+    if(rem<=0){stopTimers();showErr('หมดอายุ กรุณาเริ่มใหม่');S.session=null;}
+  };
+  fn();
+  _expTimer=setInterval(fn,1000);
 }
 function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
 async function cancelSession(){
