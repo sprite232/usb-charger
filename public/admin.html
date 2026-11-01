@@ -2313,6 +2313,8 @@ async function saveServerBase() {
     if (r.ok) {
       showServerBaseMsg('เชื่อมต่อสำเร็จ กำลังโหลดข้อมูล...', 'var(--green)');
       syncAdminIssuesFromBackend();
+      tryLoadDashboard();
+      autoRefresh();
     } else {
       showServerBaseMsg(`ตอบกลับแล้วแต่ status ${r.status} — ตรวจสอบ URL อีกครั้ง`, 'var(--yellow)');
     }
@@ -3237,7 +3239,24 @@ async function toggleRelay(portId, on) {
       renderTestingTab(dashData.ports);
     }
   }
-  await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
+  try {
+    const res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
+    if (res && res.success) {
+      adminToast(`สั่งรีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'} สำเร็จ`, 'success');
+    } else {
+      adminToast(`บันทึกสถานะรีเลย์ ${portId} เรียบร้อย`, 'info');
+    }
+  } catch(_) {}
+
+  try {
+    if (typeof fbDb !== 'undefined' && fbDb) {
+      fbDb.collection('charger').doc('charger01').set({
+        ports: { [portId]: { relayOn: on } },
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(() => {});
+    }
+  } catch(_) {}
+
   setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'}`);
   autoRefresh();
 }

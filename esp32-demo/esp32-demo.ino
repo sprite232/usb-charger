@@ -26,6 +26,10 @@
 const int RELAY_PINS[4] = { 26, 27, 25, 33 };
 const char* PORT_KEYS[4] = { "usb-a-1", "usb-a-2", "usb-c-1", "usb-c-2" };
 
+// Relay State Cache
+bool currentRelayState[4] = { false, false, false, false };
+int pollCount = 0;
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -57,6 +61,7 @@ void setup() {
     Serial.println("\n✅ WiFi Connected Successfully!");
     Serial.println("📍 ESP32 IP: " + WiFi.localIP().toString());
     Serial.printf("🎯 Target Server: %s\n", SERVER_URL);
+    Serial.println("📡 เริ่มต้นรับคำสั่งจากเซิร์ฟเวอร์...");
   } else {
     Serial.printf("\n⚠️ ยังเชื่อมต่อ WiFi ไม่สำเร็จ (Status Code: %d)\n", WiFi.status());
     Serial.println("   ระบบจะพยายามเชื่อมต่อใหม่อัตโนมัติใน loop...");
@@ -101,16 +106,31 @@ void fetchRelayCommands() {
           bool isOn = relays[key]["on"] | false;
           int gpio = RELAY_PINS[i];
           
-          // สั่ง Relay: HIGH = เปิดไฟ, LOW = ปิดไฟ
-          digitalWrite(gpio, isOn ? HIGH : LOW);
+          // ตรวจสอบว่ามีการเปลี่ยนสถานะหรือไม่
+          if (isOn != currentRelayState[i]) {
+            currentRelayState[i] = isOn;
+            digitalWrite(gpio, isOn ? HIGH : LOW);
+            Serial.printf("⚡ [คำสั่ง Relay] พอร์ต %d (%s | GPIO %d) -> %s\n", 
+                          i + 1, key, gpio, isOn ? "🟢 เปิดไฟ (ON)" : "🔴 ปิดไฟ (OFF)");
+          }
         }
       }
-      // Serial.println("✅ Relay status synchronized with server");
+
+      // แสดง Heartbeat ทุกๆ 10 วินาที (5 รอบการ poll)
+      pollCount++;
+      if (pollCount >= 5) {
+        pollCount = 0;
+        Serial.printf("📡 [Sync OK] สถานะรีเลย์: P1=%s | P2=%s | P3=%s | P4=%s\n",
+                      currentRelayState[0] ? "ON" : "OFF",
+                      currentRelayState[1] ? "ON" : "OFF",
+                      currentRelayState[2] ? "ON" : "OFF",
+                      currentRelayState[3] ? "ON" : "OFF");
+      }
     }
   } else if (httpCode > 0) {
-    Serial.printf("❌ HTTP Error: %d\n", httpCode);
+    Serial.printf("❌ HTTP Error จากเซิร์ฟเวอร์: %d\n", httpCode);
   } else {
-    Serial.printf("❌ Connection Error: %s\n", http.errorToString(httpCode).c_str());
+    Serial.printf("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (%s) — ตรวจสอบว่าเปิด 'node server.js' หรือยัง\n", http.errorToString(httpCode).c_str());
   }
   http.end();
 }

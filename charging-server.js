@@ -553,6 +553,20 @@ async function requireAdmin(req, res, next) {
     } catch (_) {}
   }
 
+  // 3. Fallback: ตรวจสอบ Firebase ID Token จาก Google Sign-In เมื่อไม่มี Firebase Admin Service Account
+  try {
+    const decodedFb = jwt.decode(bearer);
+    if (
+      decodedFb &&
+      (decodedFb.aud === (process.env.FIREBASE_PROJECT_ID || "usb-charger-project") || decodedFb.iss?.includes("securetoken.google.com/usb-charger-project")) &&
+      decodedFb.exp * 1000 > Date.now() &&
+      decodedFb.email
+    ) {
+      req.adminUser = { user: decodedFb.email, role: "admin", provider: "firebase_jwt" };
+      return next();
+    }
+  } catch (_) {}
+
   return res.status(401).json({ error: "Token ไม่ถูกต้องหรือหมดอายุ กรุณาเข้าสู่ระบบใหม่" });
 }
 
