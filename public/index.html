@@ -459,11 +459,119 @@ html:not([data-theme="dark"]) .sun-icon{
 .pc-hint{font-size:.78rem;color:var(--g3);margin-top:10px}
 .pc-pending{font-size:.75rem;color:var(--amber);margin-top:8px}
 
-/* progress bar */
-.bar-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-.bar-port{font-family:var(--display);font-size:.9rem;font-weight:700;display:flex;align-items:center;gap:6px;color:var(--dark)}
-.bar-meta{text-align:right;font-size:.72rem;color:var(--g3)}
-.bar-timer{font-size:1.05rem;font-weight:800;color:var(--blue);display:inline-block;margin-top:2px}
+/* ── MODERN FUTURISTIC CHARGING PROGRESS BAR & ANIMATIONS ── */
+@keyframes chargeStripes {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 56px 0, 0 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.45)); }
+  50% { filter: drop-shadow(0 0 16px rgba(6, 182, 212, 0.85)); }
+}
+
+@keyframes pulseWarning {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.55)); }
+  50% { filter: drop-shadow(0 0 18px rgba(244, 63, 94, 0.95)); }
+}
+
+@keyframes sparkTwinkle {
+  0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.85; }
+  50% { transform: translateY(-50%) scale(1.3); opacity: 1; filter: drop-shadow(0 0 8px #fff); }
+}
+
+@keyframes cardChargingBreath {
+  0%, 100% { box-shadow: 0 6px 24px -4px rgba(16, 185, 129, 0.12), 0 0 0 1.5px rgba(16, 185, 129, 0.25); }
+  50% { box-shadow: 0 10px 32px rgba(16, 185, 129, 0.22), 0 0 0 2px rgba(16, 185, 129, 0.45); }
+}
+
+@keyframes cardWarningBreath {
+  0%, 100% { box-shadow: 0 6px 24px -4px rgba(239, 68, 68, 0.18), 0 0 0 1.5px rgba(239, 68, 68, 0.35); }
+  50% { box-shadow: 0 10px 32px rgba(239, 68, 68, 0.3), 0 0 0 2px rgba(239, 68, 68, 0.65); }
+}
+
+.port-card.in-use {
+  grid-column: 1 / -1;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  animation: cardChargingBreath 3s ease-in-out infinite;
+  border-radius: 18px;
+  padding: 20px 20px 18px;
+}
+
+.port-card.in-use.low-time {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  animation: cardWarningBreath 1.8s ease-in-out infinite;
+}
+
+.bar-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bar-port {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--dark);
+}
+
+.bar-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  margin-left: 6px;
+}
+
+.bar-status-tag .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  animation: timerTick 1s infinite alternate;
+}
+
+.bar-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-price-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.08);
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.bar-timer {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0284c7;
+  letter-spacing: -0.02em;
+  display: inline-block;
+}
+
+.bar-timer.low {
+  color: #ef4444;
+  animation: timerTick 0.8s infinite alternate;
+}
 
 @keyframes timerTick {
   0% { transform: scale(1); }
@@ -472,40 +580,128 @@ html:not([data-theme="dark"]) .sun-icon{
 }
 .bar-timer.tick { animation: timerTick .15s ease; }
 
-.bar-pill{
-  position:relative;height:44px;border-radius:100px;
-  overflow:hidden;background:var(--g1);
-  box-shadow:inset 0 2px 4px rgba(0,0,0,.06);
-}
-.bar-fill{height:100%;width:100%;transition:background .8s}
-.bar-pct{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.15rem;font-weight:900;color:#fff;
-  text-shadow:0 1px 4px rgba(0,0,0,.3);
+/* ── CAPSULE TRACK ── */
+.bar-pill {
+  position: relative;
+  height: 38px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4), 0 1px 2px rgba(255,255,255,0.8);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  padding: 3px;
+  display: flex;
+  align-items: center;
 }
 
-.bar-icon{
-  display:inline-block;vertical-align:middle;margin-right:6px;
-  mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat;
-  mask-size:contain;-webkit-mask-size:contain;
-  mask-position:center;-webkit-mask-position:center;
-  background:var(--blue);
+/* ── INNER FILL BAR ── */
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  position: relative;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 14px;
+  background-image: 
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.2) 0,
+      rgba(255, 255, 255, 0.2) 10px,
+      transparent 10px,
+      transparent 20px
+    ),
+    linear-gradient(90deg, #059669 0%, #10b981 40%, #06b6d4 100%);
+  background-size: 28px 28px, 100% 100%;
+  animation: chargeStripes 1.2s linear infinite, pulseGlow 2.5s ease-in-out infinite;
 }
-.bar-icon.a{width:20px;height:22px;mask-image:url('assets/usb-a-icon.png');-webkit-mask-image:url('assets/usb-a-icon.png')}
-.bar-icon.c{width:16px;height:22px;mask-image:url('assets/usb-c-icon.png');-webkit-mask-image:url('assets/usb-c-icon.png')}
+
+/* Medium level */
+.bar-fill.medium {
+  background-image: 
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.22) 0,
+      rgba(255, 255, 255, 0.22) 10px,
+      transparent 10px,
+      transparent 20px
+    ),
+    linear-gradient(90deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%);
+  animation: chargeStripes 1s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.7));
+}
+
+/* Low level / Emergency */
+.bar-fill.low {
+  background-image: 
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.25) 0,
+      rgba(255, 255, 255, 0.25) 10px,
+      transparent 10px,
+      transparent 20px
+    ),
+    linear-gradient(90deg, #b91c1c 0%, #ef4444 50%, #f43f5e 100%);
+  animation: chargeStripes 0.7s linear infinite, pulseWarning 1.2s ease-in-out infinite;
+}
+
+/* Glowing pin at head of fill */
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 80%;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 8px #ffffff, 0 0 16px rgba(255, 255, 255, 0.9);
+  animation: sparkTwinkle 1.5s infinite alternate;
+}
+
+/* ── TEXT PERCENTAGE IN BAR ── */
+.bar-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display), sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 2;
+  gap: 5px;
+}
+
+.bar-icon {
+  display: inline-block;
+  vertical-align: middle;
+  mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat;
+  mask-size: contain; -webkit-mask-size: contain;
+  mask-position: center; -webkit-mask-position: center;
+  background: var(--blue);
+}
+.bar-icon.a { width: 20px; height: 22px; mask-image: url('assets/usb-a-icon.png'); -webkit-mask-image: url('assets/usb-a-icon.png'); }
+.bar-icon.c { width: 16px; height: 22px; mask-image: url('assets/usb-c-icon.png'); -webkit-mask-image: url('assets/usb-c-icon.png'); }
 
 /* 1min warning */
-.warn-1m{
-  margin-top:10px;
-  background:rgba(217,119,6,.08);
-  border:1px solid rgba(217,119,6,.3);
-  border-radius:10px;padding:10px 12px;
-  display:flex;align-items:flex-start;gap:8px;
+.warn-1m {
+  margin-top: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: badgePop 0.3s ease;
 }
-.warn-1m svg{width:16px;height:16px;color:var(--amber);flex-shrink:0;margin-top:1px}
-.warn-1m-t{font-size:.78rem;font-weight:700;color:var(--amber)}
-.warn-1m-s{font-size:.7rem;color:var(--g3);margin-top:2px}
+.warn-1m svg { width: 18px; height: 18px; color: #ef4444; flex-shrink: 0; }
+.warn-1m-t { font-size: 0.82rem; font-weight: 700; color: #dc2626; }
+.warn-1m-s { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
 
 /* ── FAQ ───────────────────────────────── */
 .faq{max-width:600px;margin:0 auto 48px;padding:0 20px}
@@ -2271,10 +2467,8 @@ function renderPorts(ports){
       const total=p.totalSeconds||p.currentTx?.chargeSeconds||Number(card.dataset.total)||p.remainingSeconds||1;
       const rem=p.remainingSeconds||0;
       card.dataset.rem=rem;card.dataset.total=total;card.dataset.paused=p.isPaused?'1':'0';
-      const pct=Math.max(0,Math.min(100,Math.round((rem/total)*100)));
-      const used=100-pct;
-      const grad=pct===100?'linear-gradient(90deg,#16a34a,#22c55e)':pct===0?'linear-gradient(90deg,#b91c1c,#ef4444)':`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
-      const tEl=$(`t-${p.id}`),bpEl=$(`bp-${p.id}`),bfEl=$(`bf-${p.id}`),wEl=$(`w1m-${p.id}`);
+      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+      const tEl = $(`t-${p.id}`), bpEl = $(`bp-${p.id}`), bfEl = $(`bf-${p.id}`), wEl = $(`w1m-${p.id}`);
       
       const newText = fmtSecs(rem);
       if(tEl && tEl.textContent !== newText){
@@ -2282,11 +2476,17 @@ function renderPorts(ports){
           tEl.classList.remove('tick');
           void tEl.offsetWidth;
           tEl.classList.add('tick');
+          tEl.classList.toggle('low', rem <= 60 && rem > 0);
       }
       
-      if(bpEl)bpEl.textContent=`${pct} %`;
-      if(bfEl)bfEl.style.background=grad;
-      if(wEl)wEl.style.display=(rem<=60&&rem>0)?'block':'none';
+      card.classList.toggle('low-time', rem <= 60 && rem > 0);
+      if(bpEl) bpEl.innerHTML = `⚡ เหลือเวลา ${pct}%`;
+      if(bfEl) {
+        bfEl.style.width = `${pct}%`;
+        bfEl.classList.toggle('low', pct <= 15 || rem <= 60);
+        bfEl.classList.toggle('medium', pct > 15 && pct <= 35 && rem > 60);
+      }
+      if(wEl) wEl.style.display = (rem <= 60 && rem > 0) ? 'block' : 'none';
     });
     return;
   }
@@ -2303,29 +2503,35 @@ function renderPorts(ports){
     const tc=isC?'c':'a';
 
     if(isU){
-      const total=p.totalSeconds||p.currentTx?.chargeSeconds||p.remainingSeconds||1;
-      const rem=p.remainingSeconds||0;
-      const pct=Math.max(0,Math.min(100,Math.round((rem/total)*100)));
-      const used=100-pct;
-      const grad=pct===100?'linear-gradient(90deg,#16a34a,#22c55e)':pct===0?'linear-gradient(90deg,#b91c1c,#ef4444)':`linear-gradient(90deg,#ef4444 ${used}%,#16a34a ${used}%)`;
-      const pauseBadge=p.isPaused?'<span style="color:var(--amber);font-size:.7rem;margin-left:6px">(พักชั่วคราว)</span>':'';
-      el.innerHTML=`
+      const total = p.totalSeconds || p.currentTx?.chargeSeconds || p.remainingSeconds || 1;
+      const rem = p.remainingSeconds || 0;
+      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+      const isLow = pct <= 15 || rem <= 60;
+      const isMed = pct > 15 && pct <= 35 && !isLow;
+      const stateClass = isLow ? 'low' : isMed ? 'medium' : '';
+      const pauseBadge = p.isPaused ? '<span style="color:var(--amber);font-size:.7rem;margin-left:6px">(พักชั่วคราว)</span>' : '';
+      
+      el.className = `port-card in-use ${isLow ? 'low-time' : ''}`;
+      el.innerHTML = `
         <div class="bar-hd">
           <div class="bar-port">
-            <span class="bar-icon ${tc}"></span>${p.label}${pauseBadge}
+            <span class="bar-icon ${tc}"></span>
+            <span>${p.label}</span>
+            <span class="bar-status-tag"><span class="live-dot"></span>${p.isPaused ? 'พักชาร์จ' : 'กำลังจ่ายไฟ'}</span>
+            ${pauseBadge}
           </div>
           <div class="bar-meta">
-            ฿${p.currentTx?.amount||Math.round(total/SPB)||'—'}
-            <span class="bar-timer" id="t-${p.id}">${fmtSecs(rem)}</span>
+            <span class="bar-price-chip">฿${p.currentTx?.amount || Math.round(total / SPB) || '—'}</span>
+            <span class="bar-timer ${rem <= 60 ? 'low' : ''}" id="t-${p.id}">${fmtSecs(rem)}</span>
           </div>
         </div>
         <div class="bar-pill">
-          <div class="bar-fill" id="bf-${p.id}" style="background:${grad}"></div>
-          <div class="bar-pct" id="bp-${p.id}">${pct} %</div>
+          <div class="bar-fill ${stateClass}" id="bf-${p.id}" style="width:${pct}%"></div>
+          <div class="bar-pct" id="bp-${p.id}">⚡ เหลือเวลา ${pct}%</div>
         </div>
-        <div id="w1m-${p.id}" style="display:${(rem<=60&&rem>0)?'block':'none'}">
+        <div id="w1m-${p.id}" style="display:${(rem <= 60 && rem > 0) ? 'block' : 'none'}">
           <div class="warn-1m">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
             <div><div class="warn-1m-t">เหลือเวลาชาร์จ 1 นาทีสุดท้าย</div><div class="warn-1m-s">ระบบจะตัดไฟอัตโนมัติเมื่อครบเวลา</div></div>
           </div>
         </div>`;
