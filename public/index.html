@@ -1159,7 +1159,8 @@ footer{
 
     <!-- Quick Contact Channels -->
     <div class="contact-grid">
-      <a href="tel:0969679951" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก">
+      <!-- Phone -->
+      <a href="tel:0969679951" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก" style="display:none">
         <div class="contact-ic-box phone">
           <i class="pic-icon ic-phone"></i>
         </div>
@@ -1169,17 +1170,30 @@ footer{
         </div>
       </a>
 
-      <a href="https://instagram.com" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Instagram">
-        <div class="contact-ic-box ig" id="contactSocialIconBox">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;display:block"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+      <!-- Line -->
+      <a href="https://line.me" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Line" style="display:none">
+        <div class="contact-ic-box line">
+          <i class="pic-icon ic-line"></i>
         </div>
         <div class="contact-info">
-          <span class="contact-lbl" id="contactSocialLbl">Instagram ผู้ดูแล</span>
+          <span class="contact-lbl">Line ID ผู้ดูแล</span>
           <strong class="contact-val" id="contactLineText">@smartcharger</strong>
         </div>
       </a>
 
-      <div class="contact-pill loc" id="contactLocPill">
+      <!-- Instagram (IG) -->
+      <a href="https://instagram.com" target="_blank" rel="noopener" class="contact-pill" id="contactIgBtn" title="กดเพื่อเปิด Instagram" style="display:none">
+        <div class="contact-ic-box ig" style="padding:0;overflow:hidden;background:none">
+          <img src="assets/icon-instagram.png" alt="Instagram" style="width:38px;height:38px;object-fit:cover;border-radius:10px;display:block"/>
+        </div>
+        <div class="contact-info">
+          <span class="contact-lbl">Instagram ผู้ดูแล</span>
+          <strong class="contact-val" id="contactIgText">@instagram</strong>
+        </div>
+      </a>
+
+      <!-- Location -->
+      <div class="contact-pill loc" id="contactLocPill" style="display:none">
         <div class="contact-ic-box loc">
           <i class="pic-icon ic-map-pin"></i>
         </div>
@@ -2151,9 +2165,10 @@ function getAppConfig(){
       bankAccountName: fsCfg.bankAccountName || s.bankAccountName || 'ศุภกฤต สอนบุญมา',
       secondsPerBaht: Number(fsCfg.secondsPerBaht || s.secondsPerBaht) || 180,
       easyslipKey: fsCfg.easyslipKey || s.easyslipKey || '',
-      supportPhone: fsCfg.supportPhone || s.supportPhone || '0969679951',
-      supportLine: fsCfg.supportLine || s.supportLine || '@smartcharger',
-      supportLocation: fsCfg.supportLocation || s.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
+      supportPhone: fsCfg.supportPhone !== undefined ? fsCfg.supportPhone : (s.supportPhone !== undefined ? s.supportPhone : '0969679951'),
+      supportLine: fsCfg.supportLine !== undefined ? fsCfg.supportLine : (s.supportLine !== undefined ? s.supportLine : ''),
+      supportIg: fsCfg.supportIg !== undefined ? fsCfg.supportIg : (s.supportIg !== undefined ? s.supportIg : ''),
+      supportLocation: fsCfg.supportLocation !== undefined ? fsCfg.supportLocation : (s.supportLocation !== undefined ? s.supportLocation : 'ห้องคอมพิวเตอร์ อาคาร 1')
     };
   }
   catch(e){
@@ -2166,7 +2181,8 @@ function getAppConfig(){
       secondsPerBaht: Number(fsCfg.secondsPerBaht) || 180,
       easyslipKey: fsCfg.easyslipKey || '',
       supportPhone: fsCfg.supportPhone || '0969679951',
-      supportLine: fsCfg.supportLine || '@smartcharger',
+      supportLine: fsCfg.supportLine || '',
+      supportIg: fsCfg.supportIg || '',
       supportLocation: fsCfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
     };
   }
@@ -2174,50 +2190,65 @@ function getAppConfig(){
 
 function updateSupportContactInfo() {
   const cfg = getAppConfig();
-  const phone = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
-  const phoneFormatted = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-  const line = cfg.supportLine || '@smartcharger';
-  const loc = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
+  const phone = (cfg.supportPhone || cfg.promptpayPhone || '').trim();
+  const line = (cfg.supportLine || '').trim();
+  const ig = (cfg.supportIg || '').trim();
+  const loc = (cfg.supportLocation || '').trim();
 
+  // 1. Phone
   const pBtn = $('contactPhoneBtn');
   const pTxt = $('contactPhoneText');
-  if (pBtn) pBtn.href = `tel:${phone.replace(/\D/g, '')}`;
-  if (pTxt) pTxt.textContent = phoneFormatted || phone;
-
-  const lBtn = $('contactLineBtn');
-  const lTxt = $('contactLineText');
-  const lLbl = $('contactSocialLbl');
-  const iconBox = $('contactSocialIconBox') || lBtn?.querySelector('.contact-ic-box');
-  const rawContact = line || '@smartcharger';
-  if (lTxt) lTxt.textContent = rawContact;
-
-  const isLine = rawContact.includes('line.me') || rawContact.toLowerCase().startsWith('line:') || rawContact.toLowerCase().includes('line');
-  if (iconBox) {
-    if (isLine) {
-      iconBox.className = 'contact-ic-box line';
-      iconBox.innerHTML = '<i class="pic-icon ic-line"></i>';
+  if (pBtn) {
+    if (phone) {
+      const phoneFormatted = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      pBtn.href = `tel:${phone.replace(/\D/g, '')}`;
+      if (pTxt) pTxt.textContent = phoneFormatted || phone;
+      pBtn.style.display = 'flex';
     } else {
-      iconBox.className = 'contact-ic-box ig';
-      iconBox.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;display:block"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
+      pBtn.style.display = 'none';
     }
   }
 
-  let href = '';
-  if (rawContact.startsWith('http://') || rawContact.startsWith('https://')) {
-    href = rawContact;
-    if (lLbl) lLbl.textContent = isLine ? 'Line ผู้ดูแล' : 'Instagram ผู้ดูแล';
-  } else if (isLine) {
-    href = `https://line.me/ti/p/~${rawContact.replace(/^line:\s*/i, '').replace('@', '')}`;
-    if (lLbl) lLbl.textContent = 'Line ผู้ดูแล';
-  } else {
-    const handle = rawContact.replace('@', '').trim();
-    href = `https://instagram.com/${handle}`;
-    if (lLbl) lLbl.textContent = 'Instagram ผู้ดูแล';
+  // 2. Line
+  const lBtn = $('contactLineBtn');
+  const lTxt = $('contactLineText');
+  if (lBtn) {
+    if (line) {
+      const cleanLine = line.replace(/^line:\s*/i, '').trim();
+      lBtn.href = cleanLine.startsWith('http') ? cleanLine : `https://line.me/ti/p/~${cleanLine.replace('@', '')}`;
+      if (lTxt) lTxt.textContent = cleanLine;
+      lBtn.style.display = 'flex';
+    } else {
+      lBtn.style.display = 'none';
+    }
   }
-  if (lBtn) lBtn.href = href;
 
+  // 3. Instagram (IG)
+  const igBtn = $('contactIgBtn');
+  const igTxt = $('contactIgText');
+  if (igBtn) {
+    if (ig) {
+      const cleanIg = ig.trim();
+      const handle = cleanIg.replace(/^@/, '').trim();
+      igBtn.href = cleanIg.startsWith('http') ? cleanIg : `https://instagram.com/${handle}`;
+      if (igTxt) igTxt.textContent = cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`;
+      igBtn.style.display = 'flex';
+    } else {
+      igBtn.style.display = 'none';
+    }
+  }
+
+  // 4. Location
+  const locPill = $('contactLocPill');
   const locTxt = $('contactLocText');
-  if (locTxt) locTxt.textContent = loc;
+  if (locPill) {
+    if (loc) {
+      if (locTxt) locTxt.textContent = loc;
+      locPill.style.display = 'flex';
+    } else {
+      locPill.style.display = 'none';
+    }
+  }
 
   // Update public QA badge count (all issues, excluding legacy mocks)
   const allIssues = getStoredIssues();
@@ -2336,8 +2367,8 @@ window._onFsUpdate = function(d) {
   try {
     const localCfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
     let hasCfgUpdate = false;
-    ['promptpayPhone', 'truemoneyPhone', 'bankName', 'bankAccount', 'bankAccountName', 'supportPhone', 'supportLine', 'supportLocation'].forEach(k => {
-      if (srcCfg[k]) {
+    ['promptpayPhone', 'truemoneyPhone', 'bankName', 'bankAccount', 'bankAccountName', 'supportPhone', 'supportLine', 'supportIg', 'supportLocation'].forEach(k => {
+      if (srcCfg[k] !== undefined) {
         localCfg[k] = srcCfg[k];
         hasCfgUpdate = true;
       }

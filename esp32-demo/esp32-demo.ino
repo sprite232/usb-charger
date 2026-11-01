@@ -8,10 +8,9 @@
   - Port 4: USB-C 2 -> GPIO 33 (Relay 4)
   
   Flow:
-  1. ESP32 connects to WiFi.
+  1. ESP32 connects to WiFi (2.4GHz).
   2. Polls /api/esp32/command every 2 seconds.
   3. Updates GPIO 26, 27, 25, 33 according to relayOn state.
-  4. Reports hardware heartbeat to /api/esp32/report.
 */
 
 #include <WiFi.h>
@@ -20,8 +19,8 @@
 
 #define WIFI_SSID "Plam_tawan_2.4G"
 #define WIFI_PASSWORD "0626097440"
-#define SERVER_URL "http://192.168.1.107:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
-#define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Authentication Secret
+#define SERVER_URL "http://192.168.1.107:3000" // IP คอมพิวเตอร์เซิร์ฟเวอร์
+#define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Secret Token
 
 // 4 Relays Pins
 const int RELAY_PINS[4] = { 26, 27, 25, 33 };
@@ -29,36 +28,58 @@ const char* PORT_KEYS[4] = { "usb-a-1", "usb-a-2", "usb-c-1", "usb-c-2" };
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
   
   // Setup Relay Pins
   for (int i = 0; i < 4; i++) {
     pinMode(RELAY_PINS[i], OUTPUT);
-    digitalWrite(RELAY_PINS[i], LOW); // ปิดไฟเริ่มต้น (Active-High)
+    digitalWrite(RELAY_PINS[i], LOW); // ปิดไฟเริ่มต้น (Active-High Relay: LOW = OFF, HIGH = ON)
   }
 
-  Serial.println("\n🔌 Starting Smart USB Charger ESP32...");
+  Serial.println("\n==========================================");
+  Serial.println("🔌 Starting Smart USB Charger ESP32...");
+  Serial.printf("📡 Connecting to WiFi: %s\n", WIFI_SSID);
+  Serial.println("==========================================");
+
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 40) {
     delay(500);
     Serial.print(".");
+    attempts++;
   }
-  Serial.println("\n✅ WiFi Connected! IP: " + WiFi.localIP().toString());
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\n✅ WiFi Connected Successfully!");
+    Serial.println("📍 ESP32 IP: " + WiFi.localIP().toString());
+    Serial.printf("🎯 Target Server: %s\n", SERVER_URL);
+  } else {
+    Serial.printf("\n⚠️ ยังเชื่อมต่อ WiFi ไม่สำเร็จ (Status Code: %d)\n", WiFi.status());
+    Serial.println("   ระบบจะพยายามเชื่อมต่อใหม่อัตโนมัติใน loop...");
+  }
 }
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     fetchRelayCommands();
   } else {
-    Serial.println("⚠️ WiFi Disconnected, reconnecting...");
+    Serial.println("⚠️ กำลังเชื่อมต่อ WiFi อีกครั้ง...");
+    WiFi.disconnect();
     WiFi.reconnect();
+    delay(3000);
   }
-  delay(2000); // ตรวจสอบสถานะทุกๆ 2 วินาที
+  delay(2000); // Poll ทุก 2 วินาที
 }
 
 void fetchRelayCommands() {
   HTTPClient http;
-  http.begin(String(SERVER_URL) + "/api/esp32/command");
-  http.setTimeout(3000);
+  String url = String(SERVER_URL) + "/api/esp32/command";
+  http.begin(url);
+  http.setTimeout(4000);
   http.addHeader("X-ESP32-Secret", ESP32_SECRET);
   
   int httpCode = http.GET();
@@ -80,13 +101,16 @@ void fetchRelayCommands() {
           bool isOn = relays[key]["on"] | false;
           int gpio = RELAY_PINS[i];
           
-          // สั่ง Relay (HIGH = เปิดไฟ, LOW = ปิดไฟ)
+          // สั่ง Relay: HIGH = เปิดไฟ, LOW = ปิดไฟ
           digitalWrite(gpio, isOn ? HIGH : LOW);
         }
       }
+      // Serial.println("✅ Relay status synchronized with server");
     }
-  } else {
+  } else if (httpCode > 0) {
     Serial.printf("❌ HTTP Error: %d\n", httpCode);
+  } else {
+    Serial.printf("❌ Connection Error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
 }

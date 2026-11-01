@@ -75,12 +75,13 @@ const CFG = {
   adminPinHash:     process.env.ADMIN_PIN_HASH || (process.env.ADMIN_PIN ? bcrypt.hashSync(String(process.env.ADMIN_PIN), 10) : "$2b$10$rHV5FympGk4lK.g4Mnom5e1p6lcW5q5eW21bYZ/nQ/vhmEmLC0OFm"),
   jwtSecret:        process.env.JWT_SECRET           || `secret-${Math.random()}`,
   easyslipKey:      process.env.EASYSLIP_API_KEY     || "",
-  esp32Secret:      process.env.ESP32_SECRET         || "esp32_device_secret_2026_x89q",
+  esp32Secret:      process.env.ESP32_SECRET         || "usb-charger-esp32-hw-secret-key-2026",
   bankName:         process.env.BANK_NAME            || "กสิกรไทย (kbank)",
   bankAccount:      process.env.BANK_ACCOUNT         || "193-3-86131-3",
   bankAccountName:  process.env.BANK_ACCOUNT_NAME    || "ศุภกฤต สอนบุญมา",
   supportPhone:     process.env.SUPPORT_PHONE        || "0969679951",
   supportLine:      process.env.SUPPORT_LINE         || "@smartcharger",
+  supportIg:        process.env.SUPPORT_IG           || "",
   supportLocation:  process.env.SUPPORT_LOCATION     || "ห้องคอมพิวเตอร์ อาคาร 1",
   sessionExpireMs:  Math.min(600_000, Math.max(30_000, Number(process.env.PAYMENT_SESSION_EXPIRE_SECONDS || 120) * 1000)),
   slipMaxAgeMins:   30,
@@ -153,6 +154,7 @@ function saveState() {
         easyslipKey: CFG.easyslipKey,
         supportPhone: CFG.supportPhone,
         supportLine: CFG.supportLine,
+        supportIg: CFG.supportIg,
         supportLocation: CFG.supportLocation,
         truemoneyPhone: CFG.truemoneyPhone,
       },
@@ -166,6 +168,7 @@ function saveState() {
       secondsPerBaht: CFG.secondsPerBaht,
       supportPhone: CFG.supportPhone,
       supportLine: CFG.supportLine,
+      supportIg: CFG.supportIg,
       supportLocation: CFG.supportLocation,
       truemoneyPhone: CFG.truemoneyPhone,
       updatedAt: state.updatedAt,
@@ -192,8 +195,9 @@ function loadState() {
       if (data.config.secondsPerBaht) CFG.secondsPerBaht = Number(data.config.secondsPerBaht);
       if (data.config.easyslipKey) CFG.easyslipKey = data.config.easyslipKey;
       if (data.config.supportPhone) CFG.supportPhone = data.config.supportPhone;
-      if (data.config.supportLine) CFG.supportLine = data.config.supportLine;
-      if (data.config.supportLocation) CFG.supportLocation = data.config.supportLocation;
+      if (data.config.supportLine !== undefined) CFG.supportLine = data.config.supportLine;
+      if (data.config.supportIg !== undefined) CFG.supportIg = data.config.supportIg;
+      if (data.config.supportLocation !== undefined) CFG.supportLocation = data.config.supportLocation;
     }
     if (data.ports && Array.isArray(data.ports)) {
       const lastTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
@@ -557,6 +561,7 @@ app.get("/api/state", (_, res) => {
     easyslipEnabled: !!CFG.easyslipKey,
     supportPhone: CFG.supportPhone,
     supportLine: CFG.supportLine,
+    supportIg: CFG.supportIg,
     supportLocation: CFG.supportLocation,
     updatedAt: state.updatedAt,
     ports: Object.values(state.ports).map((p) => ({
@@ -907,6 +912,7 @@ app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
       easyslipEnabled: !!CFG.easyslipKey,
       supportPhone: CFG.supportPhone,
       supportLine: CFG.supportLine,
+      supportIg: CFG.supportIg,
       supportLocation: CFG.supportLocation,
     },
     lastEsp32: state.lastEsp32,
@@ -916,7 +922,7 @@ app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
 
 // POST /api/admin/config — update settings (admin only)
 app.post("/api/admin/config", requireAdmin, (req, res) => {
-  const { promptpayPhone, truemoneyPhone, bankName, bankAccount, bankAccountName, secondsPerBaht, easyslipKey, supportPhone, supportLine, supportLocation } = req.body;
+  const { promptpayPhone, truemoneyPhone, bankName, bankAccount, bankAccountName, secondsPerBaht, easyslipKey, supportPhone, supportLine, supportIg, supportLocation } = req.body;
   if (promptpayPhone !== undefined) CFG.promptpayPhone = promptpayPhone.trim();
   if (truemoneyPhone !== undefined) CFG.truemoneyPhone = truemoneyPhone.trim();
   if (bankName !== undefined) CFG.bankName = bankName.trim();
@@ -926,6 +932,7 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
   if (easyslipKey !== undefined && easyslipKey.trim()) CFG.easyslipKey = easyslipKey.trim();
   if (supportPhone !== undefined) CFG.supportPhone = supportPhone.trim();
   if (supportLine !== undefined) CFG.supportLine = supportLine.trim();
+  if (supportIg !== undefined) CFG.supportIg = supportIg.trim();
   if (supportLocation !== undefined) CFG.supportLocation = supportLocation.trim();
   
   saveState();
@@ -943,6 +950,7 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
       easyslipEnabled: !!CFG.easyslipKey,
       supportPhone: CFG.supportPhone,
       supportLine: CFG.supportLine,
+      supportIg: CFG.supportIg,
       supportLocation: CFG.supportLocation,
     }
   });

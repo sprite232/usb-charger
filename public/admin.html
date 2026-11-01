@@ -1650,19 +1650,23 @@ tr:hover td{background: var(--card-hover);}
         <i class="pic-icon ic-phone" style="font-size:18px;color:var(--cyan)"></i>
         <span>ข้อมูลช่องทางติดต่อฉุกเฉิน (Emergency Support)</span>
       </div>
-      <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ศูนย์ช่วยเหลือมุมล่างของหน้าเว็บ เพื่อให้ผู้ใช้งานโทรออกหรือติดต่อทาง Instagram (IG) / Line ได้ทันที</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem">
+      <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ศูนย์ช่วยเหลือมุมล่างของหน้าเว็บ (ช่องไหนไม่ใส่ค่า ระบบจะไม่แสดงที่หน้าเว็บ)</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
         <div class="field-row">
           <label>เบอร์โทรศัพท์ผู้ดูแล:</label>
-          <input type="text" id="cfgSupportPhone" class="form-input" placeholder="0969679951" />
+          <input type="text" id="cfgSupportPhone" class="form-input" placeholder="0969679951 (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
-          <label>Instagram (IG) หรือ Line ID:</label>
-          <input type="text" id="cfgSupportLine" class="form-input" placeholder="@your_instagram (หรือ Line ID)" />
+          <label>Line ID ผู้ดูแล:</label>
+          <input type="text" id="cfgSupportLine" class="form-input" placeholder="@smartcharger (ว่าง = ไม่แสดง)" />
+        </div>
+        <div class="field-row">
+          <label>Instagram (IG) ผู้ดูแล:</label>
+          <input type="text" id="cfgSupportIg" class="form-input" placeholder="_exoba_ หรือ @instagram (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
           <label>จุดบริการ / ห้องคอมพิวเตอร์:</label>
-          <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ห้องคอมพิวเตอร์ อาคาร 1" />
+          <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ห้องคอมพิวเตอร์ อาคาร 1 (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
           <label>เบอร์ TrueMoney Wallet รับซองอั่งเปา:</label>
@@ -4056,20 +4060,23 @@ async function deleteCurrentIssue() {
 function loadSupportSettings() {
   const cfg = getLocalSavedConfig();
   if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
-  if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '@smartcharger';
+  if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '';
+  if (document.getElementById('cfgSupportIg')) document.getElementById('cfgSupportIg').value = cfg.supportIg || cfg.supportInstagram || '';
   if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
   if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = cfg.truemoneyPhone || cfg.promptpayPhone || '0969679951';
 }
 
 async function saveSupportSettings() {
   const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '0969679951';
-  const line = document.getElementById('cfgSupportLine')?.value?.trim() || '@smartcharger';
+  const line = document.getElementById('cfgSupportLine')?.value?.trim() || '';
+  const ig = document.getElementById('cfgSupportIg')?.value?.trim() || '';
   const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || 'ห้องคอมพิวเตอร์ อาคาร 1';
   const truemoneyPhone = document.getElementById('cfgTruemoneyPhone')?.value?.trim() || phone;
 
   const cfg = getLocalSavedConfig();
   cfg.supportPhone = phone;
   cfg.supportLine = line;
+  cfg.supportIg = ig;
   cfg.supportLocation = loc;
   cfg.truemoneyPhone = truemoneyPhone;
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
@@ -4079,6 +4086,7 @@ async function saveSupportSettings() {
     config: cfg,
     supportPhone: phone,
     supportLine: line,
+    supportIg: ig,
     supportLocation: loc,
     truemoneyPhone: truemoneyPhone
   });
@@ -4088,6 +4096,7 @@ async function saveSupportSettings() {
     await adminApi('POST', '/api/admin/config', {
       supportPhone: phone,
       supportLine: line,
+      supportIg: ig,
       supportLocation: loc,
       truemoneyPhone: truemoneyPhone
     });
