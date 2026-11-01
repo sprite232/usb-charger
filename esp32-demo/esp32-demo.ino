@@ -20,7 +20,7 @@
 
 #define WIFI_SSID "Plam_tawan_2.4G"
 #define WIFI_PASSWORD "0626097440"
-#define SERVER_URL "http://192.168.1.50:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
+#define SERVER_URL "http://192.168.1.107:3000" // IP ของเครื่องคอมพิวเตอร์/เซิร์ฟเวอร์
 #define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Authentication Secret
 
 // 4 Relays Pins
