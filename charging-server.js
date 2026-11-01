@@ -32,13 +32,19 @@ const bcrypt   = require("bcryptjs");
 // ─── Firebase Admin (Firestore real-time sync) ────────────────────────────────
 let db = null;
 let fbAdmin = null;
+function hasFbApps() {
+  if (!fbAdmin) return false;
+  const apps = typeof fbAdmin.getApps === 'function' ? fbAdmin.getApps() : (fbAdmin.apps || []);
+  return apps.length > 0;
+}
+
 try {
   fbAdmin = require("firebase-admin");
   const credential = process.env.FIREBASE_SERVICE_ACCOUNT
     ? fbAdmin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
     : fbAdmin.credential.applicationDefault();
 
-  if (!fbAdmin.apps.length) {
+  if (!hasFbApps()) {
     fbAdmin.initializeApp({
       credential,
       projectId: process.env.FIREBASE_PROJECT_ID || "usb-charger-project",
@@ -523,7 +529,7 @@ async function requireAdmin(req, res, next) {
   } catch (_) {}
 
   // 2. ตรวจสอบ Firebase ID Token (กรณีล็อกอินผ่าน Google Sign-In ใน admin.html)
-  if (fbAdmin && fbAdmin.apps.length) {
+  if (hasFbApps()) {
     try {
       const decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
       if (decodedFb && decodedFb.email && db) {
@@ -1076,7 +1082,7 @@ app.get("/api/issues", async (req, res) => {
       if (decoded && decoded.role === "admin") isAdmin = true;
     } catch(_) {}
 
-    if (!isAdmin && fbAdmin && fbAdmin.apps.length) {
+    if (!isAdmin && hasFbApps()) {
       try {
         const decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
         if (decodedFb && decodedFb.email && db) {

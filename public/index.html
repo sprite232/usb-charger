@@ -1170,7 +1170,7 @@ footer{
       </a>
 
       <a href="https://instagram.com" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Instagram">
-        <div class="contact-ic-box ig">
+        <div class="contact-ic-box ig" id="contactSocialIconBox">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;display:block"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
         </div>
         <div class="contact-info">
@@ -2187,14 +2187,26 @@ function updateSupportContactInfo() {
   const lBtn = $('contactLineBtn');
   const lTxt = $('contactLineText');
   const lLbl = $('contactSocialLbl');
+  const iconBox = $('contactSocialIconBox') || lBtn?.querySelector('.contact-ic-box');
   const rawContact = line || '@smartcharger';
   if (lTxt) lTxt.textContent = rawContact;
+
+  const isLine = rawContact.includes('line.me') || rawContact.toLowerCase().startsWith('line:') || rawContact.toLowerCase().includes('line');
+  if (iconBox) {
+    if (isLine) {
+      iconBox.className = 'contact-ic-box line';
+      iconBox.innerHTML = '<i class="pic-icon ic-line"></i>';
+    } else {
+      iconBox.className = 'contact-ic-box ig';
+      iconBox.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;display:block"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
+    }
+  }
 
   let href = '';
   if (rawContact.startsWith('http://') || rawContact.startsWith('https://')) {
     href = rawContact;
-    if (lLbl) lLbl.textContent = rawContact.includes('line.me') ? 'Line ผู้ดูแล' : 'Instagram ผู้ดูแล';
-  } else if (rawContact.startsWith('line:') || rawContact.toLowerCase().includes('line')) {
+    if (lLbl) lLbl.textContent = isLine ? 'Line ผู้ดูแล' : 'Instagram ผู้ดูแล';
+  } else if (isLine) {
     href = `https://line.me/ti/p/~${rawContact.replace(/^line:\s*/i, '').replace('@', '')}`;
     if (lLbl) lLbl.textContent = 'Line ผู้ดูแล';
   } else {
