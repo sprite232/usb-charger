@@ -890,6 +890,7 @@ footer{
 .contact-ic-box svg{width:18px;height:18px;fill:currentColor}
 .contact-ic-box.phone{background:linear-gradient(135deg,#10b981,#059669)}
 .contact-ic-box.line{background:linear-gradient(135deg,#06c755,#00b347)}
+.contact-ic-box.ig{background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)}
 .contact-ic-box.loc{background:linear-gradient(135deg,#6366f1,#4f46e5)}
 .contact-info{display:flex;flex-direction:column;min-width:0}
 .contact-lbl{font-size:.68rem;color:var(--g3);font-weight:600}
@@ -1168,12 +1169,12 @@ footer{
         </div>
       </a>
 
-      <a href="https://line.me/ti/p/~@smartcharger" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Line">
-        <div class="contact-ic-box line">
-          <i class="pic-icon ic-line"></i>
+      <a href="https://instagram.com" target="_blank" rel="noopener" class="contact-pill" id="contactLineBtn" title="กดเพื่อเปิด Instagram">
+        <div class="contact-ic-box ig">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#fff;display:block"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
         </div>
         <div class="contact-info">
-          <span class="contact-lbl">Line ID ผู้ดูแล</span>
+          <span class="contact-lbl" id="contactSocialLbl">Instagram ผู้ดูแล</span>
           <strong class="contact-val" id="contactLineText">@smartcharger</strong>
         </div>
       </a>
@@ -2185,8 +2186,23 @@ function updateSupportContactInfo() {
 
   const lBtn = $('contactLineBtn');
   const lTxt = $('contactLineText');
-  if (lBtn) lBtn.href = line.startsWith('http') ? line : `https://line.me/ti/p/~${line.replace('@', '')}`;
-  if (lTxt) lTxt.textContent = line;
+  const lLbl = $('contactSocialLbl');
+  const rawContact = line || '@smartcharger';
+  if (lTxt) lTxt.textContent = rawContact;
+
+  let href = '';
+  if (rawContact.startsWith('http://') || rawContact.startsWith('https://')) {
+    href = rawContact;
+    if (lLbl) lLbl.textContent = rawContact.includes('line.me') ? 'Line ผู้ดูแล' : 'Instagram ผู้ดูแล';
+  } else if (rawContact.startsWith('line:') || rawContact.toLowerCase().includes('line')) {
+    href = `https://line.me/ti/p/~${rawContact.replace(/^line:\s*/i, '').replace('@', '')}`;
+    if (lLbl) lLbl.textContent = 'Line ผู้ดูแล';
+  } else {
+    const handle = rawContact.replace('@', '').trim();
+    href = `https://instagram.com/${handle}`;
+    if (lLbl) lLbl.textContent = 'Instagram ผู้ดูแล';
+  }
+  if (lBtn) lBtn.href = href;
 
   const locTxt = $('contactLocText');
   if (locTxt) locTxt.textContent = loc;
