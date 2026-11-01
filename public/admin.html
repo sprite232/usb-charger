@@ -3230,6 +3230,17 @@ async function setTimeRemaining(portId, seconds) {
 }
 
 async function toggleRelay(portId, on) {
+  // 1. อัปเดตข้อความบนหน้าจอทันที ไม่ต้องรอเน็ตเวิร์ก
+  const stateSpan = document.getElementById(`relayState-${portId}`);
+  if (stateSpan) {
+    stateSpan.textContent = on ? 'เปิดไฟอยู่' : 'ตัดไฟอยู่';
+    stateSpan.style.color = on ? 'var(--green)' : 'var(--red)';
+  }
+  const noticeEl = document.getElementById('lastActionNotice');
+  if (noticeEl) {
+    noticeEl.textContent = `สถานะ: สั่ง ${portId} -> ${on ? '⚡ เปิดไฟ' : '🛑 ตัดไฟ'}`;
+  }
+
   if (dashData && dashData.ports) {
     const p = dashData.ports.find(x => x.id === portId);
     if (p) { 
@@ -3239,15 +3250,16 @@ async function toggleRelay(portId, on) {
       renderTestingTab(dashData.ports);
     }
   }
+
+  // 2. ส่งคำสั่งไปยังเซิร์ฟเวอร์
   try {
     const res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
     if (res && res.success) {
       adminToast(`สั่งรีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'} สำเร็จ`, 'success');
-    } else {
-      adminToast(`บันทึกสถานะรีเลย์ ${portId} เรียบร้อย`, 'info');
     }
   } catch(_) {}
 
+  // 3. ซิงค์ขึ้น Cloud
   try {
     if (typeof fbDb !== 'undefined' && fbDb) {
       fbDb.collection('charger').doc('charger01').set({
