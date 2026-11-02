@@ -16,6 +16,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 
 #define WIFI_SSID "Palm_tawan_2.4G"
@@ -88,8 +89,14 @@ void fetchRelayCommands() {
   long rssi = WiFi.RSSI();
   String url = String(SERVER_URL) + "/api/esp32/command?secret=" + ESP32_SECRET + "&ip=" + myIp + "&rssi=" + String(rssi);
   
-  http.begin(url);
-  http.setTimeout(4000);
+  WiFiClientSecure secClient;
+  if (url.startsWith("https://")) {
+    secClient.setInsecure(); // รองรับ Cloud HTTPS อัตโนมัติ
+    http.begin(secClient, url);
+  } else {
+    http.begin(url);
+  }
+  http.setTimeout(5000);
   http.addHeader("X-ESP32-Secret", ESP32_SECRET);
   
   int httpCode = http.GET();
