@@ -2473,14 +2473,22 @@ function showServerBaseMsg(text, color) {
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
 async function adminApi(method, path, body) {
   try {
-    // Refresh Firebase token ถ้ามี user (expire ทุก 1 ชั่วโมง)
     if (currentUser) {
       try { token = await currentUser.getIdToken(false); } catch(_) {}
     }
-    const fullUrl = SERVER_BASE + path;
     const opt = { method, headers: authHdr() };
     if (body) opt.body = JSON.stringify(body);
-    const res = await fetch(fullUrl, opt);
+    
+    const fullUrl = SERVER_BASE ? (SERVER_BASE + path) : path;
+    let res = null;
+    try {
+      res = await fetch(fullUrl, opt);
+    } catch(err) {
+      if (SERVER_BASE && !window.location.protocol.includes('https')) {
+        try { res = await fetch(path, opt); } catch(_) {}
+      }
+    }
+    if (!res) return null;
     if (res.status === 401) { logout(); return {}; }
     return await res.json();
   } catch(e) {
@@ -2626,7 +2634,8 @@ async function tryLoadDashboard() {
 }
 
 async function autoRefresh() {
-  if (!token) return;
+  const isLocalHost = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') || window.location.hostname.includes('192.168.');
+  if (!token && !isLocalHost) return;
   const data = await adminApi('GET', '/api/admin/dashboard');
   if (data && data.ports) { 
     dashData = data; 
@@ -3501,47 +3510,65 @@ async function refreshAdminLogs() {
 }
 
 async function toggleRelay(portId, on) {
-  // 1. อัปเดตข้อความบนหน้าจอทันที ไม่ต้องรอเน็ตเวิร์ก
   const stateSpan = document.getElementById(`relayState-${portId}`);
-  if (stateSpan) {
-    stateSpan.textContent = on ? 'เปิดไฟอยู่' : 'ตัดไฟอยู่';
-    stateSpan.style.color = on ? 'var(--green)' : 'var(--red)';
-  }
   const noticeEl = document.getElementById('lastActionNotice');
+  const prevText = stateSpan ? stateSpan.textContent : '';
+  const prevColor = stateSpan ? stateSpan.style.color : '';
+
+  if (stateSpan) {
+    stateSpan.textContent = 'กำลังส่งคำสั่ง...';
+    stateSpan.style.color = 'var(--yellow)';
+  }
   if (noticeEl) {
-    noticeEl.textContent = `สถานะ: สั่ง ${portId} -> ${on ? '⚡ เปิดไฟ' : '🛑 ตัดไฟ'}`;
+    noticeEl.textContent = `สถานะ: กำลังส่งคำสั่ง ${portId} -> ${on ? '⚡ เปิดไฟ' : '🛑 ตัดไฟ'} ไปยังตู้ชาร์จ...`;
   }
 
-  if (dashData && dashData.ports) {
-    const p = dashData.ports.find(x => x.id === portId);
-    if (p) { 
-      p.relayOn = on; 
+  let res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
+  
+  if (!res || !res.success) {
+    try {
+      const fRes = await fetch(`/api/admin/port/${portId}/toggle-relay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on })
+      });
+      if (fRes.ok) res = await fRes.json();
+    } catch (_) {}
+  }
+
+  if (res && res.success) {
+    const isActuallyOn = res.relayOn;
+    if (stateSpan) {
+      stateSpan.textContent = isActuallyOn ? 'เปิดไฟอยู่' : 'ตัดไฟอยู่';
+      stateSpan.style.color = isActuallyOn ? 'var(--green)' : 'var(--red)';
+    }
+    if (noticeEl) {
+      noticeEl.textContent = `สถานะ: สวิตช์ ${portId} -> ${isActuallyOn ? '🟢 เปิดไฟสำเร็จ' : '🔴 ตัดไฟสำเร็จ'}`;
+    }
+    if (dashData && dashData.ports) {
+      const p = dashData.ports.find(x => x.id === portId);
+      if (p) p.relayOn = isActuallyOn;
       saveAdminPersistentPorts(dashData.ports);
       renderAll(dashData);
-      renderTestingTab(dashData.ports);
+    }
+    adminToast(`สั่งรีเลย์ ${portId} -> ${isActuallyOn ? 'เปิดไฟ' : 'ตัดไฟ'} สำเร็จ`, 'success');
+    refreshAdminLogs();
+  } else {
+    if (stateSpan) {
+      stateSpan.textContent = prevText || 'ตัดไฟอยู่';
+      stateSpan.style.color = prevColor || 'var(--red)';
+    }
+    if (noticeEl) {
+      noticeEl.textContent = '❌ ส่งคำสั่งไม่สำเร็จ — เบราว์เซอร์ติดต่อเซิร์ฟเวอร์ตู้ชาร์จไม่ได้';
+    }
+    const isHttps = window.location.protocol === 'https:';
+    if (isHttps) {
+      adminToast('❌ เบราว์เซอร์บล็อกคำสั่งส่งเข้า IP คอมในบ้าน (Mixed Content) กรุณาเปิดผ่าน http://localhost:3000/admin บนคอมตู้ชาร์จ', 'error');
+      alert('⚠️ ส่งคำสั่งไปยังตู้ชาร์จไม่ได้:\n\nเนื่องจากเปิดหน้าเว็บผ่าน Firebase (HTTPS) ซึ่งระบบรักษาความปลอดภัยของเบราว์เซอร์จะบล็อกไม่ให้ส่งข้อมูลเข้า IP ในบ้าน (HTTP 192.168.1.107)\n\n👉 วิธีใช้งานที่ถูกต้อง:\nให้เปิดหน้าแอดมินผ่าน:\nhttp://localhost:3000/admin\nบนเครื่องคอมพิวเตอร์ตู้ชาร์จโดยตรงครับ');
+    } else {
+      adminToast('❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ตู้ชาร์จได้ กรุณาตรวจเช็คว่าเปิด node server.js อยู่หรือไม่', 'error');
     }
   }
-
-  // 2. ส่งคำสั่งไปยังเซิร์ฟเวอร์
-  try {
-    const res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
-    if (res && res.success) {
-      adminToast(`สั่งรีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'} สำเร็จ`, 'success');
-    }
-  } catch(_) {}
-
-  // 3. ซิงค์ขึ้น Cloud
-  try {
-    if (typeof fbDb !== 'undefined' && fbDb) {
-      fbDb.collection('charger').doc('charger01').set({
-        ports: { [portId]: { relayOn: on } },
-        updatedAt: new Date().toISOString()
-      }, { merge: true }).catch(() => {});
-    }
-  } catch(_) {}
-
-  setActionNotice(`สวิตช์รีเลย์ ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'}`);
-  autoRefresh();
 }
 
 async function stopPort(portId) {
