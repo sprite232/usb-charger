@@ -659,6 +659,9 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   if (!Number.isFinite(amount) || amount < 1) {
     return res.status(400).json({ error: "จำนวนเงินต้องไม่น้อยกว่า 1 บาท" });
   }
+  if (amount > 100) {
+    return res.status(400).json({ error: "จำนวนเงินต้องไม่เกิน 100 บาท" });
+  }
   if (normMethod === "coin" && (amount < 5 || amount % 5 !== 0)) {
     return res.status(400).json({ error: "รับชำระด้วยเหรียญเฉพาะยอด 5 บาทขึ้นไป และเป็นทวีคูณของ 5 บาท" });
   }
@@ -761,6 +764,9 @@ app.post("/api/payment/truemoney-voucher", limiterPaymentCreate, async (req, res
   }
   if (expectedAmount < 10) {
     return res.status(400).json({ error: "TrueMoney ซองของขวัญต้องมียอดขั้นต่ำ ฿10 ขึ้นไป" });
+  }
+  if (expectedAmount > 100) {
+    return res.status(400).json({ error: "จำนวนเงินต้องไม่เกิน 100 บาท" });
   }
 
   // Extract hash (35 characters)

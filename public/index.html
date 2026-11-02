@@ -2831,14 +2831,31 @@ function focusCustom(){
   $('dcCustom').classList.add('sel');$('customRow').style.display='flex';$('customIn').focus();
 }
 function onCustomIn(){
-  const clean=String($('customIn').value).replace(/[^0-9]/g,'');
-  if($('customIn').value!==clean)$('customIn').value=clean;
-  const v=parseInt(clean,10)||0;
+  let clean=String($('customIn').value).replace(/[^0-9]/g,'');
+  let v=parseInt(clean,10)||0;
   const hint=$('customHint');
-  if(v>=1){
-    S.amount=v;$('customPrev').textContent='= '+fmtTime(v*SPB);$('customMinPreview').textContent=fmtTime(v*SPB);$('btnNext').disabled=false;
-    if(hint){hint.style.display='block';hint.textContent=(v<5||v%5!==0)?`ยอด ฿${v} ชำระผ่าน PromptPay / โอนเงินเท่านั้น`:`ยอด ฿${v} ชำระได้ทั้งเงินสดและโอนจ่าย`;}
-  }else{S.amount=null;$('customPrev').textContent='';$('customMinPreview').textContent='';$('btnNext').disabled=true;if(hint)hint.style.display='none';}
+  if(v > 100){
+    v = 100;
+    clean = '100';
+    $('customIn').value = '100';
+  }
+  if($('customIn').value!==clean)$('customIn').value=clean;
+  if(v>=1 && v<=100){
+    S.amount=v;
+    $('customPrev').textContent='= '+fmtTime(v*SPB);
+    $('customMinPreview').textContent=fmtTime(v*SPB);
+    $('btnNext').disabled=false;
+    if(hint){
+      hint.style.display='block';
+      hint.textContent=(v<5||v%5!==0)?`ยอด ฿${v} ชำระผ่าน PromptPay / โอนเงิน (สูงสุด ฿100)`:`ยอด ฿${v} ชำระได้ทั้งเงินสดและโอนจ่าย (สูงสุด ฿100)`;
+    }
+  }else{
+    S.amount=null;
+    $('customPrev').textContent='';
+    $('customMinPreview').textContent='';
+    $('btnNext').disabled=true;
+    if(hint)hint.style.display='none';
+  }
 }
 
 /* ── Confirm ── */
