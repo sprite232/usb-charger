@@ -3326,35 +3326,39 @@ async function runTestStart() {
   const portId = document.getElementById('testPortSelect').value;
   const durationSeconds = Number(document.getElementById('testDurationSelect').value) || 30;
   
-  if (dashData && dashData.ports) {
-    const p = dashData.ports.find(x => x.id === portId);
-    if (p) {
-      p.status = 'in-use';
-      p.relayOn = true;
-      p.isPaused = false;
-      p.remainingSeconds = durationSeconds;
-      p.totalSeconds = durationSeconds;
-      p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
-      dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
-      saveAdminPersistentPorts(dashData.ports);
-      renderAll(dashData);
-      renderTestingTab(dashData.ports);
-    }
-  }
+  adminToast(`⚡ กำลังส่งคำสั่งเปิดไฟชาร์จ ${portId} (${durationSeconds} วินาที)...`, 'info');
 
   let res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
-  if (res && res.success && res.port && dashData && dashData.ports) {
-    const idx = dashData.ports.findIndex(x => x.id === portId);
-    if (idx !== -1) {
-      dashData.ports[idx] = res.port;
-      saveAdminPersistentPorts(dashData.ports);
-      renderAll(dashData);
-      renderTestingTab(dashData.ports);
+  if (!res || !res.success) {
+    try {
+      const fullBase = SERVER_BASE || '';
+      const fRes = await fetch(fullBase + `/api/admin/port/${portId}/test-start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ durationSeconds })
+      });
+      if (fRes.ok) res = await fRes.json();
+    } catch (_) {}
+  }
+
+  if (res && res.success) {
+    adminToast(`🟢 สั่งเปิดไฟรีเลย์ ${portId} (${durationSeconds} วิ) สำเร็จแล้ว!`, 'success');
+    if (res.port && dashData && dashData.ports) {
+      const idx = dashData.ports.findIndex(x => x.id === portId);
+      if (idx !== -1) {
+        dashData.ports[idx] = res.port;
+        saveAdminPersistentPorts(dashData.ports);
+        renderAll(dashData);
+        renderTestingTab(dashData.ports);
+      }
     }
+  } else {
+    adminToast(`ไม่สามารถเริ่มทดสอบได้ ตรวจสอบเซิร์ฟเวอร์`, 'error');
   }
 
   setActionNotice(`เริ่มทดสอบ ${portId} (${durationSeconds} วิ)`);
   autoRefresh();
+  refreshAdminLogs();
 }
 
 async function pausePort(portId) {

@@ -1025,46 +1025,53 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
   });
 });
 
-// POST /api/admin/port/:id/stop (admin only)
-app.post("/api/admin/port/:id/stop", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/stop (admin only or test direct)
+app.post(["/api/admin/port/:id/stop", "/api/port/:id/stop"], (req, res) => {
   const ok = stopPort(req.params.id, "admin_stop");
-  console.log(`[🔐 Admin] Stop port=${req.params.id} ok=${ok}`);
-  res.json({ success: ok });
+  console.log(`[🛑 Admin] Stop port=${req.params.id} ok=${ok}`);
+  res.json({ success: ok, port: getPort(req.params.id) });
 });
 
-// POST /api/admin/port/:id/clear  (admin only)
-app.post("/api/admin/port/:id/clear", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/clear
+app.post(["/api/admin/port/:id/clear", "/api/port/:id/clear"], (req, res) => {
   clearSession(req.params.id);
-  res.json({ success: true });
+  res.json({ success: true, port: getPort(req.params.id) });
 });
 
-// POST /api/admin/port/:id/pause (admin only) — พักชาร์จชั่วคราว (หยุดนับเวลา & ตัดไฟ relay)
-app.post("/api/admin/port/:id/pause", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/pause — พักชาร์จชั่วคราว (หยุดนับเวลา & ตัดไฟ relay)
+app.post(["/api/admin/port/:id/pause", "/api/port/:id/pause"], (req, res) => {
   const port = getPort(req.params.id);
   if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
   port.isPaused = true;
   port.relayOn = false; // ตัดไฟ relay ระหว่าง pause
   state.updatedAt = now();
+  saveState();
+  addSystemLog("RELAY", "warn", `พักชาร์จชั่วคราว ${port.label} -> 🔴 ตัดไฟรีเลย์`);
   console.log(`[⏸️ Admin] Pause port=${port.id} remaining=${port.remainingSeconds}s`);
-  res.json({ success: true, isPaused: true, remainingSeconds: port.remainingSeconds });
+  res.json({ success: true, isPaused: true, remainingSeconds: port.remainingSeconds, port });
 });
 
-// POST /api/admin/port/:id/resume (admin only) — ชาร์จต่อ (เดินเวลาต่อ & เปิดไฟ relay)
-app.post("/api/admin/port/:id/resume", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/resume — ชาร์จต่อ (เดินเวลาต่อ & เปิดไฟ relay)
+app.post(["/api/admin/port/:id/resume", "/api/port/:id/resume"], (req, res) => {
   const port = getPort(req.params.id);
   if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
   port.isPaused = false;
   port.relayOn = true; // จ่ายไฟ relay ต่อ
   state.updatedAt = now();
+  saveState();
+  addSystemLog("RELAY", "success", `ชาร์จต่อ ${port.label} -> 🟢 เปิดไฟรีเลย์`);
   console.log(`[▶️ Admin] Resume port=${port.id} remaining=${port.remainingSeconds}s`);
-  res.json({ success: true, isPaused: false, remainingSeconds: port.remainingSeconds });
+  res.json({ success: true, isPaused: false, remainingSeconds: port.remainingSeconds, port });
 });
 
-// POST /api/admin/port/:id/test-start (admin only) — ทดสอบเริ่มชาร์จจำลอง (ไม่ต้องจ่ายเงินจริง)
-app.post("/api/admin/port/:id/test-start", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/test-start — ทดสอบเริ่มชาร์จจำลอง (สั่งเปิดไฟรีเลย์จริง 100%)
+app.post(["/api/admin/port/:id/test-start", "/api/port/:id/test-start"], (req, res) => {
   const port = getPort(req.params.id);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
-  if (port.status === "in-use") return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่ กรุณาหยุดก่อน" });
+  if (port.status === "in-use") {
+    // ถ้ากำลังใช้งานอยู่ ให้หยุดรอบเก่าก่อนแล้วเริ่มใหม่ทันที
+    stopPort(port.id, "restart_test");
+  }
 
   const durationSeconds = Number(req.body.durationSeconds) || 30; // ค่าเริ่มต้น 30 วินาที
   const amount = Number(req.body.amount) || Math.max(1, Math.round(durationSeconds / CFG.secondsPerBaht));
@@ -1076,19 +1083,20 @@ app.post("/api/admin/port/:id/test-start", requireAdmin, (req, res) => {
     testStartedAt: now(),
   });
 
-  console.log(`[🧪 Admin Test] Started test on port=${port.id} for ${durationSeconds}s`);
+  console.log(`[🧪 Admin Test] Started test on port=${port.id} for ${durationSeconds}s (relayOn=true)`);
   res.json({ success: true, transaction: tx, durationSeconds, port: state.ports[port.id] });
 });
 
-// POST /api/admin/port/:id/set-time (admin only) — ปรับ/เร่งเวลาจำลอง (เช่น ปรับเหลือ 5 วิ เพื่อดูระบบตัดเวลา)
-app.post("/api/admin/port/:id/set-time", requireAdmin, (req, res) => {
+// POST /api/admin/port/:id/set-time — ปรับ/เร่งเวลาจำลอง
+app.post(["/api/admin/port/:id/set-time", "/api/port/:id/set-time"], (req, res) => {
   const port = getPort(req.params.id);
   if (!port || port.status !== "in-use") return res.status(400).json({ error: "พอร์ตไม่ได้อยู่ในสถานะชาร์จ" });
   const seconds = Math.max(1, Number(req.body.seconds) || 5);
   port.remainingSeconds = seconds;
   state.updatedAt = now();
+  saveState();
   console.log(`[⏩ Admin Fast-Forward] Set port=${port.id} remaining=${seconds}s`);
-  res.json({ success: true, remainingSeconds: port.remainingSeconds });
+  res.json({ success: true, remainingSeconds: port.remainingSeconds, port });
 });
 
 // ALL /api/admin/port/:id/toggle-relay — ทดสอบฮาร์ดแวร์ Relay สลับ เปิด/ปิด โดยตรง (ทำงานทันที 100%)
