@@ -1342,6 +1342,57 @@ tr:hover td{background: var(--card-hover);}
   .itc-footer > div { width: 100%; justify-content: flex-end; }
   .itc-footer button { flex: 1; justify-content: center; min-height: 40px !important; }
 }
+
+/* ─── ESP32 Hardware & Live Activity Logs Terminal ─── */
+.badge-status-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.badge-status-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.status-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulseLed 2s infinite;
+}
+.log-filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.log-filter-btn.active {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
 </style>
 </head>
 <body>
@@ -1479,6 +1530,85 @@ tr:hover td{background: var(--card-hover);}
       <button class="btn-sm btn-danger" onclick="adminReset()">รีเซ็ตทุกพอร์ต</button>
     </div>
     <div class="port-grid" id="adminPortGrid"></div>
+
+    <!-- ── ESP32 Hardware Status & Live Activity Console ── -->
+    <div class="esp32-console-grid" style="display:grid;grid-template-columns:1fr;gap:1.5rem;margin:1.8rem 0;">
+      <!-- Card 1: ESP32 Hardware Connection -->
+      <div class="test-panel" style="margin-bottom:0;border-left:4px solid var(--cyan);box-shadow:var(--shadow-card);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(6,182,212,0.15);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:18px">🔌</div>
+            <div>
+              <div style="font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px">
+                <span>ฮาร์ดแวร์บอร์ด ESP32 & Arduino</span>
+                <span id="esp32OnlineBadge" class="badge-status-offline">
+                  <span class="status-pulse-dot"></span>
+                  <span id="esp32OnlineText">กำลังตรวจเช็ค...</span>
+                </span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--muted)">ระบบสั่งจ่ายไฟและควบคุมรีเลย์ 4 ช่องผ่าน WiFi อัตโนมัติ (Plug & Play เสียบปลั๊กเชื่อมต่อเอง)</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;padding:6px 12px;border-radius:8px;cursor:pointer" onclick="refreshAdminLogs()">
+              🔄 เช็คสถานะสด
+            </button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:0.85rem;background:var(--card2);padding:1rem;border-radius:12px;border:1px solid var(--border)">
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">📍 IP Address ของบอร์ด ESP32:</div>
+            <div style="display:flex;gap:6px">
+              <input type="text" id="esp32IpInput" class="form-input" style="padding:6px 10px;font-size:0.88rem;font-family:monospace;font-weight:600" placeholder="192.168.1.124" />
+              <button class="btn-sm btn-primary" style="padding:6px 12px;font-size:0.8rem;white-space:nowrap" onclick="saveEsp32Ip()">บันทึก</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">📶 ความแรงสัญญาณ WiFi:</div>
+            <div id="esp32RssiDisplay" style="font-size:0.95rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--cyan)">— dBm</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">💓 รับสัญญาณล่าสุด (Heartbeat):</div>
+            <div id="esp32LastSeenDisplay" style="font-size:0.88rem;font-weight:500;padding:6px 0;color:var(--muted)">—</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">🎯 คอมพิวเตอร์เซิร์ฟเวอร์ (Target):</div>
+            <div id="esp32TargetServerDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--green)">http://192.168.1.107:3000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Live Activity Logs Terminal -->
+      <div class="test-panel" style="margin-bottom:0;border-left:4px solid var(--purple);box-shadow:var(--shadow-card);background:var(--card);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,0.15);display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:18px">📋</div>
+            <div>
+              <div style="font-size:1.05rem;font-weight:700">บันทึกการทำงานสด (Live Activity Logs & Arduino Events)</div>
+              <div style="font-size:0.8rem;color:var(--muted)">แสดงทุกเหตุการณ์: ESP32 ต่อสำเร็จ, สแกนจ่ายเงิน, สั่งเปิด-ตัดไฟรีเลย์แบบเรียลไทม์</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+            <div class="log-filter-group" style="display:flex;background:var(--card2);padding:3px;border-radius:8px;border:1px solid var(--border)">
+              <button class="log-filter-btn active" data-filter="all" onclick="filterLogs('all')">ทั้งหมด</button>
+              <button class="log-filter-btn" data-filter="ESP32" onclick="filterLogs('ESP32')">ESP32 / บอร์ด</button>
+              <button class="log-filter-btn" data-filter="SERVER" onclick="filterLogs('SERVER')">เซิร์ฟเวอร์</button>
+              <button class="log-filter-btn" data-filter="RELAY" onclick="filterLogs('RELAY')">รีเลย์ / สั่งไฟ</button>
+            </div>
+            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:0.8rem;padding:6px 10px;border-radius:8px;cursor:pointer" onclick="clearAdminLogs()" title="ล้างบันทึก">
+              🧹 ล้าง
+            </button>
+          </div>
+        </div>
+
+        <!-- Terminal Screen -->
+        <div id="adminLiveLogsTerminal" style="background:#090d16;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.85rem 1rem;font-family:'JetBrains Mono', Consolas, monospace;font-size:0.82rem;line-height:1.6;color:#e2e8f0;height:240px;overflow-y:auto;box-shadow:inset 0 2px 6px rgba(0,0,0,0.6)">
+          <div style="color:#64748b;font-style:italic">กำลังเชื่อมต่อข้อมูลบันทึกสด...</div>
+        </div>
+      </div>
+    </div>
+
 
     <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin:2rem 0 1rem">
       <h2 style="font-size:1.1rem;font-weight:700">รายการล่าสุด 5 รายการ</h2>
@@ -2609,7 +2739,9 @@ function renderAll(d) {
   renderTestingTab(d.ports);
   renderTxTable5(txs);
   renderTxTableAll(txs);
-  populateSettingsForm(d.config);
+    populateSettingsForm(d.config);
+  if (d.esp32 || d.lastEsp32) renderEsp32Status(d.esp32 || d.lastEsp32);
+  if (d.logs || d.systemLogs) renderAdminLogs(d.logs || d.systemLogs);
   
   // Render visible charts
   const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick') || '';
@@ -3227,6 +3359,145 @@ async function setTimeRemaining(portId, seconds) {
   await adminApi('POST', `/api/admin/port/${portId}/set-time`, { seconds });
   setActionNotice(`ปรับเวลา ${portId} เหลือ ${seconds} วินาที`);
   autoRefresh();
+}
+
+
+// ─── ESP32 Hardware Status & Live Activity Logs ─────────────────
+let currentLogFilter = 'all';
+let cachedLogs = [];
+
+function renderEsp32Status(esp32) {
+  if (!esp32) return;
+  const isOnline = !!esp32.isOnline || (esp32.lastSeen && (Date.now() - new Date(esp32.lastSeen).getTime() < 8000));
+  const badge = document.getElementById('esp32OnlineBadge');
+  const text = document.getElementById('esp32OnlineText');
+  const ipInput = document.getElementById('esp32IpInput');
+  const rssiEl = document.getElementById('esp32RssiDisplay');
+  const lastSeenEl = document.getElementById('esp32LastSeenDisplay');
+  
+  if (badge && text) {
+    if (isOnline) {
+      badge.className = 'badge-status-online';
+      text.textContent = 'ออนไลน์ (เชื่อมต่อแล้ว)';
+    } else {
+      badge.className = 'badge-status-offline';
+      text.textContent = 'ออฟไลน์ (ยังไม่ได้เสียบไฟ/WiFi)';
+    }
+  }
+  
+  if (ipInput && !ipInput.matches(':focus') && esp32.ip) {
+    ipInput.value = esp32.ip;
+  }
+  
+  if (rssiEl) {
+    if (esp32.rssi) {
+      const dbm = Number(esp32.rssi);
+      let quality = 'พอใช้';
+      if (dbm > -60) quality = 'ดีเยี่ยม';
+      else if (dbm > -75) quality = 'ดี';
+      else if (dbm <= -85) quality = 'อ่อน';
+      rssiEl.innerHTML = `<span style="color:var(--cyan)">${dbm} dBm</span> <span style="font-size:0.75rem;color:var(--muted)">(${quality})</span>`;
+    } else {
+      rssiEl.textContent = isOnline ? 'เชื่อมต่อ WiFi ปกติ' : '—';
+    }
+  }
+  
+  if (lastSeenEl) {
+    if (esp32.lastSeen) {
+      const diffSec = Math.max(0, Math.floor((Date.now() - new Date(esp32.lastSeen).getTime()) / 1000));
+      if (diffSec < 4) {
+        lastSeenEl.innerHTML = `<span style="color:var(--green)">⚡ ติดต่อสดๆ (${diffSec} วิที่แล้ว)</span>`;
+      } else if (diffSec < 60) {
+        lastSeenEl.textContent = `${diffSec} วินาทีที่แล้ว`;
+      } else {
+        lastSeenEl.textContent = `${Math.floor(diffSec / 60)} นาทีที่แล้ว`;
+      }
+    } else {
+      lastSeenEl.textContent = 'ยังไม่มีการติดต่อเข้ามา';
+    }
+  }
+}
+
+function filterLogs(filter) {
+  currentLogFilter = filter;
+  document.querySelectorAll('.log-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+  });
+  renderAdminLogs(cachedLogs);
+}
+
+function renderAdminLogs(logs) {
+  if (Array.isArray(logs)) cachedLogs = logs;
+  const terminal = document.getElementById('adminLiveLogsTerminal');
+  if (!terminal) return;
+  
+  const filtered = (cachedLogs || []).filter(item => {
+    if (currentLogFilter === 'all') return true;
+    return String(item.source || '').toUpperCase() === currentLogFilter.toUpperCase();
+  });
+  
+  if (filtered.length === 0) {
+    terminal.innerHTML = `<div style="color:#64748b;font-style:italic;padding:8px 0">ไม่มีบันทึกในหมวดนี้ (${currentLogFilter})</div>`;
+    return;
+  }
+  
+  let html = '';
+  filtered.forEach(item => {
+    const time = item.time || (item.iso ? new Date(item.iso).toLocaleTimeString('th-TH') : '');
+    const src = String(item.source || 'SYS').toUpperCase();
+    let badgeColor = '#38bdf8';
+    let badgeBg = 'rgba(56, 189, 248, 0.15)';
+    if (src === 'ESP32') { badgeColor = '#22d3ee'; badgeBg = 'rgba(34, 211, 238, 0.18)'; }
+    else if (src === 'SERVER') { badgeColor = '#a855f7'; badgeBg = 'rgba(168, 85, 247, 0.18)'; }
+    else if (src === 'RELAY') { badgeColor = '#4ade80'; badgeBg = 'rgba(74, 222, 128, 0.18)'; }
+    else if (src === 'ADMIN') { badgeColor = '#f59e0b'; badgeBg = 'rgba(245, 158, 11, 0.18)'; }
+    
+    let msgColor = '#f1f5f9';
+    if (item.level === 'error') msgColor = '#f87171';
+    else if (item.level === 'success') msgColor = '#86efac';
+    else if (item.level === 'warn') msgColor = '#fde047';
+    
+    html += `
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="color:#64748b;flex-shrink:0;font-size:0.75rem">${time}</span>
+        <span style="background:${badgeBg};color:${badgeColor};font-size:0.7rem;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;letter-spacing:0.5px">${src}</span>
+        <span style="color:${msgColor};word-break:break-word;flex:1">${item.message || ''}</span>
+      </div>
+    `;
+  });
+  
+  terminal.innerHTML = html;
+}
+
+async function saveEsp32Ip() {
+  const input = document.getElementById('esp32IpInput');
+  const ip = (input?.value || '').trim();
+  if (!ip) {
+    adminToast('กรุณากรอก IP เช่น 192.168.1.124', 'error');
+    return;
+  }
+  const res = await adminApi('POST', '/api/admin/esp32/set-ip', { ip });
+  if (res && res.success) {
+    adminToast(`บันทึก IP ของ ESP32 เป็น ${ip} สำเร็จ`, 'success');
+    refreshAdminLogs();
+  }
+}
+
+async function clearAdminLogs() {
+  const ok = await adminConfirm('ล้างบันทึกการทำงาน', 'ต้องการล้างประวัติบันทึกการทำงานทั้งหมดหรือไม่?', 'ล้างบันทึก');
+  if (!ok) return;
+  await adminApi('POST', '/api/admin/logs/clear');
+  cachedLogs = [];
+  renderAdminLogs([]);
+  adminToast('ล้างบันทึกเรียบร้อย', 'info');
+}
+
+async function refreshAdminLogs() {
+  const res = await adminApi('GET', '/api/admin/logs');
+  if (res) {
+    if (res.esp32) renderEsp32Status(res.esp32);
+    if (res.logs) renderAdminLogs(res.logs);
+  }
 }
 
 async function toggleRelay(portId, on) {

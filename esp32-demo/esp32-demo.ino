@@ -9,8 +9,9 @@
   
   Flow:
   1. ESP32 connects to WiFi (2.4GHz).
-  2. Polls /api/esp32/command every 2 seconds.
+  2. Polls /api/esp32/command every 2 seconds with its local IP and WiFi signal.
   3. Updates GPIO 26, 27, 25, 33 according to relayOn state.
+  4. Displays live connection confirmation and relay events in Serial Monitor.
 */
 
 #include <WiFi.h>
@@ -29,6 +30,7 @@ const char* PORT_KEYS[4] = { "usb-a-1", "usb-a-2", "usb-c-1", "usb-c-2" };
 // Relay State Cache
 bool currentRelayState[4] = { false, false, false, false };
 int pollCount = 0;
+bool isFirstConnect = true;
 
 void setup() {
   Serial.begin(115200);
@@ -61,7 +63,7 @@ void setup() {
     Serial.println("\n✅ WiFi Connected Successfully!");
     Serial.println("📍 ESP32 IP: " + WiFi.localIP().toString());
     Serial.printf("🎯 Target Server: %s\n", SERVER_URL);
-    Serial.println("📡 เริ่มต้นรับคำสั่งจากเซิร์ฟเวอร์...");
+    Serial.println("📡 เริ่มต้นส่งข้อมูลและรับคำสั่งจากเซิร์ฟเวอร์...");
   } else {
     Serial.printf("\n⚠️ ยังเชื่อมต่อ WiFi ไม่สำเร็จ (Status Code: %d)\n", WiFi.status());
     Serial.println("   ระบบจะพยายามเชื่อมต่อใหม่อัตโนมัติใน loop...");
@@ -82,7 +84,10 @@ void loop() {
 
 void fetchRelayCommands() {
   HTTPClient http;
-  String url = String(SERVER_URL) + "/api/esp32/command?secret=" + ESP32_SECRET;
+  String myIp = WiFi.localIP().toString();
+  long rssi = WiFi.RSSI();
+  String url = String(SERVER_URL) + "/api/esp32/command?secret=" + ESP32_SECRET + "&ip=" + myIp + "&rssi=" + String(rssi);
+  
   http.begin(url);
   http.setTimeout(4000);
   http.addHeader("X-ESP32-Secret", ESP32_SECRET);
@@ -110,21 +115,33 @@ void fetchRelayCommands() {
           if (isOn != currentRelayState[i]) {
             currentRelayState[i] = isOn;
             digitalWrite(gpio, isOn ? HIGH : LOW);
-            Serial.printf("⚡ [คำสั่ง Relay] พอร์ต %d (%s | GPIO %d) -> %s\n", 
+            Serial.printf("⚡ [คำสั่งจากเว็บ/เซิร์ฟเวอร์] พอร์ต %d (%s | GPIO %d) -> %s\n", 
                           i + 1, key, gpio, isOn ? "🟢 เปิดไฟ (ON)" : "🔴 ปิดไฟ (OFF)");
           }
         }
+      }
+
+      // แจ้งเตือนเมื่อเชื่อมต่อเว็บและเซิร์ฟเวอร์สำเร็จครั้งแรก
+      if (isFirstConnect) {
+        isFirstConnect = false;
+        Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Serial.printf("🟢 [เชื่อมต่อกับเว็บและเซิร์ฟเวอร์สำเร็จแล้ว!]\n");
+        Serial.printf("📍 IP ตัวเอง: %s\n", myIp.c_str());
+        Serial.printf("🎯 เซิร์ฟเวอร์: %s\n", SERVER_URL);
+        Serial.println("✨ ระบบพร้อมควบคุมและแสดงสถานะบนหน้าเว็บได้ทันที");
+        Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       }
 
       // แสดง Heartbeat ทุกๆ 10 วินาที (5 รอบการ poll)
       pollCount++;
       if (pollCount >= 5) {
         pollCount = 0;
-        Serial.printf("📡 [Sync OK] สถานะรีเลย์: P1=%s | P2=%s | P3=%s | P4=%s\n",
+        Serial.printf("📡 [Sync OK] สถานะรีเลย์: P1=%s | P2=%s | P3=%s | P4=%s (WiFi: %ld dBm)\n",
                       currentRelayState[0] ? "ON" : "OFF",
                       currentRelayState[1] ? "ON" : "OFF",
                       currentRelayState[2] ? "ON" : "OFF",
-                      currentRelayState[3] ? "ON" : "OFF");
+                      currentRelayState[3] ? "ON" : "OFF",
+                      rssi);
       }
     }
   } else if (httpCode > 0) {

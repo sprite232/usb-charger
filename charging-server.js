@@ -115,9 +115,31 @@ const state = {
   ports: {},
   transactions: [],
   usedTransRefs: new Set(),   // ป้องกันสลิปซ้ำ
-  lastEsp32: null,
+  lastEsp32: {
+    ip: "192.168.1.124",
+    lastSeen: null,
+    status: "offline",
+    rssi: null
+  },
+  systemLogs: [],
   updatedAt: new Date().toISOString(),
 };
+
+function addSystemLog(source, level, message, details = null) {
+  if (!state.systemLogs) state.systemLogs = [];
+  const entry = {
+    id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    time: new Date().toLocaleTimeString('th-TH', { hour12: false }),
+    iso: new Date().toISOString(),
+    source: String(source || 'SYS').toUpperCase(),
+    level: level || 'info',
+    message,
+    details
+  };
+  state.systemLogs.unshift(entry);
+  if (state.systemLogs.length > 80) state.systemLogs.pop();
+  return entry;
+}
 
 PORT_DEFS.forEach((d) => {
   state.ports[d.id] = {
@@ -173,6 +195,8 @@ function saveState() {
       truemoneyPhone: CFG.truemoneyPhone,
       updatedAt: state.updatedAt,
       deviceId: state.deviceId,
+      esp32: state.lastEsp32,
+      systemLogs: (state.systemLogs || []).slice(0, 30),
     });
   } catch(e) {
     console.error("[Persistence Error]", e.message);
@@ -267,6 +291,7 @@ function activatePort(portId, amount, method, extra = {}) {
   state.updatedAt = now();
   saveState();
   console.log(`[✅ Activated] port=${portId} ฿${amount} method=${method} tx=${tx.id}`);
+  addSystemLog("RELAY", "success", `พอร์ต ${port.label} เริ่มจ่ายไฟ ฿${amount} (${Math.round(tx.chargeSeconds / 60)} นาที) ผ่าน ${method.toUpperCase()}`);
   return tx;
 }
 
@@ -286,6 +311,8 @@ function stopPort(portId, reason = "time_up") {
   port.remainingSeconds = 0;
   state.updatedAt = now();
   saveState();
+  addSystemLog("RELAY", "info", `พอร์ต ${port.label} ตัดไฟ (${reason === "time_up" ? "ครบเวลาชาร์จแล้ว" : "คำสั่งผู้ดูแล"})`);
+  console.log(`[🛑 Stopped] port=${portId} reason=${reason}`);
   return true;
 }
 
@@ -667,6 +694,7 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   state.updatedAt = now();
 
   console.log(`[📋 Session] port=${portId} method=${method} ฿${rounded} id=${session.id}`);
+  addSystemLog("SERVER", "info", `สร้างคำขอชำระเงินพอร์ต ${portId} (${method.toUpperCase()}) ยอด ฿${rounded}`);
   res.json({ success: true, session });
 });
 
@@ -708,6 +736,7 @@ app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), 
   });
 
   console.log(`[✅ Slip OK] port=${port.id} transRef=${result.transRef}`);
+    addSystemLog("SERVER", "success", `สลิปถูกต้องผ่าน EasySlip ยอด ฿${session.amount} เริ่มจ่ายไฟพอร์ต ${port.label}`);
   res.json({ success: true, transaction: tx, sender: result.sender, isDev: result.isDev || false });
 });
 
@@ -944,6 +973,11 @@ app.get("/api/admin/dashboard", requireAdmin, (_, res) => {
       supportLocation: CFG.supportLocation,
     },
     lastEsp32: state.lastEsp32,
+    esp32: {
+      ...(state.lastEsp32 || {}),
+      isOnline: !!(state.lastEsp32?.lastSeen && (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() < 8000))
+    },
+    logs: (state.systemLogs || []).slice(0, 40),
     updatedAt: state.updatedAt,
   });
 });
@@ -1060,6 +1094,7 @@ app.all("/api/admin/port/:id/toggle-relay", (req, res) => {
   port.relayOn = turnOn;
   state.updatedAt = now();
   console.log(`[🔌 Admin Relay Test] Port=${port.id} GPIO=${port.relayGpio} RelayOn=${turnOn}`);
+  addSystemLog("RELAY", "info", `สวิตช์รีเลย์ ${port.label} (GPIO ${port.relayGpio}) -> ${turnOn ? "🟢 เปิดไฟ (ON)" : "🔴 ตัดไฟ (OFF)"}`);
   saveState();
   res.json({ success: true, portId: port.id, relayGpio: port.relayGpio, relayOn: port.relayOn });
 });
@@ -1077,12 +1112,68 @@ app.post("/api/admin/reset", requireAdmin, (_, res) => {
 
 // ─── ESP32 ────────────────────────────────────────────────────────────────────
 
-app.get("/api/esp32/command", requireEsp32Auth, (_, res) => {
+app.get("/api/esp32/command", requireEsp32Auth, (req, res) => {
+  const espIp = (req.query?.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").replace(/^.*:/, "");
+  const rssi = req.query?.rssi ? Number(req.query.rssi) : null;
+  const nowIso = now();
+  const wasOffline = !state.lastEsp32?.lastSeen || (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() > 8000);
+
+  if (!state.lastEsp32) state.lastEsp32 = {};
+  state.lastEsp32.ip = espIp || state.lastEsp32.ip || "192.168.1.124";
+  state.lastEsp32.lastSeen = nowIso;
+  state.lastEsp32.status = "online";
+  if (rssi !== null) state.lastEsp32.rssi = rssi;
+
+  if (wasOffline) {
+    addSystemLog("ESP32", "success", `บอร์ด ESP32 เชื่อมต่อสำเร็จ (IP: ${state.lastEsp32.ip}) พร้อมรับคำสั่ง`, { ip: state.lastEsp32.ip, rssi });
+    console.log(`[🟢 ESP32 Online] IP=${state.lastEsp32.ip} RSSI=${rssi}`);
+  }
+
   const relays = {};
   Object.values(state.ports).forEach((p) => {
     relays[p.id] = { gpio: p.relayGpio, on: p.relayOn, isPaused: !!p.isPaused, remainingSeconds: p.remainingSeconds };
   });
-  res.json({ relays, updatedAt: state.updatedAt });
+  res.json({
+    connected: true,
+    serverIp: "192.168.1.107",
+    serverTime: nowIso,
+    espIp: state.lastEsp32.ip,
+    relays,
+    updatedAt: state.updatedAt
+  });
+});
+
+// GET /api/admin/logs — ดึงประวัติการทำงานสดทั้งเซิร์ฟเวอร์และ Arduino
+app.get("/api/admin/logs", requireAdmin, (req, res) => {
+  const isOnline = !!(state.lastEsp32?.lastSeen && (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() < 8000));
+  res.json({
+    esp32: {
+      ...(state.lastEsp32 || {}),
+      isOnline,
+      status: isOnline ? "online" : "offline"
+    },
+    logs: state.systemLogs || []
+  });
+});
+
+// POST /api/admin/logs/clear — ล้างบันทึก
+app.post("/api/admin/logs/clear", requireAdmin, (req, res) => {
+  state.systemLogs = [];
+  addSystemLog("ADMIN", "info", "ล้างบันทึกการทำงานเรียบร้อย");
+  res.json({ success: true });
+});
+
+// POST /api/admin/esp32/set-ip — กำหนดหรือแก้ไข IP ของ ESP32
+app.post("/api/admin/esp32/set-ip", requireAdmin, (req, res) => {
+  const ip = (req.body?.ip || "").trim();
+  if (ip) {
+    if (!state.lastEsp32) state.lastEsp32 = {};
+    state.lastEsp32.ip = ip;
+    state.lastEsp32.configuredIp = ip;
+    addSystemLog("ADMIN", "info", `กำหนด IP ของบอร์ด ESP32 เป็น ${ip}`);
+    saveState();
+  }
+  res.json({ success: true, esp32: state.lastEsp32 });
 });
 
 app.post("/api/esp32/report", requireEsp32Auth, (req, res) => {
