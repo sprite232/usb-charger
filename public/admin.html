@@ -2403,7 +2403,12 @@ function showUserInfo() {
 // ─── Admin API Helper ─────────────────────────
 // SERVER_BASE: IP/URL ของตู้ชาร์จ (เช่น http://192.168.1.100:3000)
 // ถ้าว่างจะใช้ same-origin (สำหรับกรณีเปิดหน้า admin บนตู้โดยตรง)
-let SERVER_BASE = localStorage.getItem('usb_charger_server_base') || '';
+const DEFAULT_CLOUD_SERVER = 'https://usb-charger.onrender.com';
+let SERVER_BASE = localStorage.getItem('usb_charger_server_base') || (
+  (typeof window !== 'undefined' && (window.location.hostname.includes('web.app') || window.location.hostname.includes('firebaseapp.com')))
+    ? DEFAULT_CLOUD_SERVER
+    : ''
+);
 
 function setServerBase(url) {
   SERVER_BASE = (url || '').replace(/\/$/, '').trim();

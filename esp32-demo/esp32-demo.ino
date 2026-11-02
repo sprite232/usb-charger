@@ -21,7 +21,7 @@
 
 #define WIFI_SSID "Palm_tawan_2.4G"
 #define WIFI_PASSWORD "0626097440"
-#define SERVER_URL "http://192.168.1.107:3000" // IP คอมพิวเตอร์เซิร์ฟเวอร์
+#define SERVER_URL "https://usb-charger.onrender.com" // เซิร์ฟเวอร์บน Cloud Render (หรือ http://192.168.1.107:3000 สำหรับ localhost)
 #define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026" // Hardware Secret Token
 
 // 4 Relays Pins

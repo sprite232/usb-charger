@@ -2332,7 +2332,12 @@ function kioskToast(msg, type='info'){
   }, 4000);
 }
 
-const BASE=window.API_BASE||'';
+const CLOUD_API = 'https://usb-charger.onrender.com';
+const BASE = window.API_BASE || (
+  (typeof window !== 'undefined' && (window.location.hostname.includes('web.app') || window.location.hostname.includes('firebaseapp.com')))
+    ? CLOUD_API
+    : ''
+);
 const apiFetch=(m,url,b)=>{
   const o={method:m,headers:{'Content-Type':'application/json'}};
   if(b)o.body=JSON.stringify(b);
