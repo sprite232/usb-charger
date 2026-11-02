@@ -1574,7 +1574,7 @@ tr:hover td{background: var(--card-hover);}
           </div>
           <div>
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">🎯 คอมพิวเตอร์เซิร์ฟเวอร์ (Target):</div>
-            <div id="esp32TargetServerDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--green)">http://192.168.1.107:3000</div>
+            <div id="esp32TargetServerDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--green)">https://usb-charger.onrender.com</div>
           </div>
         </div>
       </div>
@@ -2472,7 +2472,7 @@ async function saveServerBase() {
   showServerBaseMsg('บันทึกแล้ว กำลังทดสอบการเชื่อมต่อ...', 'var(--cyan)');
   // ทดสอบ ping
   try {
-    const r = await fetch(SERVER_BASE + '/api/ping', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(SERVER_BASE + '/api/ping', { signal: AbortSignal.timeout(15000) });
     if (r.ok) {
       showServerBaseMsg('เชื่อมต่อสำเร็จ กำลังโหลดข้อมูล...', 'var(--green)');
       syncAdminIssuesFromBackend();
@@ -2482,7 +2482,8 @@ async function saveServerBase() {
       showServerBaseMsg(`ตอบกลับแล้วแต่ status ${r.status} — ตรวจสอบ URL อีกครั้ง`, 'var(--yellow)');
     }
   } catch(e) {
-    showServerBaseMsg('เชื่อมต่อไม่ได้ — ตรวจสอบ IP และ Port ให้ถูกต้อง', 'var(--red)');
+    const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
+    showServerBaseMsg(isTimeout ? 'เซิร์ฟเวอร์ตอบช้าเล็กน้อย (ลองกดบันทึกใหม่อีกครั้ง)' : `เชื่อมต่อไม่ได้: ${e.message || 'ตรวจสอบ URL'}`, 'var(--red)');
   }
 }
 
@@ -3458,6 +3459,8 @@ function renderEsp32Status(esp32) {
       lastSeenEl.textContent = 'ยังไม่มีการติดต่อเข้ามา';
     }
   }
+  const targetEl = document.getElementById('esp32TargetServerDisplay');
+  if (targetEl) targetEl.textContent = SERVER_BASE || 'https://usb-charger.onrender.com';
 }
 
 function filterLogs(filter) {

@@ -71,16 +71,20 @@ void setup() {
   }
 }
 
+unsigned long lastWifiRetry = 0;
+
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     fetchRelayCommands();
+    delay(2000); // Poll ทุก 2 วินาที
   } else {
-    Serial.println("⚠️ กำลังเชื่อมต่อ WiFi อีกครั้ง...");
-    WiFi.disconnect();
-    WiFi.reconnect();
-    delay(3000);
+    if (millis() - lastWifiRetry > 10000) {
+      lastWifiRetry = millis();
+      Serial.printf("⚠️ ยังเชื่อมต่อ WiFi ไม่ได้ (สถานะ: %d) กำลังพยายามเชื่อมต่อใหม่...\n", WiFi.status());
+      WiFi.reconnect();
+    }
+    delay(1000);
   }
-  delay(2000); // Poll ทุก 2 วินาที
 }
 
 void fetchRelayCommands() {
@@ -92,11 +96,12 @@ void fetchRelayCommands() {
   WiFiClientSecure secClient;
   if (url.startsWith("https://")) {
     secClient.setInsecure(); // รองรับ Cloud HTTPS อัตโนมัติ
+    secClient.setTimeout(15000);
     http.begin(secClient, url);
   } else {
     http.begin(url);
   }
-  http.setTimeout(5000);
+  http.setTimeout(15000);
   http.addHeader("X-ESP32-Secret", ESP32_SECRET);
   
   int httpCode = http.GET();
