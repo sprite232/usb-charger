@@ -492,11 +492,62 @@ html:not([data-theme="dark"]) .sun-icon{
 
 .port-card.in-use {
   grid-column: 1 / -1;
-  border-color: rgba(16, 185, 129, 0.4) !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  background: var(--card-bg);
   animation: cardChargingBreath 3s ease-in-out infinite;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 20px 20px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .port-card.in-use {
+  background: linear-gradient(145deg, #131c2e 0%, #0d1522 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.12) !important;
+}
+
+[data-theme="dark"] .port-card.in-use.low-time {
+  background: linear-gradient(145deg, #241419 0%, #150d12 100%) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 22px rgba(239, 68, 68, 0.22) !important;
+}
+
+[data-theme="dark"] .bar-port {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .bar-port span:nth-child(2) {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .bar-price-chip {
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .bar-timer {
+  color: #38bdf8 !important;
+  text-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+}
+
+[data-theme="dark"] .bar-timer.low {
+  color: #f87171 !important;
+  text-shadow: 0 0 16px rgba(248, 113, 113, 0.6);
+}
+
+[data-theme="dark"] .warn-1m {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+[data-theme="dark"] .warn-1m-t {
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .warn-1m-s {
+  color: #cbd5e1 !important;
 }
 
 .port-card.in-use.low-time {
@@ -2721,7 +2772,13 @@ setInterval(()=>{
     
     if(bpEl)bpEl.textContent=`${pct} %`;
     if(wEl)wEl.style.display=(rem<=60&&rem>0)?'block':'none';
-    if(bfEl){const u=100-pct;bfEl.style.background=pct===100?'linear-gradient(90deg,#16a34a,#22c55e)':pct===0?'linear-gradient(90deg,#b91c1c,#ef4444)':`linear-gradient(90deg,#ef4444 ${u}%,#16a34a ${u}%)`;}
+    if(bfEl){
+      bfEl.style.width = `${pct}%`;
+      bfEl.classList.toggle('low', pct <= 15 || rem <= 60);
+      bfEl.classList.toggle('medium', pct > 15 && pct <= 35 && rem > 60);
+      bfEl.style.background = '';
+    }
+    if(bpEl) bpEl.textContent = `⚡ เหลือเวลา ${pct}%`;
   });
   if(hasInUse)savePersistentPorts(currentPorts);
 },1000);

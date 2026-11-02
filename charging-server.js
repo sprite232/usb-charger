@@ -288,6 +288,7 @@ function activatePort(portId, amount, method, extra = {}) {
   port.paymentSession = null;
   port.currentTx = tx;
   port.remainingSeconds = tx.chargeSeconds;
+  port.totalSeconds = tx.chargeSeconds;
   state.updatedAt = now();
   saveState();
   console.log(`[✅ Activated] port=${portId} ฿${amount} method=${method} tx=${tx.id}`);
