@@ -2226,9 +2226,20 @@ async function signInWithGoogle() {
     if (loadingEl) loadingEl.style.display = 'flex';
     if (loadingText) loadingText.textContent = `ตรวจสอบสิทธิ์ ${email}...`;
 
-    // Check Firestore whitelist
-    const doc = await fbDb.collection('admin_whitelist').doc(email).get();
-    if (!doc.exists) {
+    // Check Firestore whitelist or Master Admins
+    const MASTER_ADMINS = ['palmtawanlaothaisong00@gmail.com', 'sukitlowkey@gmail.com'];
+    const emailLower = (email || '').toLowerCase();
+    const isMaster = MASTER_ADMINS.includes(emailLower);
+    let isAllowed = isMaster;
+    try {
+      const doc = await fbDb.collection('admin_whitelist').doc(emailLower).get();
+      if (doc && doc.exists) isAllowed = true;
+      if (isMaster && (!doc || !doc.exists)) {
+        fbDb.collection('admin_whitelist').doc(emailLower).set({}).catch(() => {});
+      }
+    } catch (_) {}
+
+    if (!isAllowed) {
       await fbAuth.signOut();
       if (loadingEl) loadingEl.style.display = 'none';
       if (formEl) formEl.style.display = 'block';
@@ -2281,8 +2292,18 @@ fbAuth.onAuthStateChanged(async (user) => {
   if (user) {
     const email = user.email;
     try {
-      const doc = await fbDb.collection('admin_whitelist').doc(email).get();
-      if (doc.exists) {
+      const MASTER_ADMINS = ['palmtawanlaothaisong00@gmail.com', 'sukitlowkey@gmail.com'];
+      const emailLower = (email || '').toLowerCase();
+      const isMaster = MASTER_ADMINS.includes(emailLower);
+      let docExists = false;
+      try {
+        const doc = await fbDb.collection('admin_whitelist').doc(emailLower).get();
+        if (doc && doc.exists) docExists = true;
+      } catch (_) {}
+      if (docExists || isMaster) {
+        if (isMaster && !docExists) {
+          fbDb.collection('admin_whitelist').doc(emailLower).set({}).catch(() => {});
+        }
         currentUser = user;
         token = await user.getIdToken();
         sessionStorage.setItem('adminToken', token);

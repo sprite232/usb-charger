@@ -1,33 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function: check if authenticated user is in the admin whitelist
-    function isAdmin() {
+    // Helper function: check if authenticated user is in the admin whitelist or is master admin
+    function isMasterAdmin() {
       return request.auth != null && 
         request.auth.token.email != null &&
-        exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()));
+        request.auth.token.email.lower() in [
+          'palmtawanlaothaisong00@gmail.com',
+          'sukitlowkey@gmail.com'
+        ];
     }
 
-    // Charger & Port state — anyone can read for kiosk status; authorized admins can update
+    function isAdmin() {
+      return isMasterAdmin() || (
+        request.auth != null && 
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()))
+      );
+    }
+
+    // Charger & Port state - anyone can read for kiosk status; authorized admins can update
     match /charger/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Transactions — financial ledger: client read/write forbidden (Server Admin SDK only)
+    // Transactions - financial ledger: client read/write forbidden (Server Admin SDK only)
     match /transactions/{txId} {
       allow read, write: if false;
     }
 
-    // Admin Whitelist — users can read their own status; authorized admins can list and manage
+    // Admin Whitelist - master admins and listed admins can manage
     match /admin_whitelist/{email} {
-      allow get: if request.auth != null && 
+      allow get: if isMasterAdmin() || (
+                 request.auth != null && 
                  request.auth.token.email != null && 
-                 request.auth.token.email.lower() == email.lower();
+                 request.auth.token.email.lower() == email.lower());
       allow list, write: if isAdmin();
     }
 
-    // Issues & Support Tickets — customers can create and read status; authorized admins can update/delete
+    // Issues & Support Tickets - customers can create and read status; authorized admins can update/delete
     match /issues/{issueId} {
       allow read, create: if true;
       allow update, delete: if isAdmin();
