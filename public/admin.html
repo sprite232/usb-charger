@@ -2564,13 +2564,16 @@ function showServerBaseMsg(text, color) {
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
 async function adminApi(method, path, body) {
   try {
-    if (currentUser) {
+    if (currentUser && typeof currentUser.getIdToken === 'function') {
       try { token = await currentUser.getIdToken(false); } catch(_) {}
     }
-    const opt = { method, headers: authHdr() };
+    const opt = { method, headers: authHdr(), cache: 'no-store' };
     if (body) opt.body = JSON.stringify(body);
     
-    const fullUrl = SERVER_BASE ? (SERVER_BASE + path) : path;
+    let fullUrl = SERVER_BASE ? (SERVER_BASE + path) : path;
+    if (method === 'GET') {
+      fullUrl += (fullUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    }
     let res = null;
     try {
       res = await fetch(fullUrl, opt);
@@ -2675,17 +2678,27 @@ async function tryLoadDashboard() {
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e){}
 
+    // ซิงค์สถานะสดจาก /api/state เผื่อกรณี Token กำลังรีเฟรช
+    let liveState = null;
+    try {
+      const sUrl = (SERVER_BASE || '') + '/api/state?_t=' + Date.now();
+      const sRes = await fetch(sUrl, { cache: 'no-store' });
+      if (sRes.ok) liveState = await sRes.json();
+    } catch (_) {}
+
     data = {
       summary: {
         revenue: realRev,
         transactionCount: realTxs.length,
-        activeCount: savedPorts.filter(p => p.status === 'in-use').length,
+        activeCount: (liveState?.ports || savedPorts).filter(p => p.status === 'in-use').length,
         finishedCount: realTxs.length
       },
-      ports: savedPorts,
+      ports: liveState?.ports || savedPorts,
       transactions: realTxs,
       visits: realVisits,
-      config: cfg
+      config: cfg,
+      esp32: liveState?.esp32 || null,
+      lastEsp32: liveState?.esp32 || null
     };
 
     // If Firestore document does not exist, seed it immediately from admin
@@ -3472,7 +3485,7 @@ let cachedLogs = [];
 
 function renderEsp32Status(esp32) {
   if (!esp32) return;
-  const isOnline = !!esp32.isOnline || (esp32.lastSeen && (Date.now() - new Date(esp32.lastSeen).getTime() < 8000));
+  const isOnline = !!esp32.isOnline || (esp32.lastSeen && (Date.now() - new Date(esp32.lastSeen).getTime() < 20000));
   const badge = document.getElementById('esp32OnlineBadge');
   const text = document.getElementById('esp32OnlineText');
   const ipInput = document.getElementById('esp32IpInput');

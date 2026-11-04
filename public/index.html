@@ -2352,14 +2352,23 @@ function kioskToast(msg, type='info'){
 
 const CLOUD_API = 'https://usb-charger.onrender.com';
 const BASE = window.API_BASE || (
-  (typeof window !== 'undefined' && (window.location.hostname.includes('web.app') || window.location.hostname.includes('firebaseapp.com')))
+  (typeof window !== 'undefined' && (
+    window.location.hostname.includes('web.app') || 
+    window.location.hostname.includes('firebaseapp.com') ||
+    window.location.protocol === 'file:' ||
+    (window.location.port !== '3000' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1'))
+  ))
     ? CLOUD_API
     : ''
 );
-const apiFetch=(m,url,b)=>{
-  const o={method:m,headers:{'Content-Type':'application/json'}};
-  if(b)o.body=JSON.stringify(b);
-  return fetch(BASE+url,o).then(r=>r.json()).catch(()=>null);
+const apiFetch = (m, url, b) => {
+  const o = { method: m, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' };
+  if (b) o.body = JSON.stringify(b);
+  let finalUrl = BASE + url;
+  if (m === 'GET') {
+    finalUrl += (finalUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+  }
+  return fetch(finalUrl, o).then(r => r.json()).catch(() => null);
 };
 
 let SPB=180;
@@ -2698,12 +2707,19 @@ function mergeActivePorts(incoming, local) {
   return incoming;
 }
 
-  // 3. Ports State
+  // 3. Ports State (ป้องกัน snapshot เก่าจาก Firestore ทับสถานะ live จาก Render API)
   if (d.ports && Array.isArray(d.ports) && d.ports.length > 0) {
-    currentPorts = mergeActivePorts(d.ports, currentPorts);
+    const merged = d.ports.map(fp => {
+      const existing = currentPorts.find(p => p.id === fp.id);
+      if (existing && (existing.status === 'pending_payment' || existing.status === 'in-use') && fp.status === 'available') {
+        return existing;
+      }
+      return fp;
+    });
+    currentPorts = merged;
     savePersistentPorts(currentPorts);
     renderPorts(currentPorts);
-    if (S.session && _cashPoll) checkCash(d.ports);
+    if (S.session && _cashPoll) checkCash(merged);
   }
 };
 
@@ -2743,7 +2759,7 @@ async function refreshPorts(){
   if(S.session&&_cashPoll)checkCash(d.ports);
 }
 renderPorts(currentPorts);
-setInterval(refreshPorts,3000);
+setInterval(refreshPorts,2000);
 refreshPorts();
 
 window.addEventListener('storage', e => {
@@ -2862,10 +2878,19 @@ async function openSheet(portId,label){
     const res = await apiFetch('POST', '/api/payment/hold', { portId });
     if (res && res.session) {
       S.session = res.session;
+      const pIdx = currentPorts.findIndex(p => p.id === portId);
+      if (pIdx !== -1) {
+        currentPorts[pIdx].status = 'pending_payment';
+        currentPorts[pIdx].hasSession = true;
+        currentPorts[pIdx].sessionMethod = 'holding';
+        savePersistentPorts(currentPorts);
+        renderPorts(currentPorts);
+      }
     } else if (res && (res.status === 'in-use' || res.error)) {
       closeSheet();
       Sound.error();
       kioskToast(res.error || `ช่อง ${label} ไม่ว่างแล้ว กรุณาเลือกช่องอื่นค่ะ`, 'warn');
+      refreshPorts();
     }
   } catch(e) {}
 }
@@ -2873,9 +2898,18 @@ function closeSheet(){
   stopTimers();
   if(S.portId && S.session){
     apiFetch('POST','/api/payment/cancel',{portId:S.portId,sessionId:S.session.id}).catch(()=>{});
+    const pIdx = currentPorts.findIndex(p => p.id === S.portId);
+    if (pIdx !== -1 && currentPorts[pIdx].status === 'pending_payment') {
+      currentPorts[pIdx].status = 'available';
+      currentPorts[pIdx].hasSession = false;
+      currentPorts[pIdx].sessionMethod = null;
+      savePersistentPorts(currentPorts);
+      renderPorts(currentPorts);
+    }
     S.session=null;
   }
   $('overlay').classList.remove('open');
+  refreshPorts();
 }
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))cancelSession();});
 function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');}

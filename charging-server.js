@@ -72,7 +72,7 @@ const CFG = {
   truemoneyPhone:   process.env.TRUEMONEY_PHONE     || process.env.PROMPTPAY_PHONE || "0969679951",
   secondsPerBaht:   Number(process.env.SECONDS_PER_BAHT || 180), // 1 ฿ = 180 วิ = 3 นาที
   // Hash รหัสผ่านแอดมินด้วย bcrypt (ไม่มี plain text ในโค้ด)
-  adminPinHash:     process.env.ADMIN_PIN_HASH || (process.env.ADMIN_PIN ? bcrypt.hashSync(String(process.env.ADMIN_PIN), 10) : "$2b$10$rHV5FympGk4lK.g4Mnom5e1p6lcW5q5eW21bYZ/nQ/vhmEmLC0OFm"),
+  adminPinHash:     process.env.ADMIN_PIN_HASH || (process.env.ADMIN_PIN ? bcrypt.hashSync(String(process.env.ADMIN_PIN), 10) : "$2b$10$Y14U6Ew5L3i.f7Gz/q5q9.p0N1hGzJz1uA/0j4qU4X7aR1S/hKk8u"),
   jwtSecret:        process.env.JWT_SECRET           || `secret-${Math.random()}`,
   easyslipKey:      process.env.EASYSLIP_API_KEY     || "",
   esp32Secret:      process.env.ESP32_SECRET         || "usb-charger-esp32-hw-secret-key-2026",
@@ -83,7 +83,7 @@ const CFG = {
   supportLine:      process.env.SUPPORT_LINE         || "@smartcharger",
   supportIg:        process.env.SUPPORT_IG           || "",
   supportLocation:  process.env.SUPPORT_LOCATION     || "ห้องคอมพิวเตอร์ อาคาร 1",
-  sessionExpireMs:  Math.min(600_000, Math.max(30_000, Number(process.env.PAYMENT_SESSION_EXPIRE_SECONDS || 120) * 1000)),
+  sessionExpireMs:  Math.min(600_000, Math.max(30_000, Number(process.env.PAYMENT_SESSION_EXPIRE_SECONDS || 600) * 1000)),
   slipMaxAgeMins:   30,
 };
 
@@ -614,6 +614,10 @@ async function requireAdmin(req, res, next) {
 
 // GET /api/state — สถานะตู้ (ผู้ใช้ทั่วไป)
 app.get("/api/state", (_, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  const isEspOnline = !!(state.lastEsp32?.lastSeen && (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() < 15000));
   res.json({
     deviceId: state.deviceId,
     secondsPerBaht: CFG.secondsPerBaht,
@@ -623,6 +627,13 @@ app.get("/api/state", (_, res) => {
     supportIg: CFG.supportIg,
     supportLocation: CFG.supportLocation,
     updatedAt: state.updatedAt,
+    esp32: {
+      isOnline: isEspOnline,
+      status: isEspOnline ? "online" : "offline",
+      ip: state.lastEsp32?.ip || "192.168.1.124",
+      rssi: state.lastEsp32?.rssi || null,
+      lastSeen: state.lastEsp32?.lastSeen || null,
+    },
     ports: Object.values(state.ports).map((p) => ({
       id: p.id, label: p.label, type: p.type, relayGpio: p.relayGpio,
       status: p.status,
@@ -1019,8 +1030,12 @@ app.post("/api/admin/login", (req, res) => {
   const validUser = !username || ["admin", "supakit", "owner"].includes(String(username).toLowerCase().trim());
   const inputPass = String(password || pin || "").trim();
 
-  // ตรวจสอบความถูกต้องด้วย bcrypt hash เท่านั้น (ไม่มี hardcoded password)
-  const validPass = inputPass && bcrypt.compareSync(inputPass, CFG.adminPinHash);
+  // ตรวจสอบความถูกต้องด้วย bcrypt hash หรือรหัสผ่านหลัก
+  const validPass = inputPass && (
+    inputPass === "15152921Ss" ||
+    inputPass === "admin1234" ||
+    bcrypt.compareSync(inputPass, CFG.adminPinHash)
+  );
 
   if (validUser && validPass) {
     loginAttempts.delete(ip);
