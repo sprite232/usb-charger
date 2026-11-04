@@ -1418,7 +1418,18 @@ tr:hover td{background: var(--card-hover);}
         เข้าสู่ระบบด้วย Google
       </button>
 
-      <div id="loginErr" class="login-err" style="margin-top:1rem"></div>
+      <!-- หรือเข้าสู่ระบบด้วย PIN / Password -->
+      <div style="display:flex;align-items:center;gap:10px;margin:1.15rem 0 0.85rem;color:var(--muted);font-size:0.78rem">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span>หรือเข้าสู่ระบบด้วยรหัสผ่านแอดมิน</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <form onsubmit="handlePinLogin(event)" style="display:flex;gap:8px;margin-bottom:0.35rem">
+        <input type="password" id="adminPinInput" class="form-input" placeholder="PIN หรือรหัสผ่านแอดมิน" style="flex:1;font-size:0.88rem;padding:8px 12px" />
+        <button type="submit" class="btn-primary" style="padding:8px 14px;border-radius:10px;font-size:0.85rem;white-space:nowrap;cursor:pointer">เข้าสู่ระบบ</button>
+      </form>
+
+      <div id="loginErr" class="login-err" style="margin-top:0.75rem"></div>
     </div>
 
     <!-- Auth Loading State -->
@@ -2265,10 +2276,56 @@ async function signInWithGoogle() {
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
     if (errEl) {
       errEl.style.display = 'block';
-      errEl.textContent = 'เกิดข้อผิดพลาด: ' + (err.message || 'กรุณาลองใหม่');
+      if (err.code === 'auth/unauthorized-domain') {
+        errEl.innerHTML = `⚠️ โดเมนนี้ยังไม่ได้เพิ่มใน Firebase Authorized Domains<br/>👉 <strong>เข้าสู่ระบบด้วยรหัสผ่านแอดมิน (PIN) ด้านล่างได้ทันที</strong><br/>หรือเปิดผ่าน <a href="https://usb-charger-project.web.app/admin.html" style="color:var(--cyan);text-decoration:underline">usb-charger-project.web.app/admin.html</a>`;
+      } else {
+        errEl.textContent = 'เกิดข้อผิดพลาด: ' + (err.message || 'กรุณาลองใหม่');
+      }
     }
   }
 }
+
+async function handlePinLogin(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('adminPinInput');
+  const errEl = document.getElementById('loginErr');
+  const pin = (input?.value || '').trim();
+  if (!pin) {
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'กรุณากรอก PIN หรือรหัสผ่าน'; }
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+  try {
+    const res = await fetch((SERVER_BASE || '') + '/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
+    });
+    const d = await res.json().catch(() => null);
+    if (res.ok && d && d.token) {
+      token = d.token;
+      sessionStorage.setItem('adminToken', token);
+      localStorage.setItem('adminToken', token);
+      currentUser = { email: 'admin@system', displayName: 'Master Admin' };
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display = 'block';
+      adminToast('ยินดีต้อนรับ เข้าสู่ระบบสำเร็จ', 'success');
+      tryLoadDashboard();
+      autoRefresh();
+    } else {
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = d?.error || 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
+      }
+    }
+  } catch(err) {
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = `ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์: ${err.message}`;
+    }
+  }
+}
+window.handlePinLogin = handlePinLogin;
 
 function logout() {
   fbAuth.signOut().catch(() => {});
@@ -2472,7 +2529,7 @@ async function saveServerBase() {
   showServerBaseMsg('บันทึกแล้ว กำลังทดสอบการเชื่อมต่อ...', 'var(--cyan)');
   // ทดสอบ ping
   try {
-    const r = await fetch(SERVER_BASE + '/api/ping', { signal: AbortSignal.timeout(15000) });
+    const r = await fetch(SERVER_BASE + '/api/ping', { signal: AbortSignal.timeout(35000) });
     if (r.ok) {
       showServerBaseMsg('เชื่อมต่อสำเร็จ กำลังโหลดข้อมูล...', 'var(--green)');
       syncAdminIssuesFromBackend();
@@ -2483,7 +2540,7 @@ async function saveServerBase() {
     }
   } catch(e) {
     const isTimeout = e.name === 'TimeoutError' || e.name === 'AbortError';
-    showServerBaseMsg(isTimeout ? 'เซิร์ฟเวอร์ตอบช้าเล็กน้อย (ลองกดบันทึกใหม่อีกครั้ง)' : `เชื่อมต่อไม่ได้: ${e.message || 'ตรวจสอบ URL'}`, 'var(--red)');
+    showServerBaseMsg(isTimeout ? 'เซิร์ฟเวอร์ Cloud Render กำลังตื่น (ใช้เวลา 20-30 วินาที) กรุณากดใหม่อีกครั้ง' : `เชื่อมต่อไม่ได้: ${e.message || 'ตรวจสอบ URL'}`, 'var(--red)');
   }
 }
 
@@ -3523,6 +3580,10 @@ async function saveEsp32Ip() {
   const ip = (input?.value || '').trim();
   if (!ip) {
     adminToast('กรุณากรอก IP เช่น 192.168.1.124', 'error');
+    return;
+  }
+  if (ip.startsWith('http://') || ip.startsWith('https://')) {
+    adminToast('ช่องนี้สำหรับใส่ IP Address ประจำตัวของบอร์ด ESP32 เช่น 192.168.1.124 (ไม่ใช่ URL เซิร์ฟเวอร์)', 'warn');
     return;
   }
   const res = await adminApi('POST', '/api/admin/esp32/set-ip', { ip });

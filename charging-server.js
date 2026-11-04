@@ -652,8 +652,8 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   const { portId, method } = req.body;
   const amount = Number(req.body.amount);
 
-  if (!["qr", "transfer", "coin", "cash"].includes(method)) {
-    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | coin | cash)" });
+  if (!["qr", "transfer", "coin", "cash", "truemoney"].includes(method)) {
+    return res.status(400).json({ error: "วิธีชำระไม่ถูกต้อง (qr | transfer | coin | cash | truemoney)" });
   }
   const normMethod = (method === "cash" ? "coin" : method);
   if (!Number.isFinite(amount) || amount < 1) {
@@ -664,6 +664,9 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   }
   if (normMethod === "coin" && (amount < 5 || amount % 5 !== 0)) {
     return res.status(400).json({ error: "รับชำระด้วยเหรียญเฉพาะยอด 5 บาทขึ้นไป และเป็นทวีคูณของ 5 บาท" });
+  }
+  if (normMethod === "truemoney" && amount < 10) {
+    return res.status(400).json({ error: "TrueMoney โอนเงินขั้นต่ำ ฿10 ขึ้นไป" });
   }
 
   const port = getPort(portId);
@@ -691,6 +694,11 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
     }
   } else if (method === "transfer") {
     session.bank = { name: CFG.bankName, account: CFG.bankAccount, accountName: CFG.bankAccountName, phone: CFG.promptpayPhone };
+  } else if (method === "truemoney") {
+    session.truemoney = {
+      phone: CFG.truemoneyPhone || "0969679951",
+      accountName: CFG.bankAccountName || "ศุภกฤต สอนบุญมา"
+    };
   }
 
   port.status = "pending_payment";
@@ -715,7 +723,7 @@ app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), 
   if (port.status !== "pending_payment" || !port.paymentSession) {
     return res.status(400).json({ error: "ไม่มี session รอการชำระ" });
   }
-  if (!["qr", "transfer"].includes(port.paymentSession.method)) {
+  if (!["qr", "transfer", "truemoney"].includes(port.paymentSession.method)) {
     return res.status(400).json({ error: "วิธีชำระนี้ไม่ใช้สลิป" });
   }
   if (!req.file) {
@@ -723,11 +731,55 @@ app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), 
   }
 
   const session = port.paymentSession;
-  console.log(`[🔍 Verify Slip] port=${port.id} ฿${session.amount} size=${req.file.size} bytes`);
+  const isTrueMoney = session.method === "truemoney";
+  console.log(`[🔍 Verify Slip] port=${port.id} ฿${session.amount} method=${session.method} size=${req.file.size} bytes`);
 
   const result = await verifySlip(req.file.buffer, req.file.mimetype, session.amount);
 
   if (!result.valid) {
+    if (isTrueMoney) {
+      // Direct TrueMoney wallet transfers may not have a BOT standard QR code.
+      // Save the slip image and record as an issue ticket for Admin, then activate port on server!
+      const ticketId = `TMN-${Date.now().toString().slice(-4)}`;
+      const base64Img = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+      const slipIssue = {
+        id: ticketId,
+        createdAt: now(),
+        category: "transfer",
+        categoryLabel: "TrueMoney โอนเงิน (แนบสลิป)",
+        portId: port.id,
+        portLabel: port.label,
+        amount: session.amount,
+        contact: "ลูกค้า TrueMoney หน้าตู้",
+        description: `ลูกค้าโอนผ่าน TrueMoney Wallet ฿${session.amount} ที่ช่อง ${port.label} (บันทึกสลิปและเปิดไฟชาร์จอัตโนมัติแล้ว)`,
+        imageUrl: base64Img,
+        status: "pending",
+        reply: null
+      };
+
+      try {
+        const issues = loadIssuesFile();
+        issues.unshift(slipIssue);
+        saveIssuesFile(issues);
+        if (hasFbApps() && db) {
+          db.collection("issues").doc(ticketId).set(slipIssue).catch(() => {});
+        }
+      } catch(e) {
+        console.warn("[TrueMoney Issue Save Warn]", e.message);
+      }
+
+      const tx = activatePort(port.id, session.amount, "truemoney", {
+        transRef: ticketId,
+        sender: "TrueMoney Wallet (แนบสลิป)",
+        slipDate: now(),
+        isDev: false,
+      });
+
+      console.log(`[✅ TMN Slip OK] port=${port.id} ticket=${ticketId}`);
+      addSystemLog("SERVER", "success", `รับสลิป TrueMoney ยอด ฿${session.amount} พอร์ต ${port.label} (บันทึกสลิปแล้ว เริ่มจ่ายไฟ)`);
+      return res.json({ success: true, transaction: tx, sender: "TrueMoney Wallet", isDev: false });
+    }
+
     console.log(`[❌ Slip Fail] port=${port.id} reason=${result.reason}`);
     return res.status(422).json({ success: false, reason: result.reason, message: result.message });
   }

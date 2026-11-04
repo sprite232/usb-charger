@@ -1768,10 +1768,10 @@ footer{
         <button class="method-item" id="btnMethodTMN" onclick="createSession('truemoney')">
           <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
           <div>
-            <div class="ml">TrueMoney ซองของขวัญ</div>
-            <div class="ms">วางลิงก์ซองอั่งเปา — เปิดไฟทันที ไม่ต้องรอสลิป &bull; ขั้นต่ำ ฿10</div>
+            <div class="ml">TrueMoney Wallet (โอนเงินแนบสลิป)</div>
+            <div class="ms">โอนเข้าเบอร์ 096-967-9951 แล้วแนบสลิป &bull; ขั้นต่ำ ฿10</div>
           </div>
-          <span class="method-badge" style="color:var(--red);background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">ไม่ต้องใช้สลิป</span>
+          <span class="method-badge" style="color:#ea580c;background:rgba(234,88,12,.12);border-color:rgba(234,88,12,.3)">โอนแนบสลิป</span>
         </button>
       </div>
 
@@ -1890,32 +1890,50 @@ footer{
       <button class="btn btn-ghost" onclick="cancelSession()">ยกเลิก</button>
     </div>
 
-    <!-- TrueMoney Gift Voucher -->
+    <!-- TrueMoney Wallet & Slip -->
     <div class="page" id="pg-truemoney">
       <div class="pay-row">
         <div class="pay-cell"><div class="pay-lbl">พอร์ต</div><div class="pay-val" id="tmn-port">—</div></div>
         <div class="pay-cell"><div class="pay-lbl">จำนวน</div><div class="pay-val" id="tmn-amt">—</div></div>
         <div class="pay-cell"><div class="pay-lbl">นาที</div><div class="pay-val" id="tmn-time">—</div></div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px;padding:10px 12px;background:var(--off);border:1px solid var(--g2);border-radius:12px">
-        <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:38px;height:38px;border-radius:9px;object-fit:contain;flex-shrink:0"/>
-        <div>
-          <div style="font-size:.82rem;font-weight:700;color:var(--dark)">TrueMoney ซองของขวัญ</div>
-          <div style="font-size:.72rem;color:var(--g3)">วางลิงก์ซองอั่งเปา แล้วกดยืนยัน</div>
+      <div class="expire-row">หมดอายุใน <strong id="tmnCD">10:00</strong></div>
+      <div class="bank-block" style="background:linear-gradient(135deg,rgba(249,115,22,0.12),rgba(234,88,12,0.06));border:1.5px solid rgba(249,115,22,0.3)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:28px;height:28px;border-radius:7px;object-fit:contain"/>
+            <span style="font-weight:700;color:#ea580c;font-size:0.85rem">TrueMoney Wallet</span>
+          </div>
+          <button type="button" class="btn-sm" onclick="copyTmnPhone()" style="padding:4px 10px;font-size:0.75rem;background:#ea580c;color:#fff;border:none;border-radius:8px;cursor:pointer">📋 คัดลอกเบอร์</button>
+        </div>
+        <div class="bacc" id="tmnPhone" style="color:var(--dark);letter-spacing:1px;font-size:1.35rem">096-967-9951</div>
+        <input type="hidden" id="tmnPhoneRaw" value="0969679951"/>
+        <div class="bname" id="tmnName" style="color:var(--g3);font-size:0.88rem;margin-top:2px">ศุภกฤต สอนบุญมา</div>
+        <div style="font-size:0.75rem;color:var(--g3);margin-top:6px;padding-top:6px;border-top:1px dashed rgba(249,115,22,0.25)">
+          💡 โอนเสร็จแล้ว บันทึกรูปสลิปจากแอป TrueMoney แล้วอัปโหลดด้านล่าง
         </div>
       </div>
-      <div class="tmn-steps">
-        <strong>วิธีสร้างซองของขวัญ:</strong><br/>
-        1. เปิดแอป TrueMoney Wallet<br/>
-        2. เลือก <strong>ซองของขวัญ</strong> (อั่งเปา)<br/>
-        3. กำหนดยอดเงิน <strong>฿<span id="tmn-amt-hint">—</span></strong> &gt; สร้างลิงก์<br/>
-        4. คัดลอกลิงก์ แล้ววางด้านล่าง
+      <p class="slip-lbl">อัปโหลดสลิป TrueMoney ยืนยัน</p>
+      <div class="slip-zone" id="dropTMN" onclick="pickFile('fTMN')" ondrop="handleDrop(event,'fTMN','prevTMN','btnTMN')" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')">
+        <p>กดเพื่อเลือกไฟล์สลิปหรือถ่ายรูป<br/><small>JPEG · PNG · WebP · ไม่เกิน 4 MB</small></p>
+        <img class="slip-prev" id="prevTMN"/>
       </div>
-      <input class="tmn-voucher-input" id="tmnVoucherUrl" type="url"
-        placeholder="https://gift.truemoney.com/campaign/?v=XXXXXXXXXX..."
-        autocomplete="off" autocorrect="off" spellcheck="false"/>
-      <button class="btn btn-green" id="btnTMN" onclick="submitTruemoneyVoucher()">ยืนยันซองของขวัญ — เปิดไฟชาร์จ</button>
-      <button class="btn btn-ghost" onclick="goPage('pg-method')">ย้อนกลับ</button>
+      <input type="file" id="fTMN" accept="image/*" hidden onchange="onFile('fTMN','prevTMN','btnTMN','dropTMN')"/>
+      <button class="btn btn-green" id="btnTMN" disabled onclick="submitSlip('truemoney')">ส่งสลิป TrueMoney ตรวจสอบ</button>
+      <button class="btn btn-ghost" onclick="cancelSession()">ยกเลิก</button>
+
+      <details style="margin-top:12px;background:var(--off);border:1px solid var(--g2);border-radius:10px;padding:8px 12px">
+        <summary style="font-size:0.78rem;font-weight:600;color:var(--g3);cursor:pointer">🎁 หรือใช้ซองของขวัญ TrueMoney (อั่งเปา)</summary>
+        <div style="margin-top:8px;font-size:0.75rem;color:var(--g3);line-height:1.5">
+          1. สร้างซองของขวัญในแอป TrueMoney ยอด ฿<span id="tmn-amt-hint">10</span><br/>
+          2. วางลิงก์ซองของขวัญด้านล่าง:
+        </div>
+        <input class="tmn-voucher-input" id="tmnVoucherUrl" type="url"
+          placeholder="https://gift.truemoney.com/campaign/?v=..."
+          style="margin-top:6px"
+          autocomplete="off" autocorrect="off" spellcheck="false"/>
+        <button class="btn btn-sm btn-primary" style="margin-top:6px;width:100%" onclick="submitTruemoneyVoucher()">ยืนยันซองของขวัญ</button>
+      </details>
     </div>
 
     <!-- Coin -->
@@ -2647,16 +2665,7 @@ window._onFsUpdate = function(d) {
 
 function mergeActivePorts(incoming, local) {
   if (!Array.isArray(incoming) || !incoming.length) return local || [];
-  if (!Array.isArray(local) || !local.length) return incoming;
-  return incoming.map(ip => {
-    const lp = local.find(p => p.id === ip.id);
-    if (!lp) return ip;
-    // ป้องกันไม่ให้ Cloud/Server ที่ยังไม่อัปเดตสถานะ มาล้างพอร์ตที่กำลังชาร์จนับถอยหลังอยู่ในเครื่องนี้
-    if (lp.status === 'in-use' && lp.remainingSeconds > 0 && ip.status === 'available') {
-      return lp;
-    }
-    return ip;
-  });
+  return incoming;
 }
 
   // 3. Ports State
@@ -2925,20 +2934,8 @@ function handleCashMethodClick(){
 /* ── Create Session ── */
 async function createSession(method){
   S.method=method;
-  // TrueMoney voucher: go directly to input page (no session needed from backend)
-  if(method==='truemoney'){
-    if(S.amount<10){showErr('TrueMoney ซองของขวัญต้องมียอดขั้นต่ำ ฿10 ขึ้นไป\nกรุณาเลือกยอดเงิน ฿10 หรือมากกว่า');return;}
-    const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
-    const cs=S.amount*SPB;
-    S.session={id:`tmn_${Date.now()}`,portId:S.portId,amount:S.amount,chargeSeconds:cs};
-    $('tmn-port').textContent=S.portLabel;
-    $('tmn-amt').textContent=`฿${S.amount}`;
-    $('tmn-time').textContent=Math.round(cs/60);
-    $('tmn-amt-hint').textContent=S.amount;
-    $('tmnVoucherUrl').value='';
-    $('btnTMN').disabled=false;
-    $('sheetTitle').textContent='TrueMoney ซองของขวัญ';
-    goPage('pg-truemoney');
+  if(method==='truemoney' && S.amount < 10){
+    showErr('TrueMoney ต้องมียอดขั้นต่ำ ฿10 ขึ้นไป\nกรุณาเลือกยอดเงิน ฿10 หรือมากกว่าค่ะ');
     return;
   }
   goPage('pg-proc');$('procMsg').textContent='กำลังเตรียมข้อมูล…';
@@ -2947,11 +2944,51 @@ async function createSession(method){
     const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
     const cs=S.amount*SPB;const expiresAt=new Date(Date.now()+600000).toISOString();
     res={session:{id:`sess_${Date.now()}`,portId:S.portId,amount:S.amount,chargeSeconds:cs,expiresAt,
+      truemoney:{phone:cfg.truemoneyPhone||cfg.promptpayPhone||'0969679951',accountName:cfg.bankAccountName||'ศุภกฤต สอนบุญมา'},
       bank:{name:cfg.bankName||'กสิกรไทย (kbank)',account:cfg.bankAccount||'193-3-86131-3',accountName:cfg.bankAccountName||'ศุภกฤต สอนบุญมา',phone:cfg.promptpayPhone||'0969679951'},
       qr:{image:`https://promptpay.io/${cfg.promptpayPhone||'0969679951'}/${S.amount}.png`}}};
   }
   S.session=res.session;
-  if(method==='qr')setupQR(res.session);else if(method==='transfer')setupTR(res.session);else setupCash(res.session);
+  if(method==='qr') setupQR(res.session);
+  else if(method==='transfer') setupTR(res.session);
+  else if(method==='truemoney') setupTMN(res.session);
+  else setupCash(res.session);
+}
+
+function setupTMN(s){
+  stopTimers();
+  startExpire('tmnCD', s.expiresAt);
+  const cfg = getAppConfig();
+  const phone = s.truemoney?.phone || cfg.truemoneyPhone || cfg.promptpayPhone || '0969679951';
+  const name = s.truemoney?.accountName || cfg.bankAccountName || 'ศุภกฤต สอนบุญมา';
+  const fmtPhone = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const tPhone = $('tmnPhone'); if(tPhone) tPhone.textContent = fmtPhone;
+  const tRaw = $('tmnPhoneRaw'); if(tRaw) tRaw.value = phone;
+  const tName = $('tmnName'); if(tName) tName.textContent = name;
+  const tPort = $('tmn-port'); if(tPort) tPort.textContent = S.portLabel;
+  const cs = s.chargeSeconds || (S.amount * SPB);
+  const tAmt = $('tmn-amt'); if(tAmt) tAmt.textContent = `฿${S.amount}`;
+  const tTime = $('tmn-time'); if(tTime) tTime.textContent = Math.round(cs / 60);
+  const tHint = $('tmn-amt-hint'); if(tHint) tHint.textContent = S.amount;
+  const fT = $('fTMN'); if(fT) fT.value = '';
+  const pT = $('prevTMN'); if(pT) { pT.src = ''; pT.style.display = 'none'; }
+  const bT = $('btnTMN'); if(bT) bT.disabled = true;
+  const dTMN = $('dropTMN'); if(dTMN) dTMN.classList.remove('has-file');
+  $('sheetTitle').textContent = 'TrueMoney Wallet';
+  goPage('pg-truemoney');
+}
+
+function copyTmnPhone(){
+  const raw = $('tmnPhoneRaw')?.value || '0969679951';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(raw).then(() => {
+      kioskToast('คัดลอกเบอร์ 096-967-9951 แล้วค่ะ', 'success');
+    }).catch(() => {
+      kioskToast('เบอร์ TrueMoney: 096-967-9951', 'info');
+    });
+  } else {
+    kioskToast('เบอร์ TrueMoney: 096-967-9951', 'info');
+  }
 }
 
 async function submitTruemoneyVoucher(){
@@ -2975,55 +3012,14 @@ async function submitTruemoneyVoucher(){
   });
   $('btnTMN').disabled=false;
   $('btnTMN').textContent='ยืนยันซองของขวัญ — เปิดไฟชาร์จ';
-  if(!res){
-    // Smart Fallback สำหรับ TrueMoney เมื่อเซิร์ฟเวอร์ขัดข้องหรือไม่เปิด Backend
-    try{
-      const ticketId = `TMN-${Date.now().toString().slice(-4)}`;
-      const tmnReport = {
-        id: ticketId,
-        createdAt: new Date().toISOString(),
-        category: 'transfer',
-        categoryLabel: 'TrueMoney ซองของขวัญ (ระบบเปิดไฟแล้ว)',
-        portId: S.portId,
-        portLabel: S.portLabel,
-        amount: S.amount,
-        contact: 'ลูกค้าหน้าตู้',
-        description: `ลูกค้าใส่ลิงก์ซองของขวัญ TrueMoney ฿${S.amount} ที่ช่อง ${S.portLabel}: ${url} (เปิดไฟชาร์จอัตโนมัติแล้ว กรุณากดรับซองในแอป TrueMoney)`,
-        imageUrl: '',
-        status: 'pending',
-        reply: null
-      };
-      if (typeof window._saveIssueToCloud === 'function') {
-        window._saveIssueToCloud(tmnReport);
-      }
-      const all = getStoredIssues();
-      all.unshift(tmnReport);
-      saveStoredIssues(all);
-    }catch(err){
-      console.warn('[TMN fallback save warning]', err);
-    }
-    const cs = S.amount * SPB;
-    const localP = currentPorts.find(x => x.id === S.portId);
-    if(localP){
-      localP.status = 'in-use';
-      localP.remainingSeconds = cs;
-      localP.totalSeconds = cs;
-      localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: 'truemoney' };
-      savePersistentPorts(currentPorts);
-      renderPorts(currentPorts);
-    }
-    Voice.speak('ชำระเงินสำเร็จ กำลังเปิดไฟชาร์จค่ะ');
-    showOK(cs, 'TrueMoney ซองของขวัญ (บันทึกข้อมูลแล้ว)', false);
-    return;
-  }
-  if(res.ok){
+  if(res && res.ok){
     const sec=res.chargeSeconds||S.session?.chargeSeconds||S.amount*(180);
     const sender=res.sender||'TrueMoney';
     Voice.speak('ชำระเงินสำเร็จ กำลังเปิดไฟชาร์จค่ะ');
     showOK(sec,sender,false);
   } else {
     goPage('pg-truemoney');
-    showErr(res.message||res.error||'ซองของขวัญใช้ไม่ได้ กรุณาลองใหม่');
+    showErr(res?.message||res?.error||'ซองของขวัญใช้ไม่ได้ หรือถูกรับไปแล้ว กรุณาลองใหม่ค่ะ');
   }
 }
 
@@ -3117,6 +3113,7 @@ function setupDrop(dropId,fId,pvId,btnId){
 }
 setupDrop('dropQR','fQR','prevQR','btnQR');
 setupDrop('dropTR','fTR','prevTR','btnTR');
+setupDrop('dropTMN','fTMN','prevTMN','btnTMN');
 
 function compressSlipImage(file){
   return new Promise(resolve=>{
@@ -3146,13 +3143,13 @@ function compressSlipImage(file){
 }
 
 async function submitSlip(method){
-  const fId=method==='qr'?'fQR':'fTR';const file=$(fId).files[0];
+  const fId=method==='qr'?'fQR':(method==='truemoney'?'fTMN':'fTR');const file=$(fId).files[0];
   if(!file){
     Sound.error();
     kioskToast('กรุณาเลือกหรือถ่ายรูปสลิปก่อนส่งตรวจสอบค่ะ', 'warn');
     return;
   }
-  stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับธนาคารผ่านระบบความปลอดภัย…';
+  stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับระบบความปลอดภัย…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   let res=null;
   try{
@@ -3165,65 +3162,18 @@ async function submitSlip(method){
       res = await r.json().catch(()=>null);
     }
   }catch(e){
-    // Network or static hosting without backend
+    console.warn('[Slip verify err]', e);
   }
 
-  // 1. กรณี Backend เซิร์ฟเวอร์ตอบกลับผลตรวจผ่าน
+  // 1. กรณีเซิร์ฟเวอร์ตอบผลสำเร็จ (เซิร์ฟเวอร์เปิดรีเลย์แล้ว ทุกคนเห็นพร้อมกัน)
   if(res&&res.success){
     const cs=res.transaction?.chargeSeconds||S.amount*SPB;
-    const localP=currentPorts.find(x=>x.id===S.portId);
-    if(localP){localP.status='in-use';localP.remainingSeconds=cs;localP.totalSeconds=cs;localP.currentTx={amount:S.amount,chargeSeconds:cs,method:S.method};savePersistentPorts(currentPorts);renderPorts(currentPorts);}
-    showOK(cs,res.sender,res.isDev);
+    showOK(cs,res.sender||'ชำระเงิน',res.isDev||false);
     return;
   }
 
-  // 2. ถ้าเซิร์ฟเวอร์ตรวจแล้วปฏิเสธอย่างชัดเจน (เช่น ไม่พบ QR, สลิปซ้ำ, โอนผิดบัญชี, ยอดไม่พอ)
-  if(res && res.success === false && !res.isFallback){
-    showErr(res.message || res.error || 'ตรวจสอบสลิปไม่ผ่าน กรุณาตรวจสอบรูปสลิปแล้วลองใหม่อีกครั้งค่ะ', true);
-    return;
-  }
-
-  // 3. 🌟 SMART FALLBACK MODE:
-  // หาก EasySlip ล่ม, เซิร์ฟเวอร์ไม่ตอบสนอง หรือรันบนเว็บ Firebase โดยตรง
-  // ไม่ปล่อยให้ลูกค้าติดค้าง -> บันทึกสลิปส่งตรงเข้าหน้า Admin + เปิดไฟชาร์จให้ลูกค้าทันที!
-  try{
-    const slipBase64 = await compressSlipImage(file);
-    const ticketId = `SLIP-${Date.now().toString().slice(-4)}`;
-    const slipReport = {
-      id: ticketId,
-      createdAt: new Date().toISOString(),
-      category: 'transfer',
-      categoryLabel: 'สลิปโอนเงิน (ระบบเปิดไฟแล้ว)',
-      portId: S.portId,
-      portLabel: S.portLabel,
-      amount: S.amount,
-      contact: 'ลูกค้าหน้าตู้',
-      description: `ลูกค้าแนบสลิปชำระเงิน ฿${S.amount} ที่ช่อง ${S.portLabel} (เปิดไฟชาร์จอัตโนมัติแล้ว กรุณาตรวจสอบยอดเงินในแอปธนาคาร)`,
-      imageUrl: slipBase64,
-      status: 'pending',
-      reply: null
-    };
-    if (typeof window._saveIssueToCloud === 'function') {
-      window._saveIssueToCloud(slipReport);
-    }
-    const all = getStoredIssues();
-    all.unshift(slipReport);
-    saveStoredIssues(all);
-  }catch(err){
-    console.warn('[Slip fallback save warning]', err);
-  }
-
-  const cs = S.amount * SPB;
-  const localP = currentPorts.find(x => x.id === S.portId);
-  if(localP){
-    localP.status = 'in-use';
-    localP.remainingSeconds = cs;
-    localP.totalSeconds = cs;
-    localP.currentTx = { amount: S.amount, chargeSeconds: cs, method: S.method };
-    savePersistentPorts(currentPorts);
-    renderPorts(currentPorts);
-  }
-  showOK(cs, 'โอนเงิน (แนบสลิปเรียบร้อย)', false);
+  // 2. กรณีตรวจไม่ผ่าน หรือมีข้อผิดพลาด
+  showErr(res?.message || res?.error || res?.reason || 'ตรวจสอบสลิปไม่ผ่าน กรุณาตรวจสอบรูปสลิปและยอดเงิน แล้วลองใหม่อีกครั้งค่ะ', true);
 }
 
 function retrySlip(){
