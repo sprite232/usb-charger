@@ -1363,6 +1363,7 @@ footer{
 <!-- MAIN -->
 <main class="main">
   <p class="sec-lbl reveal">พอร์ตที่ใช้งานได้</p>
+  <div id="queueNotice" style="display:none;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;padding:10px 16px;border-radius:12px;margin-bottom:14px;font-size:0.85rem;font-weight:600;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(245,158,11,0.1)"></div>
   <div class="port-grid" id="portGrid"></div>
 </main>
 
@@ -2361,9 +2362,23 @@ const BASE = window.API_BASE || (
     ? CLOUD_API
     : ''
 );
+function getClientId() {
+  let cid = sessionStorage.getItem('kiosk_client_id');
+  if (!cid) {
+    cid = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+    sessionStorage.setItem('kiosk_client_id', cid);
+  }
+  return cid;
+}
+
 const apiFetch = (m, url, b) => {
   const o = { method: m, headers: { 'Content-Type': 'application/json' }, cache: 'no-store' };
-  if (b) o.body = JSON.stringify(b);
+  if (b) {
+    if (typeof b === 'object' && !b.clientId) {
+      b.clientId = getClientId();
+    }
+    o.body = JSON.stringify(b);
+  }
   let finalUrl = BASE + url;
   if (m === 'GET') {
     finalUrl += (finalUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
@@ -2540,8 +2555,29 @@ function updateSupportContactInfo() {
 function renderPorts(ports){
   const g=$('portGrid');
   if(!g)return;
+
+  // ตรวจสอบและแสดงแถบคิวว่าง/ช่องที่พร้อมเร็วที่สุด
+  const qNotice = $('queueNotice');
+  if (qNotice) {
+    const busy = ports.filter(p => p.status !== 'available');
+    if (busy.length === ports.length && ports.length > 0) {
+      const inUse = ports.filter(p => p.status === 'in-use' && p.remainingSeconds > 0);
+      let fastest = null;
+      if (inUse.length > 0) {
+        fastest = inUse.reduce((min, p) => p.remainingSeconds < min.remainingSeconds ? p : min, inUse[0]);
+      }
+      qNotice.style.display = 'flex';
+      qNotice.innerHTML = `
+        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f59e0b;box-shadow:0 0 8px #f59e0b;margin-right:8px"></span>
+        <span>ตู้กำลังให้บริการเต็มทุกช่อง — <strong>ช่องที่ว่างเร็วที่สุด: ${fastest ? `${fastest.label} (อีก ${fmtSecs(fastest.remainingSeconds)})` : 'กำลังรอชำระเงิน'}</strong></span>
+      `;
+    } else {
+      qNotice.style.display = 'none';
+    }
+  }
+
   const existing=g.querySelectorAll('.port-card');
-  const canUpdate=existing.length===ports.length&&Array.from(existing).every((c,i)=>c.dataset.portId===ports[i].id&&c.dataset.status===ports[i].status);
+  const canUpdate=existing.length===ports.length&&Array.from(existing).every((c,i)=>c.dataset.portId===ports[i].id&&c.dataset.status===ports[i].status&&c.dataset.method===(ports[i].sessionMethod||''));
 
   if(canUpdate){
     ports.forEach((p,i)=>{
@@ -2575,11 +2611,13 @@ function renderPorts(ports){
   }
 
   g.innerHTML='';
+  const myClientId = getClientId();
+
   ports.forEach((p,i)=>{
     const el=document.createElement('div');
     const isA=p.status==='available',isP=p.status==='pending_payment',isU=p.status==='in-use';
     el.className=`port-card ${p.status}`;
-    el.dataset.portId=p.id;el.dataset.status=p.status;
+    el.dataset.portId=p.id;el.dataset.status=p.status;el.dataset.method=p.sessionMethod||'';
     el.style.animationDelay=`${i*0.08}s`;
 
     const isC=p.type==='USB-C';
@@ -2621,26 +2659,33 @@ function renderPorts(ports){
       el.dataset.rem=rem;el.dataset.total=total;el.dataset.paused=p.isPaused?'1':'0';
     } else {
       const isPending = isP;
+      const isMine = isPending && ((p.sessionClientId && p.sessionClientId === myClientId) || (S.portId === p.id));
+      
       const badge = isA
         ? '<span class="status-badge av"><span class="sb-dot"></span>ว่าง</span>'
-        : '<span class="status-badge pend" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)"><span class="sb-dot ani" style="background:#f59e0b"></span>ไม่ว่าง (รอชำระ)</span>';
+        : isMine
+          ? '<span class="status-badge pend" style="background:rgba(16,185,129,0.18);color:var(--green);border:1px solid rgba(16,185,129,0.4)"><span class="sb-dot ani" style="background:var(--green)"></span>คุณกำลังทำรายการ</span>'
+          : '<span class="status-badge pend" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)"><span class="sb-dot ani" style="background:#f59e0b"></span>ไม่ว่าง (รอชำระ)</span>';
 
       let methodText = 'กำลังทำรายการ';
       if (p.sessionMethod === 'truemoney') methodText = 'TrueMoney';
       else if (p.sessionMethod === 'qr') methodText = 'พร้อมเพย์ QR';
       else if (p.sessionMethod === 'transfer') methodText = 'โอนธนาคาร';
       else if (p.sessionMethod === 'coin') methodText = 'หยอดเหรียญ';
+      else if (p.sessionMethod === 'holding') methodText = 'กำลังเลือกยอด';
 
       const hint = isA
         ? '<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>'
-        : `<div class="pc-pending" style="color:#f59e0b;font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px">
-             <span>⏳ มีคนกำลังทำรายการ (${methodText})</span>
-           </div>`;
+        : isMine
+          ? '<div class="pc-pending" style="color:var(--green);font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px"><span>👉 แตะเพื่อทำรายการต่อ</span></div>'
+          : `<div class="pc-pending" style="color:#f59e0b;font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px">
+               <span>⏳ มีคนกำลังทำรายการ (${methodText})</span>
+             </div>`;
 
       if (isPending) {
         el.className = `port-card pending_payment`;
-        el.style.borderColor = '#f59e0b';
-        el.style.boxShadow = '0 0 15px rgba(245, 158, 11, 0.2)';
+        el.style.borderColor = isMine ? 'var(--green)' : '#f59e0b';
+        el.style.boxShadow = isMine ? '0 0 15px rgba(16,185,129,0.2)' : '0 0 15px rgba(245, 158, 11, 0.2)';
       }
 
       el.innerHTML = `
@@ -2651,7 +2696,7 @@ function renderPorts(ports){
         </div>
         ${hint}`;
 
-      if (isA) {
+      if (isA || isMine) {
         el.addEventListener('click', () => openSheet(p.id, p.label));
       } else {
         el.addEventListener('click', () => {
@@ -2702,25 +2747,7 @@ window._onFsUpdate = function(d) {
   } catch(e){}
   updateSupportContactInfo();
 
-function mergeActivePorts(incoming, local) {
-  if (!Array.isArray(incoming) || !incoming.length) return local || [];
-  return incoming;
-}
-
-  // 3. Ports State (ป้องกัน snapshot เก่าจาก Firestore ทับสถานะ live จาก Render API)
-  if (d.ports && Array.isArray(d.ports) && d.ports.length > 0) {
-    const merged = d.ports.map(fp => {
-      const existing = currentPorts.find(p => p.id === fp.id);
-      if (existing && (existing.status === 'pending_payment' || existing.status === 'in-use') && fp.status === 'available') {
-        return existing;
-      }
-      return fp;
-    });
-    currentPorts = merged;
-    savePersistentPorts(currentPorts);
-    renderPorts(currentPorts);
-    if (S.session && _cashPoll) checkCash(merged);
-  }
+  // หมายเหตุ: สถานะพอร์ตชาร์จดึงจาก Render Server /api/state 100% (Single Source of Truth)
 };
 
 // Check if initial snapshot data already arrived before script loaded
@@ -2731,13 +2758,6 @@ if (window._fsData) {
 async function refreshPorts(){
   const d=await apiFetch('GET','/api/state');
   if(!d||!d.ports){
-    if (window._fsData) {
-      window._onFsUpdate(window._fsData);
-      return;
-    }
-    currentPorts=loadPersistentPorts();
-    renderPorts(currentPorts);
-    updateSupportContactInfo();
     return;
   }
   SPB=d.secondsPerBaht||180;
@@ -2752,7 +2772,7 @@ async function refreshPorts(){
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e) {}
   }
-  currentPorts = mergeActivePorts(d.ports, currentPorts);
+  currentPorts = d.ports;
   savePersistentPorts(currentPorts);
   renderPorts(currentPorts);
   updateSupportContactInfo();
@@ -2861,11 +2881,21 @@ function toggleAcc(btn){Sound.click();btn.parentElement?.classList.toggle('open'
 async function openSheet(portId,label){
   Sound.click();
   const targetPort = currentPorts.find(p => p.id === portId);
-  if (targetPort && targetPort.status !== 'available') {
+  const myClientId = getClientId();
+
+  if (targetPort && targetPort.status === 'in-use') {
     Sound.error();
-    kioskToast(`ช่อง ${label} มีคนกำลังทำรายการหรือใช้งานอยู่ กรุณาเลือกช่องอื่นค่ะ`, 'warn');
+    kioskToast(`ช่อง ${label} กำลังจ่ายไฟชาร์จอยู่ กรุณาเลือกช่องอื่นค่ะ`, 'warn');
     return;
   }
+  
+  // ถ้าเป็น pending_payment ของคนอื่น
+  if (targetPort && targetPort.status === 'pending_payment' && targetPort.sessionClientId && targetPort.sessionClientId !== myClientId && S.portId !== portId) {
+    Sound.error();
+    kioskToast(`ช่อง ${label} มีคนกำลังทำรายการอยู่ กรุณารอสักครู่หรือเลือกช่องอื่นนะคะ`, 'warn');
+    return;
+  }
+
   Voice.speak(`คุณเลือกพอร์ต ${label} ค่ะ`);
   Object.assign(S,{portId,portLabel:label,amount:null,method:null,session:null});
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
@@ -2873,16 +2903,33 @@ async function openSheet(portId,label){
   $('sheetTitle').textContent=`เลือกจำนวน · ${label}`;
   goPage('pg-amount');$('overlay').classList.add('open');
 
-  // แจ้งเซิร์ฟเวอร์ล็อคช่องทันที ไม่ให้ผู้อื่นกดชนกันระหว่างเลือกยอด
+  // Optimistic UI: อัปเดตในเครื่องทันที
+  const pIdx = currentPorts.findIndex(p => p.id === portId);
+  if (pIdx !== -1) {
+    currentPorts[pIdx].status = 'pending_payment';
+    currentPorts[pIdx].hasSession = true;
+    currentPorts[pIdx].sessionMethod = 'holding';
+    currentPorts[pIdx].sessionClientId = myClientId;
+    savePersistentPorts(currentPorts);
+    renderPorts(currentPorts);
+  }
+
+  // ส่งคำสั่ง hold ไปยังเซิร์ฟเวอร์
   try {
-    const res = await apiFetch('POST', '/api/payment/hold', { portId });
+    const res = await apiFetch('POST', '/api/payment/hold', { 
+      portId, 
+      clientId: myClientId,
+      holdSessionId: S.session?.id || ''
+    });
+
     if (res && res.session) {
       S.session = res.session;
-      const pIdx = currentPorts.findIndex(p => p.id === portId);
       if (pIdx !== -1) {
         currentPorts[pIdx].status = 'pending_payment';
         currentPorts[pIdx].hasSession = true;
         currentPorts[pIdx].sessionMethod = 'holding';
+        currentPorts[pIdx].sessionClientId = myClientId;
+        currentPorts[pIdx].sessionExpiresAt = res.session.expiresAt;
         savePersistentPorts(currentPorts);
         renderPorts(currentPorts);
       }
@@ -2894,23 +2941,52 @@ async function openSheet(portId,label){
     }
   } catch(e) {}
 }
+
 function closeSheet(){
   stopTimers();
-  if(S.portId && S.session){
-    apiFetch('POST','/api/payment/cancel',{portId:S.portId,sessionId:S.session.id}).catch(()=>{});
-    const pIdx = currentPorts.findIndex(p => p.id === S.portId);
+  const closingPortId = S.portId;
+  const closingSessionId = S.session?.id || '';
+
+  if (closingPortId) {
+    apiFetch('POST', '/api/payment/cancel', {
+      portId: closingPortId,
+      sessionId: closingSessionId,
+      clientId: getClientId()
+    }).catch(() => {});
+
+    const pIdx = currentPorts.findIndex(p => p.id === closingPortId);
     if (pIdx !== -1 && currentPorts[pIdx].status === 'pending_payment') {
       currentPorts[pIdx].status = 'available';
       currentPorts[pIdx].hasSession = false;
       currentPorts[pIdx].sessionMethod = null;
+      currentPorts[pIdx].sessionClientId = null;
+      currentPorts[pIdx].sessionExpiresAt = null;
       savePersistentPorts(currentPorts);
       renderPorts(currentPorts);
     }
-    S.session=null;
   }
+
+  S.portId = null;
+  S.portLabel = null;
+  S.amount = null;
+  S.method = null;
+  S.session = null;
   $('overlay').classList.remove('open');
   refreshPorts();
 }
+
+window.addEventListener('pagehide', () => {
+  if (S.portId && S.session && S.session.method === 'holding') {
+    const data = JSON.stringify({
+      portId: S.portId,
+      sessionId: S.session.id,
+      clientId: getClientId()
+    });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon((BASE || '') + '/api/payment/cancel', new Blob([data], { type: 'application/json' }));
+    }
+  }
+});
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))cancelSession();});
 function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');}
 
@@ -3341,11 +3417,6 @@ function startExpire(spanId,isoStr){
 function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
 async function cancelSession(){
   Sound.click();
-  stopTimers();
-  if(S.portId&&S.session){
-    await apiFetch('POST','/api/payment/cancel',{portId:S.portId,sessionId:S.session.id}).catch(()=>{});
-  }
-  S.session=null;
   closeSheet();
 }
 

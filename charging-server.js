@@ -371,14 +371,14 @@ setInterval(() => {
 }, 1000);
 
 
-// ✅ Session timeout — ปลดล็อกพอร์ตที่รอชำระให้คนถัดไปโดยเร็ว
+// ✅ Session timeout — ปลดล็อกพอร์ตที่รอชำระให้คนถัดไปทันที (เช็คทุก 1 วินาที)
 setInterval(() => {
   Object.values(state.ports).forEach((p) => {
     if (p.status === "pending_payment" && p.paymentSession) {
       expirePaymentSession(p);
     }
   });
-}, 5_000);
+}, 1_000);
 
 // ─── EasySlip Verification ────────────────────────────────────────────────────
 async function verifySlip(imageBuffer, mimetype, expectedAmount) {
@@ -617,6 +617,12 @@ app.get("/api/state", (_, res) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
+
+  // เคลียร์ session ที่หมดอายุทันทีก่อนส่งให้ client เพื่อความแม่นยำ 100%
+  Object.values(state.ports).forEach((p) => {
+    if (p.status === "pending_payment") expirePaymentSession(p);
+  });
+
   const isEspOnline = !!(state.lastEsp32?.lastSeen && (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() < 15000));
   res.json({
     deviceId: state.deviceId,
@@ -649,6 +655,7 @@ app.get("/api/state", (_, res) => {
       hasSession: !!p.paymentSession,
       sessionMethod: p.paymentSession?.method || null,
       sessionExpiresAt: p.paymentSession?.expiresAt || null,
+      sessionClientId: p.paymentSession?.clientId || null,
     })),
   });
 });
@@ -659,11 +666,11 @@ app.get("/api/state", (_, res) => {
 
 /**
  * POST /api/payment/hold
- * Body: { portId }
+ * Body: { portId, clientId, holdSessionId }
  * ล็อคพอร์ตทันทีที่ลูกค้ากดเลือกช่อง เพื่อไม่ให้ผู้อื่นกดชนกันระหว่างเลือกยอด/วิธีชำระ
  */
 app.post("/api/payment/hold", (req, res) => {
-  const { portId } = req.body;
+  const { portId, clientId, holdSessionId } = req.body;
   const port = getPort(portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
   if (port.status === "in-use") {
@@ -676,8 +683,19 @@ app.post("/api/payment/hold", (req, res) => {
   if (port.status === "pending_payment" && port.paymentSession) {
     const diffMs = new Date(port.paymentSession.expiresAt).getTime() - Date.now();
     if (diffMs > 0) {
+      // ตรวจสอบว่าเป็นผู้ใช้เดิมหรือไม่
+      const isSameClient = (clientId && port.paymentSession.clientId === clientId) ||
+                           (holdSessionId && port.paymentSession.id === holdSessionId);
+      if (isSameClient || (port.paymentSession.method === "holding" && diffMs < 5000)) {
+        port.paymentSession.expiresAt = new Date(Date.now() + 45_000).toISOString();
+        port.paymentSession.updatedAt = now();
+        state.updatedAt = now();
+        saveState();
+        return res.json({ success: true, session: port.paymentSession, renewed: true });
+      }
+
       return res.status(409).json({
-        error: "ช่องนี้มีผู้ใช้งานกำลังทำรายการอยู่",
+        error: `ช่อง ${port.label} กำลังมีผู้ใช้งานอื่นทำรายการอยู่ (${port.paymentSession.method === 'holding' ? 'กำลังเลือกยอด' : 'รอชำระเงิน'})`,
         status: "pending_payment",
         method: port.paymentSession.method,
         expiresInSec: Math.max(1, Math.round(diffMs / 1000))
@@ -685,15 +703,16 @@ app.post("/api/payment/hold", (req, res) => {
     }
   }
 
-  // ล็อคชั่วคราว 2 นาทีสำหรับเลือกยอดและวิธีชำระ
+  // ล็อคชั่วคราว 45 วินาทีสำหรับเลือกยอด
   const holdSession = {
     id: `hold_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     portId,
+    clientId: clientId || null,
     method: "holding",
     amount: 0,
     chargeSeconds: 0,
     createdAt: now(),
-    expiresAt: new Date(Date.now() + 120_000).toISOString()
+    expiresAt: new Date(Date.now() + 45_000).toISOString()
   };
 
   port.status = "pending_payment";
@@ -701,14 +720,14 @@ app.post("/api/payment/hold", (req, res) => {
   state.updatedAt = now();
   saveState();
 
-  console.log(`[🔒 Hold Port] port=${portId} held for 2 minutes`);
-  addSystemLog("SERVER", "info", `ลูกค้าเริ่มเลือกช่อง ${port.label} (ล็อคช่องสถานะรอชำระชั่วคราว 2 นาที)`);
+  console.log(`[🔒 Hold Port] port=${portId} held for 45s clientId=${clientId || 'anon'}`);
+  addSystemLog("SERVER", "info", `ลูกค้าเลือกช่อง ${port.label} (ล็อคช่องชั่วคราว 45 วิ)`);
   res.json({ success: true, session: holdSession });
 });
 
 /**
  * POST /api/payment/create
- * Body: { portId, amount, method: 'qr'|'transfer'|'coin' }
+ * Body: { portId, amount, method: 'qr'|'transfer'|'coin'|'truemoney', clientId, holdSessionId }
  * สร้าง session การชำระ
  */
 app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
@@ -737,11 +756,13 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   if (port.status === "in-use") {
     return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่", status: port.status });
   }
-  if (port.status === "pending_payment" && port.paymentSession && port.paymentSession.method !== "holding") {
+  if (port.status === "pending_payment" && port.paymentSession) {
     const holdId = req.body.holdSessionId;
-    if (holdId && port.paymentSession.id === holdId) {
-      // ผู้ใช้เดิมอัปเกรด session
-    } else {
+    const clientId = req.body.clientId;
+    const isOwner = (holdId && port.paymentSession.id === holdId) ||
+                    (clientId && port.paymentSession.clientId === clientId) ||
+                    (port.paymentSession.method === "holding");
+    if (!isOwner) {
       return res.status(409).json({ error: "พอร์ตนี้มีผู้ใช้งานกำลังทำรายการชำระเงินอยู่", status: port.status });
     }
   }
@@ -753,6 +774,7 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   const session = {
     id: `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
     portId, amount: rounded, method: normMethod, chargeSeconds,
+    clientId: req.body.clientId || null,
     createdAt: now(), expiresAt,
   };
 
@@ -997,22 +1019,33 @@ app.post("/api/coin/insert", requireEsp32Auth, limiterCoin, (req, res) => {
 
 /**
  * POST /api/payment/cancel
- * Body: { portId, sessionId }
- * ป้องกัน User A กดยกเลิกรายการของ User B
+ * Body: { portId, sessionId, clientId }
+ * ปลดล็อคพอร์ตทันทีเมื่อลูกค้ายกเลิก หรือปิดหน้าต่าง
  */
 app.post("/api/payment/cancel", (req, res) => {
-  const { portId, sessionId } = req.body;
+  const { portId, sessionId, clientId } = req.body;
   const port = getPort(portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
-  if (!port.paymentSession) return res.json({ success: true, message: "ไม่มี session ที่ค้างอยู่" });
-
-  // ตรวจสอบสิทธิ์ความเป็นเจ้าของ session
-  if (sessionId && port.paymentSession.id && port.paymentSession.id !== sessionId) {
-    return res.status(403).json({ error: "ไม่อนุญาต: รหัส session ไม่ถูกต้อง ไม่สามารถยกเลิกรายการของผู้อื่นได้" });
+  if (!port.paymentSession) {
+    if (port.status === "pending_payment") {
+      clearSession(port.id);
+    }
+    return res.json({ success: true, message: "ไม่มี session ที่ค้างอยู่" });
   }
 
-  clearSession(port.id);
-  res.json({ success: true });
+  // ถ้าเป็นสถานะ holding (ยังไม่ได้เลือกชำระเงินจริง) หรือ clientId ตรงกัน หรือ sessionId ตรงกัน ให้ปลดล็อคทันที
+  const isHolding = port.paymentSession.method === "holding";
+  const isMatchingSession = !sessionId || port.paymentSession.id === sessionId;
+  const isMatchingClient = clientId && port.paymentSession.clientId === clientId;
+
+  if (isHolding || isMatchingSession || isMatchingClient) {
+    clearSession(port.id);
+    console.log(`[🔓 Cancelled & Released] port=${portId} isHolding=${isHolding}`);
+    addSystemLog("SERVER", "info", `ยกเลิกรายการพอร์ต ${port.label} (คืนสถานะว่างทันที)`);
+    return res.json({ success: true, released: true });
+  }
+
+  return res.status(403).json({ error: "ไม่อนุญาต: รหัส session ไม่ตรงกัน" });
 });
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
