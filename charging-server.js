@@ -160,7 +160,10 @@ function saveState() {
       id: p.id, label: p.label, type: p.type, relayGpio: p.relayGpio,
       status: p.status, relayOn: p.relayOn, isPaused: p.isPaused,
       remainingSeconds: p.remainingSeconds, currentTx: p.currentTx,
-      totalSeconds: p.currentTx?.chargeSeconds || 0,
+      totalSeconds: p.currentTx?.chargeSeconds || (p.remainingSeconds > 0 ? p.remainingSeconds : 0),
+      hasSession: !!p.paymentSession,
+      sessionMethod: p.paymentSession?.method || null,
+      sessionExpiresAt: p.paymentSession?.expiresAt || null,
     }));
     const data = {
       transactions: state.transactions,
@@ -644,6 +647,55 @@ app.get("/api/state", (_, res) => {
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
 /**
+ * POST /api/payment/hold
+ * Body: { portId }
+ * ล็อคพอร์ตทันทีที่ลูกค้ากดเลือกช่อง เพื่อไม่ให้ผู้อื่นกดชนกันระหว่างเลือกยอด/วิธีชำระ
+ */
+app.post("/api/payment/hold", (req, res) => {
+  const { portId } = req.body;
+  const port = getPort(portId);
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (port.status === "in-use") {
+    return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่", status: "in-use" });
+  }
+
+  // ตรวจสอบว่า session เดิมหมดอายุหรือยัง
+  expirePaymentSession(port);
+
+  if (port.status === "pending_payment" && port.paymentSession) {
+    const diffMs = new Date(port.paymentSession.expiresAt).getTime() - Date.now();
+    if (diffMs > 0) {
+      return res.status(409).json({
+        error: "ช่องนี้มีผู้ใช้งานกำลังทำรายการอยู่",
+        status: "pending_payment",
+        method: port.paymentSession.method,
+        expiresInSec: Math.max(1, Math.round(diffMs / 1000))
+      });
+    }
+  }
+
+  // ล็อคชั่วคราว 2 นาทีสำหรับเลือกยอดและวิธีชำระ
+  const holdSession = {
+    id: `hold_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    portId,
+    method: "holding",
+    amount: 0,
+    chargeSeconds: 0,
+    createdAt: now(),
+    expiresAt: new Date(Date.now() + 120_000).toISOString()
+  };
+
+  port.status = "pending_payment";
+  port.paymentSession = holdSession;
+  state.updatedAt = now();
+  saveState();
+
+  console.log(`[🔒 Hold Port] port=${portId} held for 2 minutes`);
+  addSystemLog("SERVER", "info", `ลูกค้าเริ่มเลือกช่อง ${port.label} (ล็อคช่องสถานะรอชำระชั่วคราว 2 นาที)`);
+  res.json({ success: true, session: holdSession });
+});
+
+/**
  * POST /api/payment/create
  * Body: { portId, amount, method: 'qr'|'transfer'|'coin' }
  * สร้าง session การชำระ
@@ -670,8 +722,18 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   }
 
   const port = getPort(portId);
-  if (!port)                       return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
-  if (port.status !== "available") return res.status(409).json({ error: "พอร์ตนี้ไม่ว่าง", status: port.status });
+  if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
+  if (port.status === "in-use") {
+    return res.status(409).json({ error: "พอร์ตนี้กำลังใช้งานอยู่", status: port.status });
+  }
+  if (port.status === "pending_payment" && port.paymentSession && port.paymentSession.method !== "holding") {
+    const holdId = req.body.holdSessionId;
+    if (holdId && port.paymentSession.id === holdId) {
+      // ผู้ใช้เดิมอัปเกรด session
+    } else {
+      return res.status(409).json({ error: "พอร์ตนี้มีผู้ใช้งานกำลังทำรายการชำระเงินอยู่", status: port.status });
+    }
+  }
 
   const rounded       = Math.round(amount * 100) / 100;
   const chargeSeconds = Math.round(rounded * CFG.secondsPerBaht);

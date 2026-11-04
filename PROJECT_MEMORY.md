@@ -1,0 +1,104 @@
+# 🧠 PROJECT MEMORY & ARCHITECTURE CONTEXT
+> **Smart USB Charger (ตู้ชาร์จมือถืออัจฉริยะ 4 ช่อง)**
+> ไฟล์นี้เป็นสมองและความจำหลักของโปรเจกต์ (Project Brain & Knowledge Base) บันทึกประวัติ ความต้องการ สถาปัตยกรรม และรายละเอียดทางเทคนิคทั้งหมดตั้งแต่เริ่มต้น เพื่อให้ AI (Antigravity) และผู้พัฒนารู้เรื่องราวและทำงานต่อได้อย่างไร้รอยต่อในทุกที่ทุกเวลา
+
+---
+
+## 1. 📌 ที่มาและเป้าหมายของระบบ (Project Mission & Vision)
+- **วัตถุประสงค์:** สร้างระบบควบคุมตู้ชาร์จแบตเตอรี่โทรศัพท์มือถืออัจฉริยะ 4 พอร์ต (USB-A 2 ช่อง, USB-C 2 ช่อง) สำหรับใช้งานจริงที่โรงเรียนหรือสถานที่สาธารณะ
+- **ประสบการณ์ผู้ใช้ (UX/UI):** 
+  - สวยงาม ทันสมัย สไตล์ Cyberpunk / Modern Kiosk 
+  - มีเสียงพูดภาษาไทย (Voice Guidance) และเสียงเอฟเฟกต์ (Sound Effects)
+  - ผู้ใช้ไม่ต้องสับสน ไม่ต้องถามกันว่าใครชาร์จช่องไหน เพราะหน้าเว็บจะแสดงสถานะสดแบบ Real-time:
+    - 🟢 **ว่าง** (Available)
+    - 🟡 **ไม่ว่าง / กำลังชำระเงิน** (Pending Payment / Holding) เมื่อมีคนกดเลือกช่องหรือกำลังสแกนจ่าย
+    - 🔵 **กำลังจ่ายไฟ** (In Use / Charging) พร้อมแท่งบาร์เปอร์เซ็นต์และเวลานับถอยหลัง
+
+---
+
+## 2. ⚡ สถาปัตยกรรมระบบ (System Architecture)
+
+```
+[ ลูกค้าหน้าตู้ / มือถือ ]           [ ฮาร์ดแวร์ตู้ชาร์จ (ESP32) ]
+        │                                    │
+        │ HTTPS / WSS                        │ Poll ทุก 2 วินาที (HTTPS)
+        ▼                                    ▼
+[ Firebase Hosting ] ──(Proxy/API)──► [ Render Cloud Server ]
+(usb-charger-project.web.app)       (usb-charger.onrender.com)
+        │                                    │
+        └──────────► [ Firestore ] ◄─────────┘
+                   (Real-time State)
+```
+
+1. **Frontend (Kiosk & Admin UI):**
+   - Host: **Firebase Hosting** (`https://usb-charger-project.web.app`)
+   - ไฟล์หลัก: `public/index.html` (หน้าตู้ชาร์จ) และ `public/admin.html` (หน้าแดชบอร์ดแอดมิน)
+2. **Backend Server (API & Hardware Controller):**
+   - Host: **Render Cloud** (`https://usb-charger.onrender.com`)
+   - โค้ดหลัก: `charging-server.js` (Node.js + Express)
+   - Source Code Git: `https://github.com/sprite232/usb-charger.git` (Branch: `master`)
+3. **Database & Real-time State:**
+   - **Google Firebase Firestore** (Project: `usb-charger-project`)
+   - ซิงค์สถานะพอร์ตแบบ Real-time Listener (`onSnapshot`)
+4. **Hardware Controller (Microcontroller):**
+   - บอร์ด: **DOIT ESP32 DEVKIT V1**
+   - โค้ด: `esp32-demo/esp32-demo.ino`
+
+---
+
+## 3. 🔌 ฮาร์ดแวร์ & พินรีเลย์ (Hardware GPIO Mapping)
+
+| ช่องชาร์จ | ชนิดพอร์ต | พิน ESP32 (GPIO) | รีเลย์ (Active-High) |
+| :--- | :--- | :--- | :--- |
+| **พอร์ต 1** | USB-A 1 | **GPIO 26** | Relay 1 (LOW = ดับ, HIGH = จ่ายไฟ) |
+| **พอร์ต 2** | USB-A 2 | **GPIO 27** | Relay 2 (LOW = ดับ, HIGH = จ่ายไฟ) |
+| **พอร์ต 3** | USB-C 1 | **GPIO 25** | Relay 3 (LOW = ดับ, HIGH = จ่ายไฟ) |
+| **พอร์ต 4** | USB-C 2 | **GPIO 33** | Relay 4 (LOW = ดับ, HIGH = จ่ายไฟ) |
+| **ปุ่มตั้งค่า Wi-Fi** | ปุ่ม BOOT | **GPIO 0** | กดค้าง 3 วินาที เพื่อปล่อย Hotspot |
+
+### 📶 Smart Wi-Fi & Captive Portal ของ ESP32:
+- ไม่ต้องแก้โค้ดเมื่อเปลี่ยนสถานที่ (เช่น เอาไปโรงเรียน)
+- หากต่อ Wi-Fi ที่บันทึกไว้ไม่ได้ภายใน 15 วินาที บอร์ดจะปล่อย Hotspot อัตโนมัติ:
+  - **ชื่อ Hotspot:** `SmartCharger-Setup`
+  - **รหัสผ่าน:** `admin1234`
+  - **หน้าเว็บตั้งค่า:** `http://192.168.4.1` (เปิดจากมือถือได้ทันทีเพื่อเลือก Wi-Fi โรงเรียน/มือถือ)
+  - บันทึกลง Flash Memory (Preferences) บอร์ดจะจำได้ถาวร
+
+---
+
+## 4. 💰 ช่องทางการชำระเงินและข้อมูลบัญชี (Payment Info)
+
+1. **พร้อมเพย์ QR Code (PromptPay):**
+   - เบอร์โทรศัพท์: `096-967-9951`
+   - ตรวจสอบสลิปอัตโนมัติด้วย **EasySlip API**
+2. **โอนเงินเข้าบัญชีธนาคาร:**
+   - ธนาคาร: **กสิกรไทย (KBank)**
+   - เลขบัญชี: `193-3-86131-3`
+   - ชื่อบัญชี: **ศุภกฤต สอนบุญมา**
+3. **TrueMoney Wallet (โอนเงินแนบสลิป & ซองของขวัญ):**
+   - เบอร์ TrueMoney: `096-967-9951` (ศุภกฤต สอนบุญมา)
+   - มีปุ่มคัดลอกเบอร์โทรศัพท์และอัปโหลดสลิป
+   - รองรับซองของขวัญ TrueMoney Gift Voucher (`gift.truemoney.com`)
+4. **หยอดเหรียญ (Coin Acceptor):**
+   - รองรับเหรียญ 5 บาท และ 10 บาท (อัตรา: 1 บาท = 180 วินาที / 3 นาที)
+
+---
+
+## 5. 🛡️ ข้อมูลสิทธิ์ผู้ดูแลระบบ (Admin Access & Whitelist)
+
+- **Master Admin Google Accounts:**
+  - `palmtawanlaothaisong00@gmail.com`
+  - `sukitlowkey@gmail.com`
+- **Master Admin PIN / Passwords:**
+  - `admin1234` หรือ `15152921Ss`
+  - สามารถล็อกอินผ่าน PIN ได้โดยตรงทั้งบน Render, Firebase หรือ Localhost
+
+---
+
+## 6. 🔒 กฎเหล็กการทำงาน (Core System Rules)
+1. **Single Source of Truth:** เซิร์ฟเวอร์ Render และ Firestore เป็นผู้ตัดสินสถานะพอร์ต ห้ามใช้ Client-side Fake Fallback ใน `localStorage` มาตัดสินสถานะเอง
+2. **Port Holding / Anti-collision:** 
+   - เมื่อมีลูกค้ากดเลือกช่อง (`openSheet`) ระบบจะเรียก `POST /api/payment/hold` ล็อคพอร์ตเป็น `pending_payment` ชั่วคราว 2 นาทีทันที
+   - คนอื่นที่เปิดเว็บอยู่จะเห็นเป็น **"🟡 ไม่ว่าง (รอชำระ)"** ทันที และไม่สามารถกดเลือกช่องซ้ำได้
+   - หากผู้ใช้กดยกเลิกหรือปิดหน้าต่าง ระบบจะคืนสถานะเป็น **"🟢 ว่าง"** ทันที
+3. **Hardware Secret:** การคุยระหว่าง ESP32 กับเซิร์ฟเวอร์ต้องมี Header หรือ Query `X-ESP32-Secret: usb-charger-esp32-hw-secret-key-2026` เสมอ

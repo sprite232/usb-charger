@@ -2611,15 +2611,45 @@ function renderPorts(ports){
         </div>`;
       el.dataset.rem=rem;el.dataset.total=total;el.dataset.paused=p.isPaused?'1':'0';
     } else {
-      const badge=isA?'<span class="status-badge av"><span class="sb-dot"></span>ว่าง</span>':isP?'<span class="status-badge pend"><span class="sb-dot ani"></span>รอชำระ</span>':'<span class="status-badge use"><span class="sb-dot ani"></span>ใช้งาน</span>';
-      el.innerHTML=`
+      const isPending = isP;
+      const badge = isA
+        ? '<span class="status-badge av"><span class="sb-dot"></span>ว่าง</span>'
+        : '<span class="status-badge pend" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)"><span class="sb-dot ani" style="background:#f59e0b"></span>ไม่ว่าง (รอชำระ)</span>';
+
+      let methodText = 'กำลังทำรายการ';
+      if (p.sessionMethod === 'truemoney') methodText = 'TrueMoney';
+      else if (p.sessionMethod === 'qr') methodText = 'พร้อมเพย์ QR';
+      else if (p.sessionMethod === 'transfer') methodText = 'โอนธนาคาร';
+      else if (p.sessionMethod === 'coin') methodText = 'หยอดเหรียญ';
+
+      const hint = isA
+        ? '<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>'
+        : `<div class="pc-pending" style="color:#f59e0b;font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px">
+             <span>⏳ มีคนกำลังทำรายการ (${methodText})</span>
+           </div>`;
+
+      if (isPending) {
+        el.className = `port-card pending_payment`;
+        el.style.borderColor = '#f59e0b';
+        el.style.boxShadow = '0 0 15px rgba(245, 158, 11, 0.2)';
+      }
+
+      el.innerHTML = `
         <span class="usb-icon ${tc}"></span>
         <div class="pc-top">
           <div><div class="pc-name">${p.label}</div><div class="pc-type">${p.type}</div></div>
           ${badge}
         </div>
-        ${isA?'<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>':isP?`<div class="pc-pending" data-session-expires-at="${p.sessionExpiresAt||''}" data-session-method="${p.sessionMethod||'—'}">รอชำระ (${p.sessionMethod||'—'})</div>`:''}`;
-      if(isA)el.addEventListener('click',()=>openSheet(p.id,p.label));
+        ${hint}`;
+
+      if (isA) {
+        el.addEventListener('click', () => openSheet(p.id, p.label));
+      } else {
+        el.addEventListener('click', () => {
+          Sound.error();
+          kioskToast(`ช่อง ${p.label} มีคนกำลังทำรายการชำระเงินอยู่ กรุณารอสักครู่หรือเลือกช่องอื่นนะคะ`, 'warn');
+        });
+      }
     }
     g.appendChild(el);
   });
@@ -2812,14 +2842,32 @@ setInterval(()=>{
 function toggleAcc(btn){Sound.click();btn.parentElement?.classList.toggle('open');}
 
 /* ── Sheet ── */
-function openSheet(portId,label){
+async function openSheet(portId,label){
   Sound.click();
+  const targetPort = currentPorts.find(p => p.id === portId);
+  if (targetPort && targetPort.status !== 'available') {
+    Sound.error();
+    kioskToast(`ช่อง ${label} มีคนกำลังทำรายการหรือใช้งานอยู่ กรุณาเลือกช่องอื่นค่ะ`, 'warn');
+    return;
+  }
   Voice.speak(`คุณเลือกพอร์ต ${label} ค่ะ`);
   Object.assign(S,{portId,portLabel:label,amount:null,method:null,session:null});
   document.querySelectorAll('.dc').forEach(c=>c.classList.remove('sel'));
   $('btnNext').disabled=true;$('customIn').value='';$('customRow').style.display='none';$('customMinPreview').textContent='';
   $('sheetTitle').textContent=`เลือกจำนวน · ${label}`;
   goPage('pg-amount');$('overlay').classList.add('open');
+
+  // แจ้งเซิร์ฟเวอร์ล็อคช่องทันที ไม่ให้ผู้อื่นกดชนกันระหว่างเลือกยอด
+  try {
+    const res = await apiFetch('POST', '/api/payment/hold', { portId });
+    if (res && res.session) {
+      S.session = res.session;
+    } else if (res && (res.status === 'in-use' || res.error)) {
+      closeSheet();
+      Sound.error();
+      kioskToast(res.error || `ช่อง ${label} ไม่ว่างแล้ว กรุณาเลือกช่องอื่นค่ะ`, 'warn');
+    }
+  } catch(e) {}
 }
 function closeSheet(){
   stopTimers();
@@ -2939,7 +2987,13 @@ async function createSession(method){
     return;
   }
   goPage('pg-proc');$('procMsg').textContent='กำลังเตรียมข้อมูล…';
-  let res=await apiFetch('POST','/api/payment/create',{portId:S.portId,amount:S.amount,method});
+  let res=await apiFetch('POST','/api/payment/create',{portId:S.portId,amount:S.amount,method,holdSessionId:S.session?.id});
+  if(res && res.error && !res.session){
+    closeSheet();
+    Sound.error();
+    showErr(res.error);
+    return;
+  }
   if(!res||!res.session){
     const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
     const cs=S.amount*SPB;const expiresAt=new Date(Date.now()+600000).toISOString();
