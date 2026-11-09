@@ -1819,6 +1819,33 @@ tr:hover td{background: var(--card-hover);}
       </div>
     </div>
 
+    <!-- Change Admin PIN / Password Panel -->
+    <div class="test-panel" style="border-left:4px solid #f59e0b;margin-bottom:1.5rem">
+      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#f59e0b;stroke-width:2;fill:none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>🔐 เปลี่ยนรหัสผ่านแอดมิน (Change Admin PIN)</span>
+      </div>
+      <div class="test-panel-desc">เปลี่ยนรหัส PIN หรือรหัสผ่านสำหรับเข้าสู่ระบบแอดมิน โดยรหัสใหม่จะถูกบันทึกและใช้งานได้ทันที</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:0.75rem">
+        <div class="field-row">
+          <label>รหัสผ่านเดิม (Old PIN):</label>
+          <input type="password" id="adminOldPin" class="form-input" placeholder="รหัสผ่านปัจจุบัน" autocomplete="current-password" />
+        </div>
+        <div class="field-row">
+          <label>รหัสผ่านใหม่ (New PIN):</label>
+          <input type="password" id="adminNewPin" class="form-input" placeholder="รหัสใหม่ (อย่างน้อย 4 ตัว)" autocomplete="new-password" />
+        </div>
+        <div class="field-row">
+          <label>ยืนยันรหัสผ่านใหม่ (Confirm):</label>
+          <input type="password" id="adminConfirmPin" class="form-input" placeholder="พิมพ์รหัสใหม่อีกครั้ง" autocomplete="new-password" />
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm btn-primary" onclick="submitChangeAdminPin()">💾 บันทึกรหัสผ่านใหม่</button>
+        <span id="changePinStatus" style="font-size:0.85rem"></span>
+      </div>
+    </div>
+
     <div class="test-panel">
       <div class="test-panel-title">ทดสอบสั่งจ่ายไฟ & เริ่มชาร์จ</div>
       <div class="test-panel-desc">สั่งเริ่มชาร์จจำลองเพื่อดูการทำงานของไฟและเวลานับถอยหลัง</div>
@@ -4573,6 +4600,60 @@ window.copyIssueContact = copyIssueContact;
 window.openIssueFromBanner = openIssueFromBanner;
 window.dismissNativeBanner = dismissNativeBanner;
 window.closeAdminConfirm = closeAdminConfirm;
+
+async function submitChangeAdminPin() {
+  const oldPin = (document.getElementById('adminOldPin')?.value || '').trim();
+  const newPin = (document.getElementById('adminNewPin')?.value || '').trim();
+  const confirmPin = (document.getElementById('adminConfirmPin')?.value || '').trim();
+  const statusEl = document.getElementById('changePinStatus');
+
+  if (!newPin) {
+    alert('กรุณากรอกรหัสผ่านใหม่');
+    return;
+  }
+  if (newPin.length < 4) {
+    alert('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
+    return;
+  }
+  if (newPin !== confirmPin) {
+    alert('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน');
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = 'กำลังบันทึกรหัสผ่าน...';
+    statusEl.style.color = 'var(--muted)';
+  }
+
+  try {
+    const res = await adminApi('POST', '/api/admin/change-pin', { oldPin, newPin });
+    if (res && res.success) {
+      if (statusEl) {
+        statusEl.textContent = '✅ ' + (res.message || 'เปลี่ยนรหัสผ่านสำเร็จแล้ว!');
+        statusEl.style.color = 'var(--green)';
+      }
+      alert('เปลี่ยนรหัสผ่านแอดมินเรียบร้อยแล้ว!\nสามารถใช้รหัสผ่านใหม่นี้เข้าสู่ระบบได้ทันที');
+      const o = document.getElementById('adminOldPin'); if (o) o.value = '';
+      const n = document.getElementById('adminNewPin'); if (n) n.value = '';
+      const c = document.getElementById('adminConfirmPin'); if (c) c.value = '';
+    } else {
+      const err = res?.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
+      if (statusEl) {
+        statusEl.textContent = '❌ ' + err;
+        statusEl.style.color = 'var(--red)';
+      }
+      alert(err);
+    }
+  } catch(e) {
+    if (statusEl) {
+      statusEl.textContent = '❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+      statusEl.style.color = 'var(--red)';
+    }
+    alert('เกิดข้อผิดพลาด: ' + e.message);
+  }
+}
+window.submitChangeAdminPin = submitChangeAdminPin;
+
 
 // ─── Session Timer ─────────────────────────────
 setInterval(() => {

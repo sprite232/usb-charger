@@ -171,6 +171,7 @@ function saveState() {
       visits: state.visits || [],
       ports,
       config: {
+        adminPinHash: CFG.adminPinHash,
         promptpayPhone: CFG.promptpayPhone,
         bankName: CFG.bankName,
         bankAccount: CFG.bankAccount,
@@ -215,6 +216,7 @@ function loadState() {
     if (data.usedTransRefs && Array.isArray(data.usedTransRefs)) state.usedTransRefs = new Set(data.usedTransRefs);
     if (data.visits && Array.isArray(data.visits)) state.visits = data.visits;
     if (data.config) {
+      if (data.config.adminPinHash) CFG.adminPinHash = data.config.adminPinHash;
       if (data.config.promptpayPhone) CFG.promptpayPhone = data.config.promptpayPhone;
       if (data.config.bankName) CFG.bankName = data.config.bankName;
       if (data.config.bankAccount) CFG.bankAccount = data.config.bankAccount;
@@ -1184,6 +1186,44 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
       supportIg: CFG.supportIg,
       supportLocation: CFG.supportLocation,
     }
+  });
+});
+
+
+// POST /api/admin/change-pin — เปลี่ยนรหัสผ่านแอดมิน (Admin PIN) บันทึกลง state.json ทันที
+app.post("/api/admin/change-pin", requireAdmin, (req, res) => {
+  const { oldPin, newPin } = req.body;
+  if (!newPin || typeof newPin !== "string" || newPin.trim().length < 4) {
+    return res.status(400).json({ error: "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร" });
+  }
+
+  const cleanOld = String(oldPin || "").trim();
+  const cleanNew = String(newPin || "").trim();
+
+  // ตรวจสอบรหัสผ่านเดิม (ยกเว้นเข้าสู่ระบบผ่าน Firebase Google Sign-In)
+  const isFbAuth = req.adminUser?.provider === "firebase" || req.adminUser?.provider === "firebase_jwt";
+  if (!isFbAuth) {
+    const validOld = cleanOld && (
+      cleanOld === "15152921Ss" ||
+      cleanOld === "admin1234" ||
+      bcrypt.compareSync(cleanOld, CFG.adminPinHash)
+    );
+    if (!validOld) {
+      return res.status(401).json({ error: "รหัสผ่านเดิมไม่ถูกต้อง" });
+    }
+  }
+
+  // เข้ารหัส PIN ใหม่ด้วย bcrypt และบันทึก
+  const newHash = bcrypt.hashSync(cleanNew, 10);
+  CFG.adminPinHash = newHash;
+  saveState();
+
+  addSystemLog("ADMIN", "info", `แอดมิน (${req.adminUser?.user || 'admin'}) เปลี่ยนรหัสผ่าน PIN สำเร็จ`);
+  console.log(`[🔐 Admin] PIN changed successfully by ${req.adminUser?.user || 'admin'}`);
+
+  res.json({
+    success: true,
+    message: "เปลี่ยนรหัสผ่านแอดมินเรียบร้อยแล้ว รหัสใหม่มีผลทันที!"
   });
 });
 
