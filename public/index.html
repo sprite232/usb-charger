@@ -18,6 +18,7 @@
 })();
 </script>
 <script src="config.js?v=20260919c"></script>
+<script src="assets/qrcode.min.js" defer></script>
 <!-- Firebase SDK -->
 <script type="module">
   import{initializeApp}from'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
@@ -1319,6 +1320,118 @@ footer{
   flex-shrink: 0;
 }
 
+/* ── SHARE QR NAV BUTTON & MODAL ───────── */
+.share-nav-btn{
+  width:auto;
+  min-width:36px;
+  padding:0 10px;
+  gap:6px;
+  color:var(--blue);
+  background:var(--blue-bg);
+  border-color:rgba(59,130,246,.32);
+  font-family:var(--sans);
+  font-size:.76rem;
+  font-weight:700;
+}
+.share-nav-btn:hover{border-color:var(--blue);transform:scale(1.04)}
+.share-nav-btn svg{width:15px;height:15px}
+.share-btn-txt{line-height:1;white-space:nowrap}
+@media(max-width:460px){
+  nav{padding:10px 12px;gap:6px}
+  .nav-brand{gap:7px;font-size:.92rem}
+  .nav-brand img{width:28px;height:28px;border-radius:8px}
+  .nav-right{gap:5px}
+  .rate-pill{padding:5px 8px;font-size:.72rem;gap:5px}
+  .icon-nav-btn{width:32px;height:32px;border-radius:9px}
+  .share-nav-btn{width:32px;min-width:32px;padding:0}
+  .share-btn-txt{display:none}
+  .theme-switch-pill{width:54px;height:30px}
+  .pill-thumb{width:22px;height:22px}
+  [data-theme="dark"] .pill-thumb{transform:translateX(24px)}
+}
+
+.share-tabs{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;justify-content:center;
+}
+.share-tab{
+  padding:6px 11px;border-radius:999px;font-size:.74rem;font-weight:600;
+  border:1px solid var(--g2);background:var(--off);color:var(--g3);
+  cursor:pointer;font-family:var(--sans);
+  transition:background-color .18s ease,border-color .18s ease,color .18s ease,transform .15s ease;
+}
+.share-tab:hover{border-color:var(--blue);color:var(--dark)}
+.share-tab.active{
+  background:var(--blue-bg);border-color:var(--blue);color:var(--blue);font-weight:700;
+}
+.share-qr-stage{
+  display:flex;justify-content:center;margin-bottom:14px;
+}
+.share-qr-card{
+  background:#ffffff;
+  color:#0f172a;
+  border-radius:18px;
+  padding:18px 20px 15px;
+  border:1px solid rgba(15,23,42,.1);
+  box-shadow:0 10px 30px rgba(0,0,0,.14);
+  text-align:center;
+  max-width:290px;
+  width:100%;
+}
+.share-qr-head{
+  font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#2563eb;margin-bottom:2px;
+}
+.share-qr-title{
+  font-family:var(--display);font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:10px;
+}
+.share-qr-canvas-box{
+  display:flex;align-items:center;justify-content:center;
+  background:#ffffff;border-radius:12px;padding:6px;margin:0 auto 10px;
+  width:220px;height:220px;border:1px solid #e2e8f0;
+}
+#shareQrCanvas{
+  width:206px;height:206px;display:block;image-rendering:pixelated;
+}
+#shareQrFallbackImg{
+  width:206px;height:206px;display:none;object-fit:contain;
+}
+.share-qr-sub{
+  font-size:.75rem;font-weight:600;color:#334155;
+}
+.share-qr-rate{
+  font-size:.69rem;color:#64748b;margin-top:2px;
+}
+.share-url-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--off);border:1px solid var(--g2);border-radius:12px;
+  padding:8px 10px;margin-bottom:12px;
+}
+.share-url-text{
+  flex:1;min-width:0;font-family:var(--mono,monospace);font-size:.73rem;
+  color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  user-select:all;
+}
+.share-copy-mini{
+  flex-shrink:0;padding:6px 10px;border-radius:8px;border:1px solid var(--g2);
+  background:var(--card-bg);color:var(--dark);font-size:.73rem;font-weight:700;
+  cursor:pointer;font-family:var(--sans);
+  transition:background-color .18s ease,border-color .18s ease,transform .15s ease;
+}
+.share-copy-mini:hover{border-color:var(--blue);color:var(--blue)}
+.share-actions-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;
+}
+.share-action-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px 12px;border-radius:12px;font-size:.83rem;font-weight:700;
+  border:none;cursor:pointer;font-family:var(--sans);min-height:44px;
+  transition:transform .16s ease,opacity .16s ease,background-color .18s ease;
+}
+.share-action-btn:active{transform:scale(.97)}
+.share-action-btn svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.share-btn-primary{background:var(--btn-primary-bg);color:var(--btn-primary-text)}
+.share-btn-secondary{background:var(--off);color:var(--dark);border:1px solid var(--g2)}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1342,6 +1455,11 @@ footer{
       <div class="rate-dot"></div>
       <span id="rateLabel">1฿ = 3 นาที</span>
     </div>
+    <!-- Share QR Code Button -->
+    <button class="icon-nav-btn share-nav-btn" id="shareQrBtn" onclick="openShareModal()" title="แชร์เป็น QR Code ให้สแกน" aria-label="แชร์เป็น QR Code">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M17 17h4v4"/><path d="M14 21h3"/></svg>
+      <span class="share-btn-txt">แชร์ QR</span>
+    </button>
     <!-- Voice & Sound Toggle -->
     <button class="icon-nav-btn" id="voiceToggleBtn" onclick="Voice.toggle()" title="เปิด/ปิดเสียงพูดและเอฟเฟกต์ (เสียงภาษาไทย)" aria-label="toggle voice">
       <svg id="iconVoiceOn" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -2025,6 +2143,60 @@ footer{
 
   </div>
 </div>
+</div>
+
+<!-- SHARE QR MODAL -->
+<div class="overlay" id="shareOverlay" onclick="if(event.target===this)closeShareModal()">
+  <div class="sheet" id="shareSheet">
+    <div class="sheet-drag"></div>
+    <div class="sheet-top">
+      <h2 style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span>แชร์ตู้ชาร์จเป็น QR Code</span>
+      </h2>
+      <button class="sheet-close" onclick="closeShareModal()" aria-label="ปิดหน้าต่างแชร์">&#x2715;</button>
+    </div>
+    <div class="sheet-body">
+      <div class="share-tabs" id="shareTargetTabs">
+        <button type="button" class="share-tab active" data-port="" onclick="setShareTarget('')">หน้าหลัก (ทุกช่อง)</button>
+        <button type="button" class="share-tab" data-port="usb-a-1" onclick="setShareTarget('usb-a-1')">USB-A 1</button>
+        <button type="button" class="share-tab" data-port="usb-a-2" onclick="setShareTarget('usb-a-2')">USB-A 2</button>
+        <button type="button" class="share-tab" data-port="usb-c-1" onclick="setShareTarget('usb-c-1')">USB-C 1</button>
+        <button type="button" class="share-tab" data-port="usb-c-2" onclick="setShareTarget('usb-c-2')">USB-C 2</button>
+      </div>
+
+      <div class="share-qr-stage">
+        <div class="share-qr-card">
+          <div class="share-qr-head">SMART CHARGING STATION</div>
+          <div class="share-qr-title" id="shareQrTitle">ตู้ชาร์จ USB · หน้าหลัก</div>
+          <div class="share-qr-canvas-box">
+            <canvas id="shareQrCanvas" width="440" height="440"></canvas>
+            <img id="shareQrFallbackImg" alt="QR Code สำหรับสแกนเปิดเว็บ"/>
+          </div>
+          <div class="share-qr-sub" id="shareQrSub">สแกน QR ด้วยกล้องมือถือเพื่อเริ่มชาร์จทันที</div>
+          <div class="share-qr-rate" id="shareQrRate">อัตราค่าบริการ 1฿ = 3 นาที</div>
+        </div>
+      </div>
+
+      <div class="share-url-row">
+        <div class="share-url-text" id="shareUrlPreview">https://usb-charger-project.web.app/</div>
+        <button type="button" class="share-copy-mini" onclick="copyShareUrl()">คัดลอกลิงก์</button>
+      </div>
+
+      <div class="share-actions-grid">
+        <button type="button" class="share-action-btn share-btn-primary" onclick="shareQrNative()">
+          <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>แชร์ QR / ลิงก์</span>
+        </button>
+        <button type="button" class="share-action-btn share-btn-secondary" onclick="downloadShareQr()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>บันทึกรูป QR</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-ghost" onclick="closeShareModal()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -3949,6 +4121,239 @@ function toggleTheme(e){
     applyTheme('light');
   }
 })();
+
+/* ───────────────────────────────────────────────
+   SHARE AS SCANNABLE QR CODE
+─────────────────────────────────────────────── */
+let currentSharePort = '';
+
+function buildShareUrl(portId) {
+  let baseUrl = 'https://usb-charger-project.web.app/';
+  if (typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
+    const cleanPath = window.location.pathname === '/index.html' ? '/' : (window.location.pathname || '/');
+    baseUrl = window.location.origin + cleanPath;
+  }
+  if (!portId) return baseUrl;
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  return baseUrl + sep + 'port=' + encodeURIComponent(portId);
+}
+
+function getSharePortLabel(portId) {
+  if (!portId) return 'หน้าหลัก (ทุกช่อง)';
+  const found = Array.isArray(currentPorts) ? currentPorts.find(p => p.id === portId) : null;
+  if (found && found.label) return found.label;
+  return ({ 'usb-a-1': 'USB-A 1', 'usb-a-2': 'USB-A 2', 'usb-c-1': 'USB-C 1', 'usb-c-2': 'USB-C 2' }[portId] || portId);
+}
+
+function createQrMatrix(text) {
+  if (typeof window.qrcode !== 'function') return null;
+  if (window.qrcode.stringToBytesFuncs && window.qrcode.stringToBytesFuncs['UTF-8']) {
+    window.qrcode.stringToBytes = window.qrcode.stringToBytesFuncs['UTF-8'];
+  }
+  const qr = window.qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  return qr;
+}
+
+function drawQrOnCanvas(canvas, text, sizePx) {
+  const qr = createQrMatrix(text);
+  if (!qr) return false;
+  const count = qr.getModuleCount();
+  const quiet = 4;
+  const totalModules = count + quiet * 2;
+  const cell = Math.floor(sizePx / totalModules);
+  const actual = cell * totalModules;
+  const offset = Math.floor((sizePx - actual) / 2);
+
+  canvas.width = sizePx;
+  canvas.height = sizePx;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, sizePx, sizePx);
+  ctx.fillStyle = '#0f172a';
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(offset + (c + quiet) * cell, offset + (r + quiet) * cell, cell, cell);
+      }
+    }
+  }
+  return true;
+}
+
+function renderShareQr() {
+  const url = buildShareUrl(currentSharePort);
+  const portLabel = getSharePortLabel(currentSharePort);
+  const rateText = document.getElementById('rateLabel')?.textContent?.trim() || '1฿ = 3 นาที';
+
+  const titleEl = document.getElementById('shareQrTitle');
+  const subEl = document.getElementById('shareQrSub');
+  const rateEl = document.getElementById('shareQrRate');
+  const urlEl = document.getElementById('shareUrlPreview');
+  if (titleEl) titleEl.textContent = currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ';
+  if (subEl) subEl.textContent = currentSharePort ? `สแกนเพื่อเลือกชาร์จช่อง ${portLabel} ทันที` : 'สแกน QR ด้วยกล้องมือถือเพื่อเริ่มชาร์จทันที';
+  if (rateEl) rateEl.textContent = `อัตราค่าบริการ ${rateText}`;
+  if (urlEl) urlEl.textContent = url;
+
+  document.querySelectorAll('#shareTargetTabs .share-tab').forEach(btn => {
+    btn.classList.toggle('active', (btn.getAttribute('data-port') || '') === currentSharePort);
+  });
+
+  const canvas = document.getElementById('shareQrCanvas');
+  const fallbackImg = document.getElementById('shareQrFallbackImg');
+  if (canvas && drawQrOnCanvas(canvas, url, 440)) {
+    canvas.style.display = 'block';
+    if (fallbackImg) fallbackImg.style.display = 'none';
+  } else if (fallbackImg) {
+    if (canvas) canvas.style.display = 'none';
+    fallbackImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(url);
+    fallbackImg.style.display = 'block';
+  }
+}
+
+function setShareTarget(portId) {
+  Sound.click();
+  currentSharePort = portId || '';
+  renderShareQr();
+}
+
+function openShareModal(portId = '') {
+  Sound.click();
+  currentSharePort = portId || '';
+  renderShareQr();
+  const ov = document.getElementById('shareOverlay');
+  if (ov) ov.classList.add('open');
+}
+
+function closeShareModal() {
+  const ov = document.getElementById('shareOverlay');
+  if (ov) ov.classList.remove('open');
+}
+
+function buildSharePosterCanvas() {
+  const url = buildShareUrl(currentSharePort);
+  const qr = createQrMatrix(url);
+  if (!qr) return null;
+
+  const W = 720, H = 880;
+  const poster = document.createElement('canvas');
+  poster.width = W;
+  poster.height = H;
+  const ctx = poster.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, W, 14);
+
+  ctx.fillStyle = '#2563eb';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SMART USB CHARGER · 24/7', W / 2, 74);
+
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 42px sans-serif';
+  const portLabel = getSharePortLabel(currentSharePort);
+  ctx.fillText(currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ', W / 2, 130);
+
+  const qrCanvas = document.createElement('canvas');
+  drawQrOnCanvas(qrCanvas, url, 520);
+  ctx.drawImage(qrCanvas, (W - 520) / 2, 165);
+
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(currentSharePort ? `สแกนเพื่อชาร์จช่อง ${portLabel}` : 'สแกน QR Code เพื่อเปิดใช้งานตู้ชาร์จ', W / 2, 735);
+
+  const rateText = document.getElementById('rateLabel')?.textContent?.trim() || '1฿ = 3 นาที';
+  ctx.fillStyle = '#059669';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText(`อัตราค่าบริการ ${rateText}`, W / 2, 780);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '20px monospace';
+  ctx.fillText(url.length > 56 ? url.slice(0, 53) + '...' : url, W / 2, 832);
+
+  return poster;
+}
+
+async function copyShareUrl() {
+  Sound.click();
+  const url = buildShareUrl(currentSharePort);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    kioskToast('คัดลอกลิงก์สำหรับแชร์แล้ว', 'success');
+  } catch (e) {
+    kioskToast('ไม่สามารถคัดลอกอัตโนมัติ กรุณาคัดลอกจากช่องลิงก์', 'warn');
+  }
+}
+
+function downloadShareQr() {
+  Sound.click();
+  const poster = buildSharePosterCanvas();
+  if (!poster) {
+    const img = document.getElementById('shareQrFallbackImg');
+    if (img && img.src) window.open(img.src, '_blank', 'noopener');
+    else kioskToast('กำลังเตรียมรูป QR Code กรุณาลองอีกครั้ง', 'warn');
+    return;
+  }
+  const link = document.createElement('a');
+  const suffix = currentSharePort ? `-${currentSharePort}` : '';
+  link.download = `usb-charger-qr${suffix}.png`;
+  link.href = poster.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  kioskToast('บันทึกรูป QR Code สำเร็จ', 'success');
+}
+
+async function shareQrNative() {
+  Sound.click();
+  const url = buildShareUrl(currentSharePort);
+  const portLabel = getSharePortLabel(currentSharePort);
+  const title = currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ';
+  const text = currentSharePort ? `สแกนหรือเปิดลิงก์เพื่อชาร์จช่อง ${portLabel}` : 'สแกน QR Code หรือเปิดลิงก์เพื่อใช้งานตู้ชาร์จ USB';
+
+  if (navigator.share) {
+    try {
+      const poster = buildSharePosterCanvas();
+      if (poster && navigator.canShare) {
+        const blob = await new Promise(resolve => poster.toBlob(resolve, 'image/png'));
+        if (blob) {
+          const suffix = currentSharePort ? `-${currentSharePort}` : '';
+          const file = new File([blob], `usb-charger-qr${suffix}.png`, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ title, text: `${text}\n${url}`, files: [file] });
+            return;
+          }
+        }
+      }
+      await navigator.share({ title, text, url });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  await copyShareUrl();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeShareModal();
+  }
+});
 </script>
 </body>
 </html>
