@@ -142,12 +142,20 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/admin", (_, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
 
-// ─── Port Definitions ─────────────────────────────────────────────────────────
+// ─── Port Definitions & ESP32 Safety Allowlists ───────────────────────────────
+const ALLOWED_RELAY_GPIOS = [25, 26, 27, 33];
+const DEFAULT_PORT_GPIO_MAP = {
+  "usb-a-1": 26,
+  "usb-a-2": 27,
+  "usb-c-1": 25,
+  "usb-c-2": 33,
+};
+
 const PORT_DEFS = [
-  { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: 26 },
-  { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: 27 },
-  { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: 25 },
-  { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: 33 },
+  { id: "usb-a-1", label: "USB-A 1", type: "USB-A", relayGpio: DEFAULT_PORT_GPIO_MAP["usb-a-1"] },
+  { id: "usb-a-2", label: "USB-A 2", type: "USB-A", relayGpio: DEFAULT_PORT_GPIO_MAP["usb-a-2"] },
+  { id: "usb-c-1", label: "USB-C 1", type: "USB-C", relayGpio: DEFAULT_PORT_GPIO_MAP["usb-c-1"] },
+  { id: "usb-c-2", label: "USB-C 2", type: "USB-C", relayGpio: DEFAULT_PORT_GPIO_MAP["usb-c-2"] },
 ];
 
 // ─── In-Memory State ──────────────────────────────────────────────────────────
@@ -164,6 +172,24 @@ const state = {
     lastSeen: null,
     status: "offline",
     rssi: null,
+    fwVersion: null,
+    partitionLabel: null,
+    rollbackSupported: null,
+    pollIntervalMs: 2000,
+    wifiSsid: null,
+    otaPendingVerify: false,
+  },
+  esp32Control: {
+    remoteConfig: {
+      configVersion: 1,
+      pollIntervalMs: 2000,
+      portGpioMap: { ...DEFAULT_PORT_GPIO_MAP },
+      updatedAt: null,
+      updatedBy: null,
+    },
+    pendingCommand: null,
+    pendingWifi: null,
+    otaRelease: null,
   },
   systemLogs: [],
   updatedAt: new Date().toISOString(),
@@ -371,12 +397,128 @@ function computeVisitStats() {
   };
 }
 
+function findActiveChargingPort() {
+  return Object.values(state.ports).find(
+    (p) => p.relayOn || p.status === "in-use" || p.status === "pending_payment"
+  ) || null;
+}
+
+function areAllRelaysOff() {
+  return Object.values(state.ports).every((p) => !p.relayOn);
+}
+
+function validatePortGpioMap(inputMap) {
+  if (!inputMap || typeof inputMap !== "object") {
+    return { valid: false, error: "ข้อมูล portGpioMap ไม่ถูกต้อง" };
+  }
+  const normalized = {};
+  const usedPins = new Set();
+  for (const def of PORT_DEFS) {
+    const pin = Number(inputMap[def.id]);
+    if (!Number.isInteger(pin) || !ALLOWED_RELAY_GPIOS.includes(pin)) {
+      return {
+        valid: false,
+        error: `พิน GPIO ของ ${def.label} (${inputMap[def.id]}) ไม่อยู่ในรายการที่อนุญาต (${ALLOWED_RELAY_GPIOS.join(", ")})`,
+      };
+    }
+    if (usedPins.has(pin)) {
+      return { valid: false, error: `พิน GPIO ${pin} ซ้ำกันไม่ได้ ต้องกำหนดไม่ซ้ำทั้ง 4 พอร์ต` };
+    }
+    usedPins.add(pin);
+    normalized[def.id] = pin;
+  }
+  return { valid: true, map: normalized };
+}
+
+function applyPortGpioMap(map) {
+  PORT_DEFS.forEach((def) => {
+    if (state.ports[def.id] && Number.isInteger(map?.[def.id])) {
+      state.ports[def.id].relayGpio = map[def.id];
+    }
+  });
+}
+
+function validateOtaHttpsUrl(rawUrl) {
+  const s = String(rawUrl || "").trim();
+  if (!s || s.length > 500) {
+    return { valid: false, error: "URL ไฟล์เฟิร์มแวร์ต้องไม่ว่างและยาวไม่เกิน 500 ตัวอักษร" };
+  }
+  let parsed;
+  try {
+    parsed = new URL(s);
+  } catch (_) {
+    return { valid: false, error: "รูปแบบ URL ไม่ถูกต้อง" };
+  }
+  if (parsed.protocol !== "https:") {
+    return { valid: false, error: "URL ไฟล์เฟิร์มแวร์ OTA ต้องใช้ HTTPS เท่านั้น (แนะนำ Firebase Storage)" };
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)
+  ) {
+    return { valid: false, error: "ไม่อนุญาตให้ใช้ URL ภายในเครือข่าย/localhost สำหรับ OTA" };
+  }
+  return { valid: true, url: parsed.toString() };
+}
+
+function sanitizeEsp32ControlForAdmin() {
+  const ctrl = state.esp32Control || {};
+  const nowMs = Date.now();
+  const cmd = ctrl.pendingCommand && (!ctrl.pendingCommand.expiresAt || new Date(ctrl.pendingCommand.expiresAt).getTime() > nowMs)
+    ? ctrl.pendingCommand
+    : null;
+  const wifi = ctrl.pendingWifi && (!ctrl.pendingWifi.expiresAt || new Date(ctrl.pendingWifi.expiresAt).getTime() > nowMs)
+    ? {
+        wifiCmdId: ctrl.pendingWifi.wifiCmdId,
+        ssid: ctrl.pendingWifi.ssid,
+        timeoutSec: ctrl.pendingWifi.timeoutSec,
+        requestedAt: ctrl.pendingWifi.requestedAt,
+        requestedBy: ctrl.pendingWifi.requestedBy,
+        expiresAt: ctrl.pendingWifi.expiresAt,
+      }
+    : null;
+  return {
+    remoteConfig: ctrl.remoteConfig,
+    pendingCommand: cmd,
+    pendingWifi: wifi,
+    otaRelease: ctrl.otaRelease || null,
+    allowedGpios: ALLOWED_RELAY_GPIOS,
+  };
+}
+
+function applySavedEsp32Control(saved) {
+  if (!saved || typeof saved !== "object") return;
+  if (saved.remoteConfig && typeof saved.remoteConfig === "object") {
+    const rc = saved.remoteConfig;
+    const pollMs = Number(rc.pollIntervalMs);
+    if (Number.isInteger(pollMs) && pollMs >= 1000 && pollMs <= 10000) {
+      state.esp32Control.remoteConfig.pollIntervalMs = pollMs;
+    }
+    if (Number.isInteger(Number(rc.configVersion)) && Number(rc.configVersion) >= 1) {
+      state.esp32Control.remoteConfig.configVersion = Number(rc.configVersion);
+    }
+    const gpioCheck = validatePortGpioMap(rc.portGpioMap);
+    if (gpioCheck.valid) {
+      state.esp32Control.remoteConfig.portGpioMap = gpioCheck.map;
+      applyPortGpioMap(gpioCheck.map);
+    }
+    if (rc.updatedAt) state.esp32Control.remoteConfig.updatedAt = rc.updatedAt;
+    if (rc.updatedBy) state.esp32Control.remoteConfig.updatedBy = rc.updatedBy;
+  }
+  if (saved.otaRelease && typeof saved.otaRelease === "object" && saved.otaRelease.otaId) {
+    state.esp32Control.otaRelease = saved.otaRelease;
+  }
+}
+
 function saveState() {
   try {
     const ports = buildPublicPortsSnapshot();
     const visitStats = computeVisitStats();
 
-    // Never persist secrets (like easyslipKey or pins) to local disk JSON
+    // Never persist secrets (like easyslipKey, pins, or Wi-Fi passwords) to local disk JSON
     const diskData = {
       transactions: state.transactions.slice(0, 500),
       usedTransRefs: Array.from(state.usedTransRefs).slice(-1000),
@@ -395,6 +537,10 @@ function saveState() {
         supportLine: CFG.supportLine,
         supportIg: CFG.supportIg,
         supportLocation: CFG.supportLocation,
+      },
+      esp32Control: {
+        remoteConfig: state.esp32Control.remoteConfig,
+        otaRelease: state.esp32Control.otaRelease,
       },
       updatedAt: state.updatedAt,
     };
@@ -419,6 +565,7 @@ function saveState() {
       ports,
       usedTransRefs: Array.from(state.usedTransRefs).slice(-1000),
       config: diskData.config,
+      esp32Control: diskData.esp32Control,
       updatedAt: state.updatedAt,
     };
 
@@ -485,6 +632,7 @@ function loadStateFromDisk() {
     if (Array.isArray(data.auditLogs)) state.auditLogs = data.auditLogs;
     if (Array.isArray(data.pendingApprovals)) state.pendingApprovals = data.pendingApprovals;
     applySavedConfig(data.config);
+    applySavedEsp32Control(data.esp32Control);
     applySavedPorts(data.ports, data.updatedAt);
     console.log(`[DISK] Loaded ${state.transactions.length} transactions, ${state.visits.length} visits, ${state.usedTransRefs.size} slips`);
   } catch (e) {
@@ -502,6 +650,7 @@ async function restoreFromFirestore() {
         priv.usedTransRefs.forEach((ref) => state.usedTransRefs.add(ref));
       }
       applySavedConfig(priv.config);
+      applySavedEsp32Control(priv.esp32Control);
       if (state.transactions.length === 0 && Array.isArray(priv.ports)) {
         applySavedPorts(priv.ports, priv.updatedAt);
       }
@@ -1566,6 +1715,7 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
       isOnline: isEspOnline,
       status: isEspOnline ? "online" : "offline",
     },
+    esp32Control: sanitizeEsp32ControlForAdmin(),
     logs: (state.systemLogs || []).slice(0, 60),
     updatedAt: state.updatedAt,
   });
@@ -1790,6 +1940,7 @@ app.get("/api/admin/logs", requireAdmin, (_, res) => {
       isOnline,
       status: isOnline ? "online" : "offline",
     },
+    esp32Control: sanitizeEsp32ControlForAdmin(),
     logs: state.systemLogs || [],
     auditLogs: (state.auditLogs || []).slice(0, 100),
   });
@@ -1815,11 +1966,211 @@ app.post("/api/admin/esp32/set-ip", requireAdmin, (req, res) => {
   res.json({ success: true, esp32: state.lastEsp32 });
 });
 
+app.get("/api/admin/esp32/control", requireAdmin, (_, res) => {
+  const isOnline = !!(state.lastEsp32?.lastSeen && (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() < 15000));
+  res.json({
+    success: true,
+    esp32: { ...(state.lastEsp32 || {}), isOnline, status: isOnline ? "online" : "offline" },
+    esp32Control: sanitizeEsp32ControlForAdmin(),
+    allowedGpios: ALLOWED_RELAY_GPIOS,
+  });
+});
+
+app.post("/api/admin/esp32/remote-config", requireAdmin, (req, res) => {
+  const rc = state.esp32Control.remoteConfig;
+  const pollInput = req.body?.pollIntervalMs;
+  let nextPollMs = rc.pollIntervalMs;
+  if (pollInput !== undefined) {
+    const num = Number(pollInput);
+    if (!Number.isInteger(num) || num < 1000 || num > 10000) {
+      return res.status(400).json({ error: "Poll interval ต้องเป็นจำนวนเต็มระหว่าง 1000 ถึง 10000 ms" });
+    }
+    nextPollMs = num;
+  }
+
+  let nextGpioMap = rc.portGpioMap;
+  if (req.body?.portGpioMap !== undefined) {
+    const check = validatePortGpioMap(req.body.portGpioMap);
+    if (!check.valid) return res.status(400).json({ error: check.error });
+
+    const changed = PORT_DEFS.some((d) => check.map[d.id] !== rc.portGpioMap[d.id]);
+    if (changed) {
+      const activePort = findActiveChargingPort();
+      if (activePort) {
+        return res.status(409).json({
+          error: `ไม่สามารถเปลี่ยนพิน GPIO ขณะที่พอร์ต ${activePort.label} กำลังใช้งาน/จ่ายไฟอยู่`,
+        });
+      }
+      nextGpioMap = check.map;
+      applyPortGpioMap(nextGpioMap);
+    }
+  }
+
+  rc.pollIntervalMs = nextPollMs;
+  rc.portGpioMap = nextGpioMap;
+  rc.configVersion = (Number(rc.configVersion) || 1) + 1;
+  rc.updatedAt = now();
+  rc.updatedBy = req.adminUser.email;
+
+  state.updatedAt = now();
+  addSystemLog("ADMIN", "info", `อัปเดต Remote Config ESP32 (v${rc.configVersion}, poll=${rc.pollIntervalMs}ms)`);
+  addAuditLog(req.adminUser, "ESP32_REMOTE_CONFIG", "esp32", {
+    configVersion: rc.configVersion,
+    pollIntervalMs: rc.pollIntervalMs,
+    portGpioMap: rc.portGpioMap,
+  });
+  saveState();
+
+  res.json({ success: true, esp32Control: sanitizeEsp32ControlForAdmin() });
+});
+
+app.post("/api/admin/esp32/command", requireAdmin, (req, res) => {
+  const action = String(req.body?.action || "").trim().toLowerCase();
+  if (!["restart", "hotspot"].includes(action)) {
+    return res.status(400).json({ error: "คำสั่งไม่ถูกต้อง (รองรับเฉพาะ restart หรือ hotspot)" });
+  }
+
+  const activePort = findActiveChargingPort();
+  if (activePort) {
+    return res.status(409).json({
+      error: `ไม่อนุญาตให้สั่ง ${action} ขณะพอร์ต ${activePort.label} กำลังชาร์จหรือรอชำระเงิน (ต้องปิดรีเลย์ครบทุกช่องก่อน)`,
+    });
+  }
+
+  const cmdId = generateRandomId("CMD");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  state.esp32Control.pendingCommand = {
+    cmdId,
+    action,
+    requestedAt: now(),
+    requestedBy: req.adminUser.email,
+    expiresAt,
+  };
+
+  addSystemLog("ADMIN", "warn", `ส่งคำสั่ง ${action.toUpperCase()} ไปยัง ESP32 (${cmdId})`);
+  addAuditLog(req.adminUser, action === "restart" ? "ESP32_RESTART" : "ESP32_HOTSPOT", "esp32", { cmdId, action });
+
+  res.json({ success: true, esp32Control: sanitizeEsp32ControlForAdmin() });
+});
+
+app.post("/api/admin/esp32/wifi", requireAdmin, (req, res) => {
+  const ssid = String(req.body?.ssid || "").trim();
+  const password = String(req.body?.password || "");
+
+  if (!ssid || ssid.length > 32) {
+    return res.status(400).json({ error: "ชื่อ Wi-Fi (SSID) ต้องมีความยาว 1–32 ตัวอักษร" });
+  }
+  if (password.length > 0 && (password.length < 8 || password.length > 63)) {
+    return res.status(400).json({ error: "รหัสผ่าน Wi-Fi ต้องว่าง (Open) หรือยาว 8–63 ตัวอักษร" });
+  }
+
+  const activePort = findActiveChargingPort();
+  if (activePort) {
+    return res.status(409).json({
+      error: `ไม่อนุญาตให้เปลี่ยน Wi-Fi ระยะไกลขณะพอร์ต ${activePort.label} กำลังชาร์จหรือรอชำระเงิน`,
+    });
+  }
+
+  const wifiCmdId = generateRandomId("WIF");
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  // Kept in memory only; password is never logged to audit logs or written to disk/Firestore
+  state.esp32Control.pendingWifi = {
+    wifiCmdId,
+    ssid,
+    password,
+    timeoutSec: 60,
+    requestedAt: now(),
+    requestedBy: req.adminUser.email,
+    expiresAt,
+  };
+
+  addSystemLog("ADMIN", "warn", `สั่งเปลี่ยน Wi-Fi ระยะไกลเป็น "${ssid}" (Rollback อัตโนมัติใน 60 วิ)`);
+  addAuditLog(req.adminUser, "ESP32_WIFI_CHANGE", "esp32", { wifiCmdId, ssid, timeoutSec: 60 });
+
+  res.json({ success: true, esp32Control: sanitizeEsp32ControlForAdmin() });
+});
+
+app.post("/api/admin/esp32/ota", requireAdmin, (req, res) => {
+  const version = String(req.body?.version || "").trim();
+  const firmwareUrlRaw = String(req.body?.firmwareUrl || "").trim();
+  const sha256Raw = String(req.body?.sha256 || "").trim().toLowerCase();
+  const notes = String(req.body?.notes || "").trim().slice(0, 200);
+  const force = !!req.body?.force;
+
+  if (!version || version.length > 32 || !/^[a-zA-Z0-9._-]+$/.test(version)) {
+    return res.status(400).json({ error: "กรุณาระบุเวอร์ชันเฟิร์มแวร์ที่ถูกต้อง (เช่น 1.2.0)" });
+  }
+
+  const urlCheck = validateOtaHttpsUrl(firmwareUrlRaw);
+  if (!urlCheck.valid) {
+    return res.status(400).json({ error: urlCheck.error });
+  }
+
+  if (!/^[a-f0-9]{64}$/.test(sha256Raw)) {
+    return res.status(400).json({ error: "กรุณากรอกค่า SHA-256 ให้ครบ 64 ตัวอักษรฐานสิบหก (แยกช่องทางจากแหล่งไฟล์)" });
+  }
+
+  const activePort = findActiveChargingPort();
+  if (activePort) {
+    return res.status(409).json({
+      error: `ไม่อนุญาตให้สั่งอัปเดต OTA ขณะพอร์ต ${activePort.label} กำลังชาร์จหรือรอชำระเงิน`,
+    });
+  }
+
+  const otaId = generateRandomId("OTA");
+  state.esp32Control.otaRelease = {
+    otaId,
+    version,
+    firmwareUrl: urlCheck.url,
+    sha256: sha256Raw,
+    notes,
+    force,
+    createdAt: now(),
+    createdBy: req.adminUser.email,
+    status: "queued",
+    statusUpdatedAt: now(),
+    lastError: null,
+  };
+
+  state.updatedAt = now();
+  addSystemLog("ADMIN", "warn", `ปล่อย OTA v${version} (${otaId}) รอ ESP32 ดึงเมื่อรีเลย์ว่างครบทุกช่อง`);
+  addAuditLog(req.adminUser, "ESP32_OTA_DEPLOY", "esp32", {
+    otaId,
+    version,
+    sha256: sha256Raw,
+    firmwareUrl: urlCheck.url,
+    force,
+  });
+  saveState();
+
+  res.json({ success: true, esp32Control: sanitizeEsp32ControlForAdmin() });
+});
+
+app.post("/api/admin/esp32/ota/cancel", requireAdmin, (req, res) => {
+  const prev = state.esp32Control.otaRelease;
+  if (prev) {
+    prev.status = "cancelled";
+    prev.statusUpdatedAt = now();
+    prev.cancelledBy = req.adminUser.email;
+  }
+  state.updatedAt = now();
+  addSystemLog("ADMIN", "info", `ยกเลิกคำสั่ง OTA${prev?.version ? ` (v${prev.version})` : ""}`);
+  addAuditLog(req.adminUser, "ESP32_OTA_CANCEL", "esp32", { otaId: prev?.otaId || null, version: prev?.version || null });
+  saveState();
+  res.json({ success: true, esp32Control: sanitizeEsp32ControlForAdmin() });
+});
+
 // ─── ESP32 Hardware Endpoints ─────────────────────────────────────────────────
 
 app.get("/api/esp32/command", requireEsp32Auth, (req, res) => {
   const espIp = String(req.query?.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").replace(/^.*:/, "").trim();
   const rssi = req.query?.rssi ? Number(req.query.rssi) : null;
+  const fwVersion = req.query?.fw ? String(req.query.fw).trim().slice(0, 32) : null;
+  const partitionLabel = req.query?.part ? String(req.query.part).trim().slice(0, 24) : null;
+  const otaPendingVerify = req.query?.otaPending === "1" || req.query?.otaPending === "true";
+  const pollMs = req.query?.pollMs ? Number(req.query.pollMs) : null;
+  const wifiSsid = req.query?.ssid ? String(req.query.ssid).trim().slice(0, 32) : null;
+
   const nowIso = now();
   const wasOffline = !state.lastEsp32?.lastSeen || (Date.now() - new Date(state.lastEsp32.lastSeen).getTime() > 15000);
 
@@ -1828,10 +2179,30 @@ app.get("/api/esp32/command", requireEsp32Auth, (req, res) => {
   state.lastEsp32.lastSeen = nowIso;
   state.lastEsp32.status = "online";
   if (rssi !== null && Number.isFinite(rssi)) state.lastEsp32.rssi = rssi;
+  if (fwVersion) state.lastEsp32.fwVersion = fwVersion;
+  if (partitionLabel) state.lastEsp32.partitionLabel = partitionLabel;
+  if (pollMs !== null && Number.isFinite(pollMs)) state.lastEsp32.pollIntervalMs = pollMs;
+  if (wifiSsid) state.lastEsp32.wifiSsid = wifiSsid;
+  state.lastEsp32.otaPendingVerify = otaPendingVerify;
 
   if (wasOffline) {
-    addSystemLog("ESP32", "success", `บอร์ด ESP32 เชื่อมต่อสำเร็จ (${state.lastEsp32.ip || "online"}) พร้อมรับคำสั่ง`, { ip: state.lastEsp32.ip, rssi });
+    addSystemLog("ESP32", "success", `บอร์ด ESP32 เชื่อมต่อสำเร็จ (${state.lastEsp32.ip || "online"}${fwVersion ? ` | FW ${fwVersion}` : ""}) พร้อมรับคำสั่ง`, {
+      ip: state.lastEsp32.ip,
+      rssi,
+      fwVersion,
+    });
   }
+
+  // Expire stale one-shot commands
+  const nowMs = Date.now();
+  if (state.esp32Control.pendingCommand?.expiresAt && new Date(state.esp32Control.pendingCommand.expiresAt).getTime() <= nowMs) {
+    state.esp32Control.pendingCommand = null;
+  }
+  if (state.esp32Control.pendingWifi?.expiresAt && new Date(state.esp32Control.pendingWifi.expiresAt).getTime() <= nowMs) {
+    state.esp32Control.pendingWifi = null;
+  }
+
+  const safeIdleForMaintenance = areAllRelaysOff() && !findActiveChargingPort();
 
   const relays = {};
   Object.values(state.ports).forEach((p) => {
@@ -1844,18 +2215,123 @@ app.get("/api/esp32/command", requireEsp32Auth, (req, res) => {
     };
   });
 
+  const ota = state.esp32Control.otaRelease;
+  const shouldDeliverOta = Boolean(
+    safeIdleForMaintenance &&
+    ota &&
+    ["queued", "deferred_port_active"].includes(ota.status) &&
+    (ota.force || !fwVersion || fwVersion !== ota.version)
+  );
+
   res.json({
     connected: true,
     serverHost: req.hostname || "localhost",
     serverTime: nowIso,
     espIp: state.lastEsp32.ip || null,
     relays,
+    remoteConfig: {
+      configVersion: state.esp32Control.remoteConfig.configVersion,
+      pollIntervalMs: state.esp32Control.remoteConfig.pollIntervalMs,
+      portGpioMap: state.esp32Control.remoteConfig.portGpioMap,
+    },
+    pendingCommand: safeIdleForMaintenance && state.esp32Control.pendingCommand
+      ? {
+          cmdId: state.esp32Control.pendingCommand.cmdId,
+          action: state.esp32Control.pendingCommand.action,
+        }
+      : null,
+    pendingWifi: safeIdleForMaintenance && state.esp32Control.pendingWifi
+      ? {
+          wifiCmdId: state.esp32Control.pendingWifi.wifiCmdId,
+          ssid: state.esp32Control.pendingWifi.ssid,
+          password: state.esp32Control.pendingWifi.password,
+          timeoutSec: state.esp32Control.pendingWifi.timeoutSec,
+        }
+      : null,
+    ota: shouldDeliverOta
+      ? {
+          otaId: ota.otaId,
+          version: ota.version,
+          firmwareUrl: ota.firmwareUrl,
+          sha256: ota.sha256,
+          force: !!ota.force,
+        }
+      : null,
     updatedAt: state.updatedAt,
   });
 });
 
 app.post("/api/esp32/report", requireEsp32Auth, (req, res) => {
-  state.lastEsp32 = { ...(state.lastEsp32 || {}), ...req.body, receivedAt: now(), lastSeen: now(), status: "online" };
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const safeFields = {
+    fwVersion: body.fwVersion ? String(body.fwVersion).slice(0, 32) : state.lastEsp32?.fwVersion || null,
+    partitionLabel: body.partitionLabel ? String(body.partitionLabel).slice(0, 24) : state.lastEsp32?.partitionLabel || null,
+    rollbackSupported: typeof body.rollbackSupported === "boolean" ? body.rollbackSupported : state.lastEsp32?.rollbackSupported ?? null,
+    pollIntervalMs: Number.isFinite(Number(body.pollIntervalMs)) ? Number(body.pollIntervalMs) : state.lastEsp32?.pollIntervalMs || 2000,
+    relayGpios: Array.isArray(body.relayGpios) ? body.relayGpios.slice(0, 4) : state.lastEsp32?.relayGpios || null,
+    wifiSsid: body.wifiSsid ? String(body.wifiSsid).slice(0, 32) : state.lastEsp32?.wifiSsid || null,
+    freeHeap: Number.isFinite(Number(body.freeHeap)) ? Number(body.freeHeap) : state.lastEsp32?.freeHeap || null,
+    uptimeSec: Number.isFinite(Number(body.uptimeSec)) ? Number(body.uptimeSec) : state.lastEsp32?.uptimeSec || null,
+    otaPendingVerify: typeof body.otaPendingVerify === "boolean" ? body.otaPendingVerify : !!state.lastEsp32?.otaPendingVerify,
+  };
+
+  state.lastEsp32 = {
+    ...(state.lastEsp32 || {}),
+    ...safeFields,
+    receivedAt: now(),
+    lastSeen: now(),
+    status: "online",
+  };
+
+  // Acknowledge one-shot remote command (restart / hotspot)
+  if (body.cmdId && state.esp32Control.pendingCommand?.cmdId === body.cmdId) {
+    const cmdStatus = String(body.cmdStatus || "");
+    const action = state.esp32Control.pendingCommand.action;
+    if (["executed", "rejected", "cancelled"].includes(cmdStatus)) {
+      state.esp32Control.pendingCommand = null;
+      addSystemLog("ESP32", cmdStatus === "executed" ? "success" : "warn", `คำสั่ง ${action.toUpperCase()} (${body.cmdId}): ${cmdStatus}`);
+    } else if (cmdStatus === "deferred_port_active") {
+      addSystemLog("ESP32", "warn", `ชะลอคำสั่ง ${action.toUpperCase()} เนื่องจากยังมีรีเลย์เปิดจ่ายไฟอยู่`);
+    }
+  }
+
+  // Acknowledge remote Wi-Fi change & wipe password from memory immediately
+  if (body.wifiCmdId && state.esp32Control.pendingWifi?.wifiCmdId === body.wifiCmdId) {
+    const wifiStatus = String(body.wifiStatus || "");
+    const targetSsid = state.esp32Control.pendingWifi.ssid;
+    if (["applied", "rolled_back", "failed"].includes(wifiStatus)) {
+      state.esp32Control.pendingWifi = null; // clears Wi-Fi password from RAM
+      addSystemLog(
+        "ESP32",
+        wifiStatus === "applied" ? "success" : "error",
+        wifiStatus === "applied"
+          ? `เปลี่ยน Wi-Fi เป็น "${targetSsid}" และเชื่อมเซิร์ฟเวอร์สำเร็จ`
+          : `เปลี่ยน Wi-Fi เป็น "${targetSsid}" ไม่สำเร็จภายใน 60 วิ — Rollback กลับ Wi-Fi เดิมแล้ว`
+      );
+    } else if (wifiStatus === "deferred_port_active") {
+      addSystemLog("ESP32", "warn", `ชะลอการเปลี่ยน Wi-Fi เนื่องจากยังมีพอร์ตจ่ายไฟอยู่`);
+    }
+  }
+
+  // Track OTA lifecycle
+  if (body.otaStatus) {
+    const otaStatus = String(body.otaStatus).slice(0, 32);
+    const otaError = body.otaError ? String(body.otaError).slice(0, 200) : null;
+    const ota = state.esp32Control.otaRelease;
+    if (ota && (!body.otaId || ota.otaId === body.otaId)) {
+      ota.status = otaStatus;
+      ota.statusUpdatedAt = now();
+      ota.lastError = otaError;
+    }
+    const level = otaStatus === "verified" ? "success" : (["failed", "rolled_back"].includes(otaStatus) ? "error" : "warn");
+    addSystemLog("ESP32", level, `OTA Status: ${otaStatus}${otaError ? ` (${otaError})` : ""}${safeFields.fwVersion ? ` [FW ${safeFields.fwVersion}]` : ""}`);
+    saveState();
+  }
+
+  if (body.configStatus === "rejected_gpio_allowlist") {
+    addSystemLog("ESP32", "error", "ESP32 ปฏิเสธการตั้งค่า GPIO ที่ไม่อยู่ใน Allowlist [25, 26, 27, 33]");
+  }
+
   state.updatedAt = now();
   res.json({ success: true });
 });

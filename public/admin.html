@@ -1595,6 +1595,99 @@ tr:hover td{background: var(--card-hover);}
             <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">เซิร์ฟเวอร์เป้าหมาย (Target):</div>
             <div id="esp32TargetServerDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--green)">https://usb-charger.onrender.com</div>
           </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">เวอร์ชันเฟิร์มแวร์ &amp; พาร์ทิชัน:</div>
+            <div id="esp32FwDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--text)">—</div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">สถานะ OTA ล่าสุด:</div>
+            <div id="esp32OtaStatusDisplay" style="font-size:0.85rem;font-weight:600;padding:6px 0;color:var(--muted)">ยังไม่มีคำสั่ง OTA</div>
+          </div>
+        </div>
+
+        <!-- Remote Config, Safe Commands, Wi-Fi Rollback & Pull OTA -->
+        <div style="margin-top:1rem;padding:1rem;border-radius:12px;background:var(--card2);border:1px solid var(--border);display:grid;grid-template-columns:repeat(auto-fit, minmax(290px, 1fr));gap:1rem">
+          <!-- 1. Remote Config + Safe Commands -->
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--cyan)">1. Remote Config (Allowlist เฉพาะค่าที่ปลอดภัย)</div>
+            <div>
+              <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:4px">Poll Interval (1000–10000 ms)</label>
+              <input type="number" id="esp32PollIntervalInput" class="form-input" min="1000" max="10000" step="250" value="2000" style="padding:7px 10px;font-size:0.85rem;font-family:monospace" />
+            </div>
+            <div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">GPIO Allowlist (จำกัดเฉพาะพินปลอดภัย: 25, 26, 27, 33)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <label style="font-size:0.75rem;color:var(--muted)">USB-A 1
+                  <select id="gpioSelect-usb-a-1" class="form-input" style="padding:5px 8px;font-size:0.82rem;margin-top:2px">
+                    <option value="26">GPIO 26</option><option value="27">GPIO 27</option><option value="25">GPIO 25</option><option value="33">GPIO 33</option>
+                  </select>
+                </label>
+                <label style="font-size:0.75rem;color:var(--muted)">USB-A 2
+                  <select id="gpioSelect-usb-a-2" class="form-input" style="padding:5px 8px;font-size:0.82rem;margin-top:2px">
+                    <option value="26">GPIO 26</option><option value="27">GPIO 27</option><option value="25">GPIO 25</option><option value="33">GPIO 33</option>
+                  </select>
+                </label>
+                <label style="font-size:0.75rem;color:var(--muted)">USB-C 1
+                  <select id="gpioSelect-usb-c-1" class="form-input" style="padding:5px 8px;font-size:0.82rem;margin-top:2px">
+                    <option value="26">GPIO 26</option><option value="27">GPIO 27</option><option value="25">GPIO 25</option><option value="33">GPIO 33</option>
+                  </select>
+                </label>
+                <label style="font-size:0.75rem;color:var(--muted)">USB-C 2
+                  <select id="gpioSelect-usb-c-2" class="form-input" style="padding:5px 8px;font-size:0.82rem;margin-top:2px">
+                    <option value="26">GPIO 26</option><option value="27">GPIO 27</option><option value="25">GPIO 25</option><option value="33">GPIO 33</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn-sm btn-primary" style="padding:7px 12px;font-size:0.8rem" onclick="saveEsp32RemoteConfig()">บันทึก Remote Config</button>
+              <button class="btn-sm btn-yellow" style="padding:7px 12px;font-size:0.8rem" onclick="sendEsp32Command('restart')">รีสตาร์ท ESP32</button>
+              <button class="btn-sm btn-gray" style="padding:7px 12px;font-size:0.8rem" onclick="sendEsp32Command('hotspot')">เปิด Hotspot ตั้งค่า</button>
+            </div>
+            <div id="esp32PendingCmdNotice" style="font-size:0.75rem;color:var(--yellow);display:none"></div>
+          </div>
+
+          <!-- 2. Remote Wi-Fi Change (60s Auto-Rollback) -->
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--green)">2. เปลี่ยน Wi-Fi ระยะไกล (Rollback อัตโนมัติใน 60 วิ)</div>
+            <div style="font-size:0.74rem;color:var(--muted);line-height:1.45">ทำได้เฉพาะตอนรีเลย์ปิดครบทุกช่อง หากเชื่อมต่อ Wi-Fi ใหม่และเซิร์ฟเวอร์ไม่ได้ภายใน 60 วินาที บอร์ดจะกลับไปใช้ Wi-Fi เดิมอัตโนมัติ (ไม่บันทึกรหัสผ่านลง Log)</div>
+            <div>
+              <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:4px">ชื่อ Wi-Fi ใหม่ (SSID 2.4GHz)</label>
+              <input type="text" id="esp32NewWifiSsid" class="form-input" maxlength="32" placeholder="เช่น School-IoT-2.4G" style="padding:7px 10px;font-size:0.85rem" />
+            </div>
+            <div>
+              <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:4px">รหัสผ่าน Wi-Fi ใหม่ (เว้นว่างถ้าเป็น Open Wi-Fi)</label>
+              <input type="password" id="esp32NewWifiPass" class="form-input" maxlength="63" placeholder="รหัสผ่าน Wi-Fi ใหม่" style="padding:7px 10px;font-size:0.85rem" />
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button class="btn-sm btn-green" style="padding:7px 12px;font-size:0.8rem" onclick="changeEsp32Wifi()">ส่งคำสั่งเปลี่ยน Wi-Fi</button>
+              <span id="esp32PendingWifiNotice" style="font-size:0.75rem;color:var(--yellow)"></span>
+            </div>
+          </div>
+
+          <!-- 3. Pull OTA with Separate-Channel SHA-256 & 2-Slot Rollback -->
+          <div style="display:flex;flex-direction:column;gap:0.65rem">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--purple)">3. Pull OTA Firmware (HTTPS + SHA-256 + Rollback)</div>
+            <div style="font-size:0.74rem;color:var(--muted);line-height:1.45">อัปโหลดไฟล์ <code>.bin</code> ขึ้น <strong>Firebase Storage</strong> แล้วนำลิงก์ HTTPS มาวาง พร้อมกรอกค่า <strong>SHA-256 (64 ตัว)</strong> ที่คำนวณจากเครื่องคอมแยกช่องทาง เฟิร์มแวร์ใหม่จะสลับบูตและยืนยันตัวเองใน 90 วิ มิฉะนั้นจะ Rollback กลับเวอร์ชันเดิม</div>
+            <div style="display:grid;grid-template-columns:120px 1fr;gap:8px">
+              <div>
+                <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:3px">เวอร์ชันใหม่</label>
+                <input type="text" id="esp32OtaVersion" class="form-input" maxlength="32" placeholder="1.2.0" style="padding:7px 10px;font-size:0.85rem;font-family:monospace" />
+              </div>
+              <div>
+                <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:3px">HTTPS URL (.bin จาก Firebase Storage)</label>
+                <input type="url" id="esp32OtaUrl" class="form-input" placeholder="https://firebasestorage.googleapis.com/..." style="padding:7px 10px;font-size:0.82rem;font-family:monospace" />
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:0.75rem;color:var(--muted);margin-bottom:3px">SHA-256 Checksum (64 ตัวอักษรฐาน 16)</label>
+              <input type="text" id="esp32OtaSha256" class="form-input" maxlength="64" placeholder="64-character SHA-256 hex digest" style="padding:7px 10px;font-size:0.8rem;font-family:monospace" />
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn-sm btn-primary" style="padding:7px 12px;font-size:0.8rem" onclick="deployEsp32Ota()">ปล่อย OTA Firmware</button>
+              <button class="btn-sm btn-red" style="padding:7px 12px;font-size:0.8rem" onclick="cancelEsp32Ota()">ยกเลิก OTA</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2929,6 +3022,7 @@ function renderAll(d) {
   renderAuditLogs(d.auditLogs || []);
   populateSettingsForm(d.config);
   if (d.esp32 || d.lastEsp32) renderEsp32Status(d.esp32 || d.lastEsp32);
+  if (d.esp32Control) renderEsp32Control(d.esp32Control);
   if (d.logs || d.systemLogs) renderAdminLogs(d.logs || d.systemLogs);
 
   const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick') || '';
@@ -3687,6 +3781,176 @@ function renderEsp32Status(esp32) {
   }
   const targetEl = document.getElementById('esp32TargetServerDisplay');
   if (targetEl) targetEl.textContent = SERVER_BASE || 'https://usb-charger.onrender.com';
+
+  const fwEl = document.getElementById('esp32FwDisplay');
+  if (fwEl) {
+    if (esp32.fwVersion) {
+      const part = esp32.partitionLabel ? ` (${esp32.partitionLabel})` : '';
+      const rb = esp32.rollbackSupported === false ? ' [No 2-Slot OTA]' : '';
+      fwEl.innerHTML = `<span style="color:var(--cyan)">v${escapeHtml(esp32.fwVersion)}</span><span style="font-size:0.75rem;color:var(--muted)">${escapeHtml(part)}${escapeHtml(rb)}</span>`;
+    } else {
+      fwEl.textContent = 'รอข้อมูลจากบอร์ด...';
+    }
+  }
+}
+
+function renderEsp32Control(ctrl) {
+  if (!ctrl) return;
+  const rc = ctrl.remoteConfig || {};
+  const pollEl = document.getElementById('esp32PollIntervalInput');
+  if (pollEl && !pollEl.matches(':focus') && rc.pollIntervalMs) {
+    pollEl.value = rc.pollIntervalMs;
+  }
+  const gmap = rc.portGpioMap || {};
+  ['usb-a-1', 'usb-a-2', 'usb-c-1', 'usb-c-2'].forEach(pid => {
+    const sel = document.getElementById(`gpioSelect-${pid}`);
+    if (sel && !sel.matches(':focus') && gmap[pid]) {
+      sel.value = String(gmap[pid]);
+    }
+  });
+
+  const cmdNotice = document.getElementById('esp32PendingCmdNotice');
+  if (cmdNotice) {
+    if (ctrl.pendingCommand) {
+      cmdNotice.style.display = 'block';
+      cmdNotice.textContent = `รอ ESP32 ดำเนินการคำสั่ง: ${ctrl.pendingCommand.action.toUpperCase()} (${ctrl.pendingCommand.cmdId})`;
+    } else {
+      cmdNotice.style.display = 'none';
+      cmdNotice.textContent = '';
+    }
+  }
+
+  const wifiNotice = document.getElementById('esp32PendingWifiNotice');
+  if (wifiNotice) {
+    wifiNotice.textContent = ctrl.pendingWifi
+      ? `รอเปลี่ยน Wi-Fi เป็น "${ctrl.pendingWifi.ssid}"...`
+      : '';
+  }
+
+  const otaEl = document.getElementById('esp32OtaStatusDisplay');
+  if (otaEl) {
+    const ota = ctrl.otaRelease;
+    if (!ota) {
+      otaEl.textContent = 'ยังไม่มีคำสั่ง OTA';
+      otaEl.style.color = 'var(--muted)';
+    } else {
+      const colorMap = {
+        verified: 'var(--green)',
+        queued: 'var(--yellow)',
+        downloading: 'var(--cyan)',
+        flashing: 'var(--cyan)',
+        rebooting: 'var(--yellow)',
+        failed: 'var(--red)',
+        rolled_back: 'var(--red)',
+        cancelled: 'var(--muted)',
+      };
+      otaEl.style.color = colorMap[ota.status] || 'var(--text)';
+      otaEl.textContent = `v${ota.version}: ${ota.status}${ota.lastError ? ` (${ota.lastError})` : ''}`;
+    }
+  }
+}
+
+async function saveEsp32RemoteConfig() {
+  const pollIntervalMs = Number(document.getElementById('esp32PollIntervalInput')?.value || 2000);
+  const portGpioMap = {
+    'usb-a-1': Number(document.getElementById('gpioSelect-usb-a-1')?.value),
+    'usb-a-2': Number(document.getElementById('gpioSelect-usb-a-2')?.value),
+    'usb-c-1': Number(document.getElementById('gpioSelect-usb-c-1')?.value),
+    'usb-c-2': Number(document.getElementById('gpioSelect-usb-c-2')?.value),
+  };
+  const pins = Object.values(portGpioMap);
+  if (new Set(pins).size !== 4) {
+    adminToast('พิน GPIO ทั้ง 4 พอร์ตต้องไม่ซ้ำกัน', 'error');
+    return;
+  }
+  const res = await adminApi('POST', '/api/admin/esp32/remote-config', { pollIntervalMs, portGpioMap });
+  if (res && res.success) {
+    adminToast('บันทึก Remote Config สำเร็จ (บันทึก Audit Log แล้ว)', 'success');
+    renderEsp32Control(res.esp32Control);
+    refreshAdminLogs();
+  } else {
+    adminToast(res?.error || 'บันทึก Remote Config ไม่สำเร็จ', 'error');
+  }
+}
+
+async function sendEsp32Command(action) {
+  const label = action === 'restart' ? 'รีสตาร์ท ESP32' : 'เปิด Hotspot ตั้งค่า (192.168.4.1)';
+  const ok = await adminConfirm(
+    `ยืนยันคำสั่ง ${label}`,
+    'ระบบจะอนุญาตเฉพาะเมื่อรีเลย์ปิดครบทุกช่อง และจะบันทึก Audit Log ทุกครั้ง',
+    label
+  );
+  if (!ok) return;
+  const res = await adminApi('POST', '/api/admin/esp32/command', { action });
+  if (res && res.success) {
+    adminToast(`ส่งคำสั่ง ${label} แล้ว รอบอร์ดตอบรับ`, 'success');
+    renderEsp32Control(res.esp32Control);
+    refreshAdminLogs();
+  } else {
+    adminToast(res?.error || 'ส่งคำสั่งไม่สำเร็จ', 'error');
+  }
+}
+
+async function changeEsp32Wifi() {
+  const ssid = (document.getElementById('esp32NewWifiSsid')?.value || '').trim();
+  const password = document.getElementById('esp32NewWifiPass')?.value || '';
+  if (!ssid) {
+    adminToast('กรุณากรอกชื่อ Wi-Fi (SSID) ใหม่', 'error');
+    return;
+  }
+  const ok = await adminConfirm(
+    'ยืนยันเปลี่ยน Wi-Fi ระยะไกล',
+    `บอร์ดจะลองเชื่อมต่อ "${ssid}" หากต่อเซิร์ฟเวอร์ไม่ได้ภายใน 60 วินาที จะ Rollback กลับ Wi-Fi เดิมอัตโนมัติ`,
+    'เปลี่ยน Wi-Fi'
+  );
+  if (!ok) return;
+  const res = await adminApi('POST', '/api/admin/esp32/wifi', { ssid, password });
+  if (res && res.success) {
+    document.getElementById('esp32NewWifiPass').value = '';
+    adminToast(`ส่งคำสั่งเปลี่ยน Wi-Fi เป็น "${ssid}" แล้ว (Rollback 60 วิ)`, 'success');
+    renderEsp32Control(res.esp32Control);
+    refreshAdminLogs();
+  } else {
+    adminToast(res?.error || 'เปลี่ยน Wi-Fi ไม่สำเร็จ', 'error');
+  }
+}
+
+async function deployEsp32Ota() {
+  const version = (document.getElementById('esp32OtaVersion')?.value || '').trim();
+  const firmwareUrl = (document.getElementById('esp32OtaUrl')?.value || '').trim();
+  const sha256 = (document.getElementById('esp32OtaSha256')?.value || '').trim().toLowerCase();
+
+  if (!version || !firmwareUrl || !/^[a-f0-9]{64}$/.test(sha256)) {
+    adminToast('กรุณากรอกเวอร์ชัน, HTTPS URL และ SHA-256 ให้ครบ 64 ตัวอักษร', 'error');
+    return;
+  }
+  const ok = await adminConfirm(
+    `ยืนยันปล่อย Pull OTA v${version}`,
+    'ESP32 จะดาวน์โหลดผ่าน HTTPS, ตรวจ SHA-256 และสลับพาร์ทิชัน (ถ้าไม่ยืนยันใน 90 วิ จะ Rollback กลับเวอร์ชันเก่า)',
+    'ปล่อย OTA'
+  );
+  if (!ok) return;
+  const res = await adminApi('POST', '/api/admin/esp32/ota', { version, firmwareUrl, sha256 });
+  if (res && res.success) {
+    adminToast(`ปล่อย OTA v${version} สำเร็จ รอบอร์ดดึงไฟล์เมื่อพอร์ตว่าง`, 'success');
+    renderEsp32Control(res.esp32Control);
+    refreshAdminLogs();
+  } else {
+    adminToast(res?.error || 'ปล่อย OTA ไม่สำเร็จ', 'error');
+  }
+}
+
+async function cancelEsp32Ota() {
+  const ok = await adminConfirm('ยกเลิกคำสั่ง OTA', 'ต้องการยกเลิกคำสั่งอัปเดตเฟิร์มแวร์ที่ค้างอยู่หรือไม่?', 'ยกเลิก OTA');
+  if (!ok) return;
+  const res = await adminApi('POST', '/api/admin/esp32/ota/cancel');
+  if (res && res.success) {
+    adminToast('ยกเลิกคำสั่ง OTA เรียบร้อย', 'info');
+    renderEsp32Control(res.esp32Control);
+    refreshAdminLogs();
+  } else {
+    adminToast(res?.error || 'ยกเลิก OTA ไม่สำเร็จ', 'error');
+  }
 }
 
 function filterLogs(filter) {
@@ -3771,6 +4035,7 @@ async function refreshAdminLogs() {
   const res = await adminApi('GET', '/api/admin/logs');
   if (res) {
     if (res.esp32) renderEsp32Status(res.esp32);
+    if (res.esp32Control) renderEsp32Control(res.esp32Control);
     if (res.logs) renderAdminLogs(res.logs);
   }
 }
