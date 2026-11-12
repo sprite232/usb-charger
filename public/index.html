@@ -645,68 +645,48 @@ html:not([data-theme="dark"]) .sun-icon{
   align-items: center;
 }
 
-/* ── INNER FILL BAR ── */
+/* ── INNER FILL BAR (GPU Composited transform:scaleX) ── */
 .bar-fill {
+  width: 100%;
   height: 100%;
   border-radius: 999px;
   position: relative;
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  min-width: 14px;
-  background-image: 
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.2) 0,
-      rgba(255, 255, 255, 0.2) 10px,
-      transparent 10px,
-      transparent 20px
-    ),
-    linear-gradient(90deg, #059669 0%, #10b981 40%, #06b6d4 100%);
-  background-size: 28px 28px, 100% 100%;
-  animation: chargeStripes 1.2s linear infinite, pulseGlow 2.5s ease-in-out infinite;
+  overflow: hidden;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.7s cubic-bezier(.22,1,.36,1), opacity 0.3s ease;
+  background: linear-gradient(90deg, #059669 0%, #10b981 45%, #06b6d4 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: pulseGlow 2.5s ease-in-out infinite;
+  will-change: transform;
 }
 
 /* Medium level */
 .bar-fill.medium {
-  background-image: 
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.22) 0,
-      rgba(255, 255, 255, 0.22) 10px,
-      transparent 10px,
-      transparent 20px
-    ),
-    linear-gradient(90deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%);
-  animation: chargeStripes 1s linear infinite;
-  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.7));
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%);
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.65));
 }
 
 /* Low level / Emergency */
 .bar-fill.low {
-  background-image: 
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.25) 0,
-      rgba(255, 255, 255, 0.25) 10px,
-      transparent 10px,
-      transparent 20px
-    ),
-    linear-gradient(90deg, #b91c1c 0%, #ef4444 50%, #f43f5e 100%);
-  animation: chargeStripes 0.7s linear infinite, pulseWarning 1.2s ease-in-out infinite;
+  background: linear-gradient(90deg, #b91c1c 0%, #ef4444 55%, #f43f5e 100%);
+  animation: pulseWarning 1.2s ease-in-out infinite;
 }
 
-/* Glowing pin at head of fill */
+@keyframes barSheenSweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  30% { opacity: 0.38; }
+  70% { opacity: 0.38; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
 .bar-fill::after {
   content: '';
   position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 80%;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 0 8px #ffffff, 0 0 16px rgba(255, 255, 255, 0.9);
-  animation: sparkTwinkle 1.5s infinite alternate;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.45) 50%, transparent 100%);
+  animation: barSheenSweep 2.2s cubic-bezier(.22,1,.36,1) infinite;
+  pointer-events: none;
 }
 
 /* ── TEXT PERCENTAGE IN BAR ── */
@@ -968,7 +948,7 @@ footer{
 .cash-live{font-family:var(--display);font-size:1.25rem;font-weight:800;color:var(--amber);margin:.5rem 0}
 .cash-rem{font-size:.78rem;color:var(--g3);margin-bottom:8px}
 .cash-progress-wrap{border-radius:100px;overflow:hidden;height:8px;background:var(--g1);margin-bottom:14px}
-.cash-progress{height:100%;background:linear-gradient(90deg,var(--amber),var(--green));transition:width .3s}
+.cash-progress{width:100%;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--amber),var(--green));transform-origin:left center;transform:scaleX(0);transition:transform .3s cubic-bezier(.22,1,.36,1)}
 
 /* Alert boxes */
 .alert-err{border:1px solid var(--red);background:var(--red-bg);border-radius:10px;padding:12px;margin:.5rem 0}
@@ -1124,7 +1104,7 @@ footer{
   display:flex;align-items:center;gap:12px;
   background:var(--off);border:1px solid var(--g1);border-radius:14px;
   padding:10px 14px;text-decoration:none;color:inherit;
-  transition:all .2s ease;cursor:pointer;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),background-color .22s ease,border-color .22s ease,box-shadow .22s ease;cursor:pointer;
 }
 .contact-pill:hover{
   border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px);
@@ -1155,7 +1135,7 @@ footer{
   background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;
   border:none;border-radius:14px;padding:12px 14px;cursor:pointer;
   box-shadow:0 4px 16px rgba(239,68,68,.25);
-  transition:all .2s ease;text-align:left;font-family:inherit;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s ease,opacity .2s ease;text-align:left;font-family:inherit;
 }
 .btn-support-report:hover{
   transform:translateY(-2px);box-shadow:0 8px 24px rgba(239,68,68,.35);
@@ -1164,7 +1144,7 @@ footer{
   display:flex;align-items:center;gap:10px;
   background:var(--off);color:var(--dark);
   border:1px solid var(--g2);border-radius:14px;padding:12px 14px;cursor:pointer;
-  transition:all .2s ease;text-align:left;font-family:inherit;
+  transition:transform .22s cubic-bezier(.22,1,.36,1),background-color .22s ease,border-color .22s ease;text-align:left;font-family:inherit;
 }
 .btn-support-qa:hover{
   border-color:var(--blue);background:var(--blue-bg);transform:translateY(-2px);
@@ -1193,7 +1173,7 @@ footer{
 .cat-chip{
   border:1.5px solid var(--g2);background:var(--off);border-radius:10px;
   padding:9px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
-  font-size:.78rem;font-weight:600;color:var(--g3);transition:all .2s ease;user-select:none;
+  font-size:.78rem;font-weight:600;color:var(--g3);transition:transform .2s cubic-bezier(.22,1,.36,1),border-color .2s ease,background-color .2s ease,color .2s ease;user-select:none;
 }
 .cat-chip:hover{border-color:var(--blue);color:var(--dark)}
 .cat-chip.active{
@@ -1201,7 +1181,7 @@ footer{
 }
 .issue-upload-zone{
   border:1.5px dashed var(--g3);border-radius:12px;padding:14px;
-  text-align:center;cursor:pointer;background:var(--off);transition:all .2s;
+  text-align:center;cursor:pointer;background:var(--off);transition:border-color .2s ease,background-color .2s ease;
 }
 .issue-upload-zone:hover,.issue-upload-zone.drag{
   border-color:var(--blue);background:var(--blue-bg);
@@ -1216,7 +1196,7 @@ footer{
 /* QA Items */
 .qa-card{
   background:var(--off);border:1px solid var(--g1);border-radius:14px;
-  padding:14px;margin-bottom:12px;transition:all .2s ease;
+  padding:14px;margin-bottom:12px;transition:transform .2s cubic-bezier(.22,1,.36,1),border-color .2s ease,box-shadow .2s ease;
 }
 .qa-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .qa-cat-badge{
@@ -1311,7 +1291,40 @@ footer{
   max-width: 90vw;
   width: max-content;
   font-weight: 500;
-  animation: toastPop 0.3s cubic-bezier(0.16,1,0.3,1) both;
+  animation: toastPop 0.3s cubic-bezier(.22,1,.36,1) both;
+}
+
+.visitor-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--off);
+  border: 1px solid var(--g2);
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--g3);
+}
+.visitor-bar strong {
+  font-family: var(--mono, monospace);
+  color: var(--dark);
+  letter-spacing: .04em;
+}
+.visitor-bar svg {
+  width: 14px;
+  height: 14px;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 </head>
@@ -1353,11 +1366,15 @@ footer{
 <div class="hero-hd" id="heroHd">
   <div class="hero-badge">
     <span class="badge-dot"></span>
-    <i class="pic-icon ic-zap" style="color:#10b981;font-size:13px;margin-right:2px"></i>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     <span>SMART CHARGING STATION · 24/7</span>
   </div>
   <h1><span class="title-primary">ชาร์จทันที</span><br/><span class="g title-secondary">จ่ายง่าย ปลอดภัย</span></h1>
   <p>เลือกพอร์ต เลือกจำนวน จ่ายเงิน — ระบบเปิดไฟให้อัตโนมัติ</p>
+  <div class="visitor-bar" id="visitorBar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>รหัสผู้ใช้งาน: <strong id="visitorIdBadge">USR-......</strong></span>
+  </div>
 </div>
 
 <!-- MAIN -->
@@ -1408,13 +1425,13 @@ footer{
     <!-- Quick Contact Channels -->
     <div class="contact-grid">
       <!-- Phone -->
-      <a href="tel:0969679951" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก" style="display:none">
+      <a href="#" class="contact-pill" id="contactPhoneBtn" title="กดเพื่อโทรออก" style="display:none">
         <div class="contact-ic-box phone">
           <i class="pic-icon ic-phone"></i>
         </div>
         <div class="contact-info">
           <span class="contact-lbl">โทรฉุกเฉิน (ผู้ดูแล)</span>
-          <strong class="contact-val" id="contactPhoneText">096-967-9951</strong>
+          <strong class="contact-val" id="contactPhoneText">—</strong>
         </div>
       </a>
 
@@ -1425,7 +1442,7 @@ footer{
         </div>
         <div class="contact-info">
           <span class="contact-lbl">Line ID ผู้ดูแล</span>
-          <strong class="contact-val" id="contactLineText">@smartcharger</strong>
+          <strong class="contact-val" id="contactLineText">—</strong>
         </div>
       </a>
 
@@ -1436,7 +1453,7 @@ footer{
         </div>
         <div class="contact-info">
           <span class="contact-lbl">Instagram ผู้ดูแล</span>
-          <strong class="contact-val" id="contactIgText">@instagram</strong>
+          <strong class="contact-val" id="contactIgText">—</strong>
         </div>
       </a>
 
@@ -1447,7 +1464,7 @@ footer{
         </div>
         <div class="contact-info">
           <span class="contact-lbl">จุดบริการช่วยเหลือ</span>
-          <strong class="contact-val" id="contactLocText">ห้องคอมพิวเตอร์ อาคาร 1</strong>
+          <strong class="contact-val" id="contactLocText">จุดบริการชาร์จไฟอัจฉริยะ</strong>
         </div>
       </div>
     </div>
@@ -1770,7 +1787,7 @@ footer{
           <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:36px;height:36px;object-fit:contain;border-radius:8px;flex-shrink:0"/>
           <div>
             <div class="ml">TrueMoney Wallet (โอนเงินแนบสลิป)</div>
-            <div class="ms">โอนเข้าเบอร์ 096-967-9951 แล้วแนบสลิป &bull; ขั้นต่ำ ฿10</div>
+            <div class="ms">โอนเข้า TrueMoney Wallet ของตู้แล้วแนบสลิป &bull; ขั้นต่ำ ฿10</div>
           </div>
           <span class="method-badge" style="color:#ea580c;background:rgba(234,88,12,.12);border-color:rgba(234,88,12,.3)">โอนแนบสลิป</span>
         </button>
@@ -1905,13 +1922,17 @@ footer{
             <img src="assets/banks/truemoney.png" alt="TrueMoney" style="width:28px;height:28px;border-radius:7px;object-fit:contain"/>
             <span style="font-weight:700;color:#ea580c;font-size:0.85rem">TrueMoney Wallet</span>
           </div>
-          <button type="button" class="btn-sm" onclick="copyTmnPhone()" style="padding:4px 10px;font-size:0.75rem;background:#ea580c;color:#fff;border:none;border-radius:8px;cursor:pointer">📋 คัดลอกเบอร์</button>
+          <button type="button" class="btn-sm" onclick="copyTmnPhone()" style="padding:4px 10px;font-size:0.75rem;background:#ea580c;color:#fff;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            คัดลอกเบอร์
+          </button>
         </div>
-        <div class="bacc" id="tmnPhone" style="color:var(--dark);letter-spacing:1px;font-size:1.35rem">096-967-9951</div>
-        <input type="hidden" id="tmnPhoneRaw" value="0969679951"/>
-        <div class="bname" id="tmnName" style="color:var(--g3);font-size:0.88rem;margin-top:2px">ศุภกฤต สอนบุญมา</div>
-        <div style="font-size:0.75rem;color:var(--g3);margin-top:6px;padding-top:6px;border-top:1px dashed rgba(249,115,22,0.25)">
-          💡 โอนเสร็จแล้ว บันทึกรูปสลิปจากแอป TrueMoney แล้วอัปโหลดด้านล่าง
+        <div class="bacc" id="tmnPhone" style="color:var(--dark);letter-spacing:1px;font-size:1.35rem">กำลังโหลด...</div>
+        <input type="hidden" id="tmnPhoneRaw" value=""/>
+        <div class="bname" id="tmnName" style="color:var(--g3);font-size:0.88rem;margin-top:2px">—</div>
+        <div style="font-size:0.75rem;color:var(--g3);margin-top:6px;padding-top:6px;border-top:1px dashed rgba(249,115,22,0.25);display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;color:#ea580c"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>โอนเสร็จแล้ว บันทึกรูปสลิปจากแอป TrueMoney แล้วอัปโหลดด้านล่าง</span>
         </div>
       </div>
       <p class="slip-lbl">อัปโหลดสลิป TrueMoney ยืนยัน</p>
@@ -1924,7 +1945,10 @@ footer{
       <button class="btn btn-ghost" onclick="cancelSession()">ยกเลิก</button>
 
       <details style="margin-top:12px;background:var(--off);border:1px solid var(--g2);border-radius:10px;padding:8px 12px">
-        <summary style="font-size:0.78rem;font-weight:600;color:var(--g3);cursor:pointer">🎁 หรือใช้ซองของขวัญ TrueMoney (อั่งเปา)</summary>
+        <summary style="font-size:0.78rem;font-weight:600;color:var(--g3);cursor:pointer;display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#ea580c"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          <span>หรือใช้ซองของขวัญ TrueMoney (อั่งเปา)</span>
+        </summary>
         <div style="margin-top:8px;font-size:0.75rem;color:var(--g3);line-height:1.5">
           1. สร้างซองของขวัญในแอป TrueMoney ยอด ฿<span id="tmn-amt-hint">10</span><br/>
           2. วางลิงก์ซองของขวัญด้านล่าง:
@@ -1933,7 +1957,7 @@ footer{
           placeholder="https://gift.truemoney.com/campaign/?v=..."
           style="margin-top:6px"
           autocomplete="off" autocorrect="off" spellcheck="false"/>
-        <button class="btn btn-sm btn-primary" style="margin-top:6px;width:100%" onclick="submitTruemoneyVoucher()">ยืนยันซองของขวัญ</button>
+        <button class="btn btn-sm btn-primary" id="btnTmnVoucherSubmit" style="margin-top:6px;width:100%" onclick="submitTruemoneyVoucher()">ยืนยันซองของขวัญ</button>
       </details>
     </div>
 
@@ -1952,7 +1976,7 @@ footer{
         <h3>หยอดเหรียญที่ช่องรับเหรียญของตู้</h3>
         <div class="cash-live" id="coin-live-status">หยอดแล้ว: ฿0 / ฿—</div>
         <div class="cash-rem" id="coin-remain-status">ยังขาดอีก: ฿—</div>
-        <div class="cash-progress-wrap"><div class="cash-progress" id="coin-progress" style="width:0%"></div></div>
+        <div class="cash-progress-wrap"><div class="cash-progress" id="coin-progress" style="transform:scaleX(0)"></div></div>
         <p id="coin-example-note" style="font-size:.75rem;color:var(--g3);line-height:1.5;margin-bottom:8px">รองรับเฉพาะเหรียญ 5฿ และ 10฿</p>
         <div class="alert-warn" style="margin-top:10px">
           <div class="alert-ic">
@@ -2294,20 +2318,98 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ───────────────────────────────────────────────
-   VISIT TRACKING
+   RANDOM IDs & RELIABLE VISIT TRACKING
 ─────────────────────────────────────────────── */
-(function(){
-  try{
-    const v=JSON.parse(localStorage.getItem('usb_charger_visits')||'[]');
-    v.push({timestamp:new Date().toISOString()});
-    if(v.length>2000)v.shift();
-    localStorage.setItem('usb_charger_visits',JSON.stringify(v));
-    apiFetch('POST','/api/stats/visit',{}).catch(()=>null);
-  }catch(e){}
+function randomSixDigits(){
+  if (window.crypto && window.crypto.getRandomValues) {
+    const arr = new Uint32Array(1);
+    window.crypto.getRandomValues(arr);
+    return String(100000 + (arr[0] % 900000));
+  }
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function getVisitorId(){
+  try {
+    let uid = localStorage.getItem('sc_user_id');
+    if (!uid || !/^USR-\d{6}$/.test(uid)) {
+      uid = 'USR-' + randomSixDigits();
+      localStorage.setItem('sc_user_id', uid);
+    }
+    return uid;
+  } catch (e) {
+    if (!window._tempVisitorId) window._tempVisitorId = 'USR-' + randomSixDigits();
+    return window._tempVisitorId;
+  }
+}
+
+function getVisitId(){
+  try {
+    let vid = sessionStorage.getItem('sc_visit_id');
+    if (!vid || !/^VIS-\d{6}$/.test(vid)) {
+      vid = 'VIS-' + randomSixDigits();
+      sessionStorage.setItem('sc_visit_id', vid);
+    }
+    return vid;
+  } catch (e) {
+    if (!window._tempVisitId) window._tempVisitId = 'VIS-' + randomSixDigits();
+    return window._tempVisitId;
+  }
+}
+
+function detectDeviceLabel(){
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iOS/i.test(ua)) return 'Mobile (iOS)';
+  if (/Android/i.test(ua)) return 'Mobile (Android)';
+  if (/Mobile/i.test(ua)) return 'Mobile';
+  return 'Desktop';
+}
+
+window._visitRecorded = false;
+window._visitSending = false;
+
+async function trackVisit(){
+  if (window._visitRecorded || window._visitSending) return;
+  window._visitSending = true;
+  const visitorId = getVisitorId();
+  const visitId = getVisitId();
+  const badge = document.getElementById('visitorIdBadge');
+  if (badge) badge.textContent = visitorId;
+
+  try {
+    const v = JSON.parse(localStorage.getItem('usb_charger_visits') || '[]');
+    if (!v.some(x => x.id === visitId)) {
+      v.push({ id: visitId, visitorId, timestamp: new Date().toISOString(), deviceType: detectDeviceLabel() });
+      if (v.length > 500) v.shift();
+      localStorage.setItem('usb_charger_visits', JSON.stringify(v));
+    }
+  } catch (e) {}
+
+  try {
+    const res = await apiFetch('POST', '/api/stats/visit', {
+      visitId,
+      visitorId,
+      page: location.pathname || '/',
+      deviceType: detectDeviceLabel()
+    });
+    if (res && res.success) {
+      window._visitRecorded = true;
+    }
+  } catch (e) {
+    // Will automatically retry when poll() receives a live server response
+  } finally {
+    window._visitSending = false;
+  }
+}
+
+(function initVisitorBadge(){
+  const badge = document.getElementById('visitorIdBadge');
+  if (badge) badge.textContent = getVisitorId();
+  setTimeout(trackVisit, 120);
 })();
 
 /* ───────────────────────────────────────────────
-   CORE APP LOGIC (preserved 100%)
+   CORE APP LOGIC
 ─────────────────────────────────────────────── */
 function $(id){return document.getElementById(id);}
 function fmtSecs(s){
@@ -2324,9 +2426,19 @@ function fmtTime(s){
 }
 function denomImg(a){return ({5:'assets/coin-5.png',10:'assets/coin-10.png',20:'assets/note-20.jpg',50:'assets/note-50.jpg',100:'assets/note-100.jpg'}[a]||null);}
 
+const SVG_ICONS = {
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  arrowRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><polyline points="20 6 9 17 4 12"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+};
+
 function kioskToast(msg, type='info'){
   const colors = { success:'#10b981', error:'#ef4444', warn:'#f59e0b', info:'#3b82f6' };
-  const icons  = { success:'✓', error:'✕', warn:'!', info:'i' };
+  const icons  = { success:SVG_ICONS.check, error:SVG_ICONS.x, warn:SVG_ICONS.alert, info:SVG_ICONS.info };
   const c = colors[type] || colors.info;
   const ic = icons[type] || icons.info;
 
@@ -2338,13 +2450,13 @@ function kioskToast(msg, type='info'){
   t.style.border = `1.5px solid ${c}`;
   t.style.borderLeft = `5px solid ${c}`;
   t.innerHTML = `
-    <span style="width:20px;height:20px;border-radius:50%;background:${c};color:#000;font-weight:900;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
+    <span style="width:22px;height:22px;border-radius:50%;background:${c};color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
     <span style="line-height:1.45;flex:1">${String(msg).replace(/\n/g, '<br/>')}</span>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1.1rem;padding:0;line-height:1;margin-left:4px">×</button>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;margin-left:4px" aria-label="close">${SVG_ICONS.x}</button>
   `;
   document.body.appendChild(t);
   setTimeout(() => {
-    t.style.transition = 'opacity .3s, transform .3s';
+    t.style.transition = 'opacity .3s ease, transform .3s cubic-bezier(.22,1,.36,1)';
     t.style.opacity = '0';
     t.style.transform = 'translate(-50%, -10px)';
     setTimeout(() => t.remove(), 320);
@@ -2452,32 +2564,30 @@ function getAppConfig(){
   try{
     const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');
     return{
-      promptpayPhone: fsCfg.promptpayPhone || s.promptpayPhone || '0969679951',
-      truemoneyPhone: fsCfg.truemoneyPhone || s.truemoneyPhone || fsCfg.promptpayPhone || s.promptpayPhone || '0969679951',
-      bankName: fsCfg.bankName || s.bankName || 'กสิกรไทย (kbank)',
-      bankAccount: fsCfg.bankAccount || s.bankAccount || '193-3-86131-3',
-      bankAccountName: fsCfg.bankAccountName || s.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      promptpayPhone: fsCfg.promptpayPhone || s.promptpayPhone || '',
+      truemoneyPhone: fsCfg.truemoneyPhone || s.truemoneyPhone || fsCfg.promptpayPhone || s.promptpayPhone || '',
+      bankName: fsCfg.bankName || s.bankName || '',
+      bankAccount: fsCfg.bankAccount || s.bankAccount || '',
+      bankAccountName: fsCfg.bankAccountName || s.bankAccountName || '',
       secondsPerBaht: Number(fsCfg.secondsPerBaht || s.secondsPerBaht) || 180,
-      easyslipKey: fsCfg.easyslipKey || s.easyslipKey || '',
-      supportPhone: fsCfg.supportPhone !== undefined ? fsCfg.supportPhone : (s.supportPhone !== undefined ? s.supportPhone : '0969679951'),
+      supportPhone: fsCfg.supportPhone !== undefined ? fsCfg.supportPhone : (s.supportPhone !== undefined ? s.supportPhone : ''),
       supportLine: fsCfg.supportLine !== undefined ? fsCfg.supportLine : (s.supportLine !== undefined ? s.supportLine : ''),
       supportIg: fsCfg.supportIg !== undefined ? fsCfg.supportIg : (s.supportIg !== undefined ? s.supportIg : ''),
-      supportLocation: fsCfg.supportLocation !== undefined ? fsCfg.supportLocation : (s.supportLocation !== undefined ? s.supportLocation : 'ห้องคอมพิวเตอร์ อาคาร 1')
+      supportLocation: fsCfg.supportLocation !== undefined ? fsCfg.supportLocation : (s.supportLocation !== undefined ? s.supportLocation : 'จุดบริการชาร์จไฟอัจฉริยะ')
     };
   }
   catch(e){
     return{
-      promptpayPhone: fsCfg.promptpayPhone || '0969679951',
-      truemoneyPhone: fsCfg.truemoneyPhone || fsCfg.promptpayPhone || '0969679951',
-      bankName: fsCfg.bankName || 'กสิกรไทย (kbank)',
-      bankAccount: fsCfg.bankAccount || '193-3-86131-3',
-      bankAccountName: fsCfg.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      promptpayPhone: fsCfg.promptpayPhone || '',
+      truemoneyPhone: fsCfg.truemoneyPhone || fsCfg.promptpayPhone || '',
+      bankName: fsCfg.bankName || '',
+      bankAccount: fsCfg.bankAccount || '',
+      bankAccountName: fsCfg.bankAccountName || '',
       secondsPerBaht: Number(fsCfg.secondsPerBaht) || 180,
-      easyslipKey: fsCfg.easyslipKey || '',
-      supportPhone: fsCfg.supportPhone || '0969679951',
+      supportPhone: fsCfg.supportPhone || '',
       supportLine: fsCfg.supportLine || '',
       supportIg: fsCfg.supportIg || '',
-      supportLocation: fsCfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1'
+      supportLocation: fsCfg.supportLocation || 'จุดบริการชาร์จไฟอัจฉริยะ'
     };
   }
 }
@@ -2552,11 +2662,113 @@ function updateSupportContactInfo() {
   if (badge) badge.textContent = String(publicCount);
 }
 
+function renderSinglePortCard(el, p, myClientId){
+  const isA = p.status === 'available';
+  const isP = p.status === 'pending_payment';
+  const isU = p.status === 'in-use';
+  const isC = p.type === 'USB-C';
+  const tc = isC ? 'c' : 'a';
+  const isMine = isP && ((p.sessionClientId && p.sessionClientId === myClientId) || (S.portId === p.id));
+
+  el.dataset.portId = p.id;
+  el.dataset.status = p.status;
+  el.dataset.method = p.sessionMethod || '';
+
+  if (isU) {
+    const total = p.totalSeconds || p.currentTx?.chargeSeconds || p.remainingSeconds || 1;
+    const rem = p.remainingSeconds || 0;
+    const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+    const scaleX = Math.max(0.03, pct / 100);
+    const isLow = pct <= 15 || rem <= 60;
+    const isMed = pct > 15 && pct <= 35 && !isLow;
+    const stateClass = isLow ? 'low' : isMed ? 'medium' : '';
+    const pauseBadge = p.isPaused ? '<span style="color:var(--amber);font-size:.7rem;margin-left:6px">(พักชั่วคราว)</span>' : '';
+
+    el.className = `port-card in-use ${isLow ? 'low-time' : ''}`;
+    el.style.borderColor = '';
+    el.style.boxShadow = '';
+    el.onclick = null;
+    el.innerHTML = `
+      <div class="bar-hd">
+        <div class="bar-port">
+          <span class="bar-icon ${tc}"></span>
+          <span>${p.label}</span>
+          <span class="bar-status-tag"><span class="live-dot"></span>${p.isPaused ? 'พักชาร์จ' : 'กำลังจ่ายไฟ'}</span>
+          ${pauseBadge}
+        </div>
+        <div class="bar-meta">
+          <span class="bar-price-chip">฿${p.currentTx?.amount || Math.round(total / SPB) || '—'}</span>
+          <span class="bar-timer ${rem <= 60 ? 'low' : ''}" id="t-${p.id}">${fmtSecs(rem)}</span>
+        </div>
+      </div>
+      <div class="bar-pill">
+        <div class="bar-fill ${stateClass}" id="bf-${p.id}" style="transform:scaleX(${scaleX})"></div>
+        <div class="bar-pct" id="bp-${p.id}">${SVG_ICONS.bolt} <span>เหลือเวลา ${pct}%</span></div>
+      </div>
+      <div id="w1m-${p.id}" style="display:${(rem <= 60 && rem > 0) ? 'block' : 'none'}">
+        <div class="warn-1m">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+          <div><div class="warn-1m-t">เหลือเวลาชาร์จ 1 นาทีสุดท้าย</div><div class="warn-1m-s">ระบบจะตัดไฟอัตโนมัติเมื่อครบเวลา</div></div>
+        </div>
+      </div>`;
+    el.dataset.rem = rem;
+    el.dataset.total = total;
+    el.dataset.paused = p.isPaused ? '1' : '0';
+  } else {
+    delete el.dataset.rem;
+    delete el.dataset.total;
+    delete el.dataset.paused;
+
+    const badge = isA
+      ? '<span class="status-badge av"><span class="sb-dot"></span>ว่าง</span>'
+      : isMine
+        ? '<span class="status-badge pend" style="background:rgba(16,185,129,0.18);color:var(--green);border:1px solid rgba(16,185,129,0.4)"><span class="sb-dot ani" style="background:var(--green)"></span>คุณกำลังทำรายการ</span>'
+        : '<span class="status-badge pend" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)"><span class="sb-dot ani" style="background:#f59e0b"></span>ไม่ว่าง (รอชำระ)</span>';
+
+    let methodText = 'กำลังทำรายการ';
+    if (p.sessionMethod === 'truemoney') methodText = 'TrueMoney';
+    else if (p.sessionMethod === 'qr') methodText = 'พร้อมเพย์ QR';
+    else if (p.sessionMethod === 'transfer') methodText = 'โอนธนาคาร';
+    else if (p.sessionMethod === 'coin') methodText = 'หยอดเหรียญ';
+    else if (p.sessionMethod === 'holding') methodText = 'กำลังเลือกยอด';
+
+    const hint = isA
+      ? '<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>'
+      : isMine
+        ? `<div class="pc-pending" style="color:var(--green);font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:5px">${SVG_ICONS.arrowRight}<span>แตะเพื่อทำรายการต่อ</span></div>`
+        : `<div class="pc-pending" style="color:#f59e0b;font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:5px">${SVG_ICONS.clock}<span>มีคนกำลังทำรายการ (${methodText})</span></div>`;
+
+    if (isP) {
+      el.className = 'port-card pending_payment';
+      el.style.borderColor = isMine ? 'var(--green)' : '#f59e0b';
+      el.style.boxShadow = isMine ? '0 0 15px rgba(16,185,129,0.2)' : '0 0 15px rgba(245, 158, 11, 0.2)';
+    } else {
+      el.className = `port-card ${p.status}`;
+      el.style.borderColor = '';
+      el.style.boxShadow = '';
+    }
+
+    el.innerHTML = `
+      <span class="usb-icon ${tc}"></span>
+      <div class="pc-top">
+        <div><div class="pc-name">${p.label}</div><div class="pc-type">${p.type}</div></div>
+        ${badge}
+      </div>
+      ${hint}`;
+
+    el.onclick = (isA || isMine)
+      ? () => openSheet(p.id, p.label)
+      : () => {
+          Sound.error();
+          kioskToast(`ช่อง ${p.label} มีคนกำลังทำรายการชำระเงินอยู่ กรุณารอสักครู่หรือเลือกช่องอื่นนะคะ`, 'warn');
+        };
+  }
+}
+
 function renderPorts(ports){
   const g=$('portGrid');
   if(!g)return;
 
-  // ตรวจสอบและแสดงแถบคิวว่าง/ช่องที่พร้อมเร็วที่สุด
   const qNotice = $('queueNotice');
   if (qNotice) {
     const busy = ports.filter(p => p.status !== 'available');
@@ -2576,141 +2788,62 @@ function renderPorts(ports){
     }
   }
 
-  const existing=g.querySelectorAll('.port-card');
-  const canUpdate=existing.length===ports.length&&Array.from(existing).every((c,i)=>c.dataset.portId===ports[i].id&&c.dataset.status===ports[i].status&&c.dataset.method===(ports[i].sessionMethod||''));
+  const myClientId = getClientId();
+  const existing = g.querySelectorAll('.port-card');
+  const idMatch = existing.length === ports.length && Array.from(existing).every((c, i) => c.dataset.portId === ports[i].id);
 
-  if(canUpdate){
-    ports.forEach((p,i)=>{
-      if(p.status!=='in-use')return;
-      const card=existing[i];
-      const total=p.totalSeconds||p.currentTx?.chargeSeconds||Number(card.dataset.total)||p.remainingSeconds||1;
-      const rem=p.remainingSeconds||0;
-      card.dataset.rem=rem;card.dataset.total=total;card.dataset.paused=p.isPaused?'1':'0';
-      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
-      const tEl = $(`t-${p.id}`), bpEl = $(`bp-${p.id}`), bfEl = $(`bf-${p.id}`), wEl = $(`w1m-${p.id}`);
-      
-      const newText = fmtSecs(rem);
-      if(tEl && tEl.textContent !== newText){
-          tEl.textContent = newText;
-          tEl.classList.remove('tick');
-          void tEl.offsetWidth;
-          tEl.classList.add('tick');
-          tEl.classList.toggle('low', rem <= 60 && rem > 0);
-      }
-      
-      card.classList.toggle('low-time', rem <= 60 && rem > 0);
-      if(bpEl) bpEl.innerHTML = `⚡ เหลือเวลา ${pct}%`;
-      if(bfEl) {
-        bfEl.style.width = `${pct}%`;
-        bfEl.classList.toggle('low', pct <= 15 || rem <= 60);
-        bfEl.classList.toggle('medium', pct > 15 && pct <= 35 && rem > 60);
-      }
-      if(wEl) wEl.style.display = (rem <= 60 && rem > 0) ? 'block' : 'none';
+  if (!idMatch) {
+    g.innerHTML = '';
+    ports.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.style.animationDelay = `${i * 0.06}s`;
+      const isMine = p.status === 'pending_payment' && ((p.sessionClientId && p.sessionClientId === myClientId) || (S.portId === p.id));
+      el.dataset.renderKey = `${p.status}|${p.sessionMethod || ''}|${p.isPaused ? '1' : '0'}|${isMine ? '1' : '0'}|${p.currentTx?.id || ''}`;
+      renderSinglePortCard(el, p, myClientId);
+      g.appendChild(el);
     });
     return;
   }
 
-  g.innerHTML='';
-  const myClientId = getClientId();
+  // Surgical per-port DOM patch: update only cards whose state changed
+  ports.forEach((p, i) => {
+    const card = existing[i];
+    const isMine = p.status === 'pending_payment' && ((p.sessionClientId && p.sessionClientId === myClientId) || (S.portId === p.id));
+    const renderKey = `${p.status}|${p.sessionMethod || ''}|${p.isPaused ? '1' : '0'}|${isMine ? '1' : '0'}|${p.currentTx?.id || ''}`;
 
-  ports.forEach((p,i)=>{
-    const el=document.createElement('div');
-    const isA=p.status==='available',isP=p.status==='pending_payment',isU=p.status==='in-use';
-    el.className=`port-card ${p.status}`;
-    el.dataset.portId=p.id;el.dataset.status=p.status;el.dataset.method=p.sessionMethod||'';
-    el.style.animationDelay=`${i*0.08}s`;
-
-    const isC=p.type==='USB-C';
-    const tc=isC?'c':'a';
-
-    if(isU){
-      const total = p.totalSeconds || p.currentTx?.chargeSeconds || p.remainingSeconds || 1;
-      const rem = p.remainingSeconds || 0;
-      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
-      const isLow = pct <= 15 || rem <= 60;
-      const isMed = pct > 15 && pct <= 35 && !isLow;
-      const stateClass = isLow ? 'low' : isMed ? 'medium' : '';
-      const pauseBadge = p.isPaused ? '<span style="color:var(--amber);font-size:.7rem;margin-left:6px">(พักชั่วคราว)</span>' : '';
-      
-      el.className = `port-card in-use ${isLow ? 'low-time' : ''}`;
-      el.innerHTML = `
-        <div class="bar-hd">
-          <div class="bar-port">
-            <span class="bar-icon ${tc}"></span>
-            <span>${p.label}</span>
-            <span class="bar-status-tag"><span class="live-dot"></span>${p.isPaused ? 'พักชาร์จ' : 'กำลังจ่ายไฟ'}</span>
-            ${pauseBadge}
-          </div>
-          <div class="bar-meta">
-            <span class="bar-price-chip">฿${p.currentTx?.amount || Math.round(total / SPB) || '—'}</span>
-            <span class="bar-timer ${rem <= 60 ? 'low' : ''}" id="t-${p.id}">${fmtSecs(rem)}</span>
-          </div>
-        </div>
-        <div class="bar-pill">
-          <div class="bar-fill ${stateClass}" id="bf-${p.id}" style="width:${pct}%"></div>
-          <div class="bar-pct" id="bp-${p.id}">⚡ เหลือเวลา ${pct}%</div>
-        </div>
-        <div id="w1m-${p.id}" style="display:${(rem <= 60 && rem > 0) ? 'block' : 'none'}">
-          <div class="warn-1m">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
-            <div><div class="warn-1m-t">เหลือเวลาชาร์จ 1 นาทีสุดท้าย</div><div class="warn-1m-s">ระบบจะตัดไฟอัตโนมัติเมื่อครบเวลา</div></div>
-          </div>
-        </div>`;
-      el.dataset.rem=rem;el.dataset.total=total;el.dataset.paused=p.isPaused?'1':'0';
-    } else {
-      const isPending = isP;
-      const isMine = isPending && ((p.sessionClientId && p.sessionClientId === myClientId) || (S.portId === p.id));
-      
-      const badge = isA
-        ? '<span class="status-badge av"><span class="sb-dot"></span>ว่าง</span>'
-        : isMine
-          ? '<span class="status-badge pend" style="background:rgba(16,185,129,0.18);color:var(--green);border:1px solid rgba(16,185,129,0.4)"><span class="sb-dot ani" style="background:var(--green)"></span>คุณกำลังทำรายการ</span>'
-          : '<span class="status-badge pend" style="background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)"><span class="sb-dot ani" style="background:#f59e0b"></span>ไม่ว่าง (รอชำระ)</span>';
-
-      let methodText = 'กำลังทำรายการ';
-      if (p.sessionMethod === 'truemoney') methodText = 'TrueMoney';
-      else if (p.sessionMethod === 'qr') methodText = 'พร้อมเพย์ QR';
-      else if (p.sessionMethod === 'transfer') methodText = 'โอนธนาคาร';
-      else if (p.sessionMethod === 'coin') methodText = 'หยอดเหรียญ';
-      else if (p.sessionMethod === 'holding') methodText = 'กำลังเลือกยอด';
-
-      const hint = isA
-        ? '<div class="pc-hint">กดเพื่อเริ่มชาร์จ</div>'
-        : isMine
-          ? '<div class="pc-pending" style="color:var(--green);font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px"><span>👉 แตะเพื่อทำรายการต่อ</span></div>'
-          : `<div class="pc-pending" style="color:#f59e0b;font-weight:600;font-size:0.75rem;margin-top:8px;display:flex;align-items:center;gap:4px">
-               <span>⏳ มีคนกำลังทำรายการ (${methodText})</span>
-             </div>`;
-
-      if (isPending) {
-        el.className = `port-card pending_payment`;
-        el.style.borderColor = isMine ? 'var(--green)' : '#f59e0b';
-        el.style.boxShadow = isMine ? '0 0 15px rgba(16,185,129,0.2)' : '0 0 15px rgba(245, 158, 11, 0.2)';
-      }
-
-      el.innerHTML = `
-        <span class="usb-icon ${tc}"></span>
-        <div class="pc-top">
-          <div><div class="pc-name">${p.label}</div><div class="pc-type">${p.type}</div></div>
-          ${badge}
-        </div>
-        ${hint}`;
-
-      if (isA || isMine) {
-        el.addEventListener('click', () => openSheet(p.id, p.label));
-      } else {
-        el.addEventListener('click', () => {
-          Sound.error();
-          kioskToast(`ช่อง ${p.label} มีคนกำลังทำรายการชำระเงินอยู่ กรุณารอสักครู่หรือเลือกช่องอื่นนะคะ`, 'warn');
-        });
-      }
+    if (card.dataset.renderKey !== renderKey) {
+      card.dataset.renderKey = renderKey;
+      renderSinglePortCard(card, p, myClientId);
+      return;
     }
-    g.appendChild(el);
-  });
-  // re-attach cursor hover after re-render
-  document.querySelectorAll('.port-card,.method-item,.dc').forEach(el=>{
-    el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
-    el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+
+    if (p.status === 'in-use') {
+      const total = p.totalSeconds || p.currentTx?.chargeSeconds || Number(card.dataset.total) || p.remainingSeconds || 1;
+      const rem = p.remainingSeconds || 0;
+      card.dataset.rem = rem;
+      card.dataset.total = total;
+      card.dataset.paused = p.isPaused ? '1' : '0';
+      const pct = Math.max(0, Math.min(100, Math.round((rem / total) * 100)));
+      const tEl = $(`t-${p.id}`), bpEl = $(`bp-${p.id}`), bfEl = $(`bf-${p.id}`), wEl = $(`w1m-${p.id}`);
+
+      const newText = fmtSecs(rem);
+      if (tEl && tEl.textContent !== newText) {
+        tEl.textContent = newText;
+        tEl.classList.remove('tick');
+        void tEl.offsetWidth;
+        tEl.classList.add('tick');
+        tEl.classList.toggle('low', rem <= 60 && rem > 0);
+      }
+
+      card.classList.toggle('low-time', rem <= 60 && rem > 0);
+      if (bpEl) bpEl.innerHTML = `${SVG_ICONS.bolt} <span>เหลือเวลา ${pct}%</span>`;
+      if (bfEl) {
+        bfEl.style.transform = `scaleX(${Math.max(0.03, pct / 100)})`;
+        bfEl.classList.toggle('low', pct <= 15 || rem <= 60);
+        bfEl.classList.toggle('medium', pct > 15 && pct <= 35 && rem > 60);
+      }
+      if (wEl) wEl.style.display = (rem <= 60 && rem > 0) ? 'block' : 'none';
+    }
   });
 }
 
@@ -2760,15 +2893,17 @@ async function refreshPorts(){
   if(!d||!d.ports){
     return;
   }
+  if(!window._visitRecorded) trackVisit();
   SPB=d.secondsPerBaht||180;
   $('rateLabel').textContent=`1฿ = ${SPB/60} นาที`;
   document.querySelectorAll('[data-for]').forEach(el=>el.textContent=fmtTime(Number(el.dataset.for)*SPB));
-  if (d.supportLocation || d.supportPhone || d.supportLine) {
+  if (d.supportLocation || d.supportPhone || d.supportLine || d.supportIg) {
     try {
       const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
       if (d.supportLocation) cfg.supportLocation = d.supportLocation;
-      if (d.supportPhone) cfg.supportPhone = d.supportPhone;
-      if (d.supportLine) cfg.supportLine = d.supportLine;
+      if (d.supportPhone !== undefined) cfg.supportPhone = d.supportPhone;
+      if (d.supportLine !== undefined) cfg.supportLine = d.supportLine;
+      if (d.supportIg !== undefined) cfg.supportIg = d.supportIg;
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e) {}
   }
@@ -2850,15 +2985,13 @@ setInterval(()=>{
       }
     }
     
-    if(bpEl)bpEl.textContent=`${pct} %`;
+    if(bpEl)bpEl.innerHTML=`${SVG_ICONS.bolt} <span>เหลือเวลา ${pct}%</span>`;
     if(wEl)wEl.style.display=(rem<=60&&rem>0)?'block':'none';
     if(bfEl){
-      bfEl.style.width = `${pct}%`;
+      bfEl.style.transform = `scaleX(${Math.max(0.03, pct / 100)})`;
       bfEl.classList.toggle('low', pct <= 15 || rem <= 60);
       bfEl.classList.toggle('medium', pct > 15 && pct <= 35 && rem > 60);
-      bfEl.style.background = '';
     }
-    if(bpEl) bpEl.textContent = `⚡ เหลือเวลา ${pct}%`;
   });
   if(hasInUse)savePersistentPorts(currentPorts);
 },1000);
@@ -2919,6 +3052,7 @@ async function openSheet(portId,label){
     const res = await apiFetch('POST', '/api/payment/hold', { 
       portId, 
       clientId: myClientId,
+      visitorId: getVisitorId(),
       holdSessionId: S.session?.id || ''
     });
 
@@ -3097,7 +3231,14 @@ async function createSession(method){
     return;
   }
   goPage('pg-proc');$('procMsg').textContent='กำลังเตรียมข้อมูล…';
-  let res=await apiFetch('POST','/api/payment/create',{portId:S.portId,amount:S.amount,method,holdSessionId:S.session?.id});
+  let res=await apiFetch('POST','/api/payment/create',{
+    portId:S.portId,
+    amount:S.amount,
+    method,
+    clientId:getClientId(),
+    visitorId:getVisitorId(),
+    holdSessionId:S.session?.id
+  });
   if(res && res.error && !res.session){
     closeSheet();
     Sound.error();
@@ -3105,12 +3246,9 @@ async function createSession(method){
     return;
   }
   if(!res||!res.session){
-    const cfg=getAppConfig();SPB=cfg.secondsPerBaht||180;
-    const cs=S.amount*SPB;const expiresAt=new Date(Date.now()+600000).toISOString();
-    res={session:{id:`sess_${Date.now()}`,portId:S.portId,amount:S.amount,chargeSeconds:cs,expiresAt,
-      truemoney:{phone:cfg.truemoneyPhone||cfg.promptpayPhone||'0969679951',accountName:cfg.bankAccountName||'ศุภกฤต สอนบุญมา'},
-      bank:{name:cfg.bankName||'กสิกรไทย (kbank)',account:cfg.bankAccount||'193-3-86131-3',accountName:cfg.bankAccountName||'ศุภกฤต สอนบุญมา',phone:cfg.promptpayPhone||'0969679951'},
-      qr:{image:`https://promptpay.io/${cfg.promptpayPhone||'0969679951'}/${S.amount}.png`}}};
+    Sound.error();
+    showErr('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ชำระเงินได้ในขณะนี้ กรุณาลองใหม่อีกครั้งค่ะ');
+    return;
   }
   S.session=res.session;
   if(method==='qr') setupQR(res.session);
@@ -3123,9 +3261,9 @@ function setupTMN(s){
   stopTimers();
   startExpire('tmnCD', s.expiresAt);
   const cfg = getAppConfig();
-  const phone = s.truemoney?.phone || cfg.truemoneyPhone || cfg.promptpayPhone || '0969679951';
-  const name = s.truemoney?.accountName || cfg.bankAccountName || 'ศุภกฤต สอนบุญมา';
-  const fmtPhone = phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+  const phone = s.truemoney?.phone || cfg.truemoneyPhone || cfg.promptpayPhone || '';
+  const name = s.truemoney?.accountName || cfg.bankAccountName || 'เจ้าของตู้ชาร์จ';
+  const fmtPhone = phone ? phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3') : 'ยังไม่ได้ตั้งค่าเบอร์';
   const tPhone = $('tmnPhone'); if(tPhone) tPhone.textContent = fmtPhone;
   const tRaw = $('tmnPhoneRaw'); if(tRaw) tRaw.value = phone;
   const tName = $('tmnName'); if(tName) tName.textContent = name;
@@ -3143,15 +3281,20 @@ function setupTMN(s){
 }
 
 function copyTmnPhone(){
-  const raw = $('tmnPhoneRaw')?.value || '0969679951';
+  const raw = ($('tmnPhoneRaw')?.value || '').trim();
+  if(!raw){
+    kioskToast('ยังไม่ได้ตั้งค่าเบอร์ TrueMoney ในระบบ', 'warn');
+    return;
+  }
+  const formatted = raw.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(raw).then(() => {
-      kioskToast('คัดลอกเบอร์ 096-967-9951 แล้วค่ะ', 'success');
+      kioskToast(`คัดลอกเบอร์ ${formatted} แล้วค่ะ`, 'success');
     }).catch(() => {
-      kioskToast('เบอร์ TrueMoney: 096-967-9951', 'info');
+      kioskToast(`เบอร์ TrueMoney: ${formatted}`, 'info');
     });
   } else {
-    kioskToast('เบอร์ TrueMoney: 096-967-9951', 'info');
+    kioskToast(`เบอร์ TrueMoney: ${formatted}`, 'info');
   }
 }
 
@@ -3168,19 +3311,18 @@ async function submitTruemoneyVoucher(){
     return;
   }
   Sound.click();
-  $('btnTMN').disabled=true;
-  $('btnTMN').textContent='กำลังตรวจสอบ…';
+  const btn = $('btnTmnVoucherSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ…'; }
   goPage('pg-proc');$('procMsg').textContent='กำลังตรวจสอบซองของขวัญ…';
   const res=await apiFetch('POST','/api/payment/truemoney-voucher',{
-    portId:S.portId,amount:S.amount,voucherUrl:url
+    portId:S.portId,amount:S.amount,voucherUrl:url,visitorId:getVisitorId()
   });
-  $('btnTMN').disabled=false;
-  $('btnTMN').textContent='ยืนยันซองของขวัญ — เปิดไฟชาร์จ';
-  if(res && res.ok){
-    const sec=res.chargeSeconds||S.session?.chargeSeconds||S.amount*(180);
-    const sender=res.sender||'TrueMoney';
+  if (btn) { btn.disabled = false; btn.textContent = 'ยืนยันซองของขวัญ'; }
+  if(res && (res.success || res.ok)){
+    const sec=res.chargeSeconds||res.transaction?.chargeSeconds||S.session?.chargeSeconds||S.amount*SPB;
+    const sender=res.sender||'TrueMoney Wallet';
     Voice.speak('ชำระเงินสำเร็จ กำลังเปิดไฟชาร์จค่ะ');
-    showOK(sec,sender,false);
+    showOK(sec,sender,false,res.transaction?.id||'');
   } else {
     goPage('pg-truemoney');
     showErr(res?.message||res?.error||'ซองของขวัญใช้ไม่ได้ หรือถูกรับไปแล้ว กรุณาลองใหม่ค่ะ');
@@ -3227,7 +3369,7 @@ function updateCashUI(t){
   }
   const lEl=$('coin-live-status')||$('cash-live-status');if(lEl)lEl.textContent=`หยอดแล้ว: ฿${liveCashInserted} / ฿${t}`;
   const rEl=$('coin-remain-status')||$('cash-remain-status');if(rEl)rEl.textContent=rem>0?`ยังขาดอีก: ฿${rem}`:'หยอดเงินครบแล้ว';
-  const prEl=$('coin-progress')||$('cash-progress');if(prEl)prEl.style.width=`${pct}%`;
+  const prEl=$('coin-progress')||$('cash-progress');if(prEl)prEl.style.transform=`scaleX(${Math.max(0, Math.min(1, pct / 100))})`;
   const ex=$('coin-example-note')||$('cash-example-note');
   if(ex){
     let noteHtml = '';
@@ -3316,11 +3458,14 @@ async function submitSlip(method){
   stopTimers();goPage('pg-proc');$('procMsg').textContent='กำลังส่งสลิปตรวจกับระบบความปลอดภัย…';
   Voice.speak('ระบบกำลังตรวจสอบการชำระเงิน กรุณารอสักครู่ค่ะ');
   let res=null;
+  let httpStatus=0;
   try{
     const fd=new FormData();
     fd.append('portId',S.portId);
+    fd.append('visitorId',getVisitorId());
     fd.append('image',file);
     const r = await fetch(BASE+'/api/payment/verify-slip',{method:'POST',body:fd});
+    httpStatus = r.status;
     const cType = r.headers.get('content-type') || '';
     if(cType.includes('application/json')){
       res = await r.json().catch(()=>null);
@@ -3329,14 +3474,27 @@ async function submitSlip(method){
     console.warn('[Slip verify err]', e);
   }
 
-  // 1. กรณีเซิร์ฟเวอร์ตอบผลสำเร็จ (เซิร์ฟเวอร์เปิดรีเลย์แล้ว ทุกคนเห็นพร้อมกัน)
+  // 1. ตรวจสลิปผ่านอัตโนมัติ (เซิร์ฟเวอร์เปิดรีเลย์แล้ว)
   if(res&&res.success){
     const cs=res.transaction?.chargeSeconds||S.amount*SPB;
-    showOK(cs,res.sender||'ชำระเงิน',res.isDev||false);
+    showOK(cs,res.sender||'ชำระเงิน',res.isDev||false,res.transaction?.id||'');
     return;
   }
 
-  // 2. กรณีตรวจไม่ผ่าน หรือมีข้อผิดพลาด
+  // 2. ส่งเข้าคิวรอผู้ดูแลอนุมัติ (เช่น สลิป TrueMoney ไม่มี QR หรือ EasySlip ขัดข้อง)
+  if(httpStatus===202 || res?.pendingApproval){
+    Sound.click();
+    $('okTitle').textContent='ส่งข้อมูลรอผู้ดูแลตรวจสอบแล้ว';
+    $('okPort').textContent=`${S.portLabel} · รหัสคำขอ ${res?.pendingId || '—'}`;
+    $('okTime').textContent='รออนุมัติ';
+    $('okSender').textContent=res?.message || 'ระบบได้รับสลิปแล้ว กรุณารอผู้ดูแลอนุมัติเปิดไฟสักครู่';
+    $('sheetTitle').textContent='รออนุมัติ';
+    goPage('pg-ok');
+    Voice.speak('ระบบได้รับสลิปแล้ว กรุณารอผู้ดูแลตรวจสอบและเปิดไฟสักครู่ค่ะ', true);
+    return;
+  }
+
+  // 3. ตรวจไม่ผ่าน หรือมีข้อผิดพลาด
   showErr(res?.message || res?.error || res?.reason || 'ตรวจสอบสลิปไม่ผ่าน กรุณาตรวจสอบรูปสลิปและยอดเงิน แล้วลองใหม่อีกครั้งค่ะ', true);
 }
 
@@ -3344,11 +3502,18 @@ function retrySlip(){
   handleErrorRetry();
 }
 
-function showOK(cs,sender,isDev){
+function showOK(cs,sender,isDev,txId){
   Sound.success();
   Voice.speak(`ชำระเงินสำเร็จแล้วค่ะ เริ่มจ่ายไฟที่ช่อง ${S.portLabel} ขอบคุณค่ะ`, true);
-  $('okTitle').textContent='ชำระเงินสำเร็จ';$('okPort').textContent=`${S.portLabel} พร้อมใช้งานแล้ว`;
-  $('okTime').textContent=fmtTime(cs);$('okSender').textContent=sender?`ผู้โอน: ${sender}`:'';
+  $('okTitle').textContent='ชำระเงินสำเร็จ';
+  $('okPort').textContent=`${S.portLabel} พร้อมใช้งานแล้ว`;
+  $('okTime').textContent=fmtTime(cs);
+  const uid = getVisitorId();
+  const parts = [];
+  if (sender) parts.push(`ผู้โอน: ${sender}`);
+  if (txId) parts.push(`รหัสรายการ: ${txId}`);
+  parts.push(`ID ผู้ใช้: ${uid}`);
+  $('okSender').textContent = parts.join(' · ');
   $('sheetTitle').textContent='สำเร็จ';goPage('pg-ok');
 }
 function showErr(msg, isSlipError){
@@ -3522,9 +3687,10 @@ async function submitIssue() {
   const portLabel = portEl.options[portEl.selectedIndex].text;
   const amount = parseInt(String($('issueAmount').value).replace(/[^0-9]/g, ''), 10) || 0;
 
-  const ticketId = `ISSUE-${Date.now().toString().slice(-4)}`;
+  const ticketId = `ISSUE-${randomSixDigits()}`;
   const newIssue = {
     id: ticketId,
+    visitorId: getVisitorId(),
     createdAt: new Date().toISOString(),
     category: currentSelectedIssueCat,
     categoryLabel: catLabels[currentSelectedIssueCat] || 'ทั่วไป',

@@ -215,7 +215,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   outline: none;
   font-family: inherit;
   box-shadow: var(--shadow-inset);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .form-input:focus{
   border-color: var(--blue);
@@ -247,7 +247,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   cursor: pointer;
   user-select: none;
   box-shadow: var(--shadow-inset);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .bot-check-card:hover{
   border-color: var(--blue);
@@ -263,7 +263,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .bot-check-spinner{
   width: 12px;
@@ -307,7 +307,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   gap: 0.4rem;
   user-select: none;
   box-shadow: var(--shadow-btn);
-  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.16s cubic-bezier(.22,1,.36,1), border-color 0.16s cubic-bezier(.22,1,.36,1), color 0.16s cubic-bezier(.22,1,.36,1), box-shadow 0.16s cubic-bezier(.22,1,.36,1), transform 0.16s cubic-bezier(.22,1,.36,1);
 }
 .btn-sm:hover, .btn-primary:hover, .btn-green:hover, .btn-yellow:hover, .btn-red:hover, .btn-danger:hover, .btn-gray:hover, .btn-gradient:hover{
   box-shadow: var(--shadow-btn-hover);
@@ -400,7 +400,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   place-items: center;
   cursor: pointer;
   box-shadow: var(--shadow-btn);
-  transition: all 0.16s ease;
+  transition: background-color 0.16s cubic-bezier(.22,1,.36,1), border-color 0.16s cubic-bezier(.22,1,.36,1), color 0.16s cubic-bezier(.22,1,.36,1), transform 0.16s cubic-bezier(.22,1,.36,1);
 }
 .btn-theme:hover{color: var(--text); transform: translateY(-1px);}
 .btn-theme:active{transform: translateY(1.5px);}
@@ -415,7 +415,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   font-size: 0.82rem;
   font-weight: 600;
   box-shadow: var(--shadow-btn);
-  transition: all 0.16s ease;
+  transition: background-color 0.16s cubic-bezier(.22,1,.36,1), border-color 0.16s cubic-bezier(.22,1,.36,1), color 0.16s cubic-bezier(.22,1,.36,1), transform 0.16s cubic-bezier(.22,1,.36,1);
 }
 .btn-logout:hover{border-color: var(--red); color: var(--red); background: var(--red-bg);}
 
@@ -445,7 +445,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   gap: 0.5rem;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-btn);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.18s cubic-bezier(.22,1,.36,1), border-color 0.18s cubic-bezier(.22,1,.36,1), color 0.18s cubic-bezier(.22,1,.36,1), transform 0.18s cubic-bezier(.22,1,.36,1), box-shadow 0.18s cubic-bezier(.22,1,.36,1);
   user-select: none;
 }
 .tab .tab-icon{font-size: 15px;}
@@ -617,10 +617,14 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
 }
 .port-progress-fill{
+  width: 100%;
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #06b6d4);
   border-radius: 6px;
-  transition: width 0.3s linear;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1);
+  will-change: transform;
   box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
 }
 
@@ -657,7 +661,7 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
   outline: none;
   font-family: inherit;
   box-shadow: var(--shadow-inset);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .search-input:focus{
   border-color: var(--blue);
@@ -748,7 +752,7 @@ tr:hover td{background: var(--card-hover);}
   outline: none;
   font-family: inherit;
   box-shadow: var(--shadow-inset);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .field-row select:focus, .field-row input:focus{
   border-color: var(--blue);
@@ -769,7 +773,7 @@ tr:hover td{background: var(--card-hover);}
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  transition: all 0.16s ease;
+  transition: background-color 0.16s cubic-bezier(.22,1,.36,1), border-color 0.16s cubic-bezier(.22,1,.36,1), color 0.16s cubic-bezier(.22,1,.36,1), transform 0.16s cubic-bezier(.22,1,.36,1);
   box-shadow: var(--shadow-btn);
 }
 .btn-template:hover{
@@ -834,7 +838,7 @@ tr:hover td{background: var(--card-hover);}
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s cubic-bezier(.22,1,.36,1), border-color 0.15s cubic-bezier(.22,1,.36,1), color 0.15s cubic-bezier(.22,1,.36,1), transform 0.15s cubic-bezier(.22,1,.36,1);
   flex-shrink: 0;
 }
 .btn-close-modal:hover{background: rgba(255, 255, 255, 0.35); transform: scale(1.05);}
@@ -1036,7 +1040,7 @@ tr:hover td{background: var(--card-hover);}
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16,1,0.3,1);
+  transition: background-color 0.18s cubic-bezier(.22,1,.36,1), border-color 0.18s cubic-bezier(.22,1,.36,1), color 0.18s cubic-bezier(.22,1,.36,1), transform 0.18s cubic-bezier(.22,1,.36,1), box-shadow 0.18s cubic-bezier(.22,1,.36,1);
   box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8);
   font-family: inherit;
 }
@@ -1262,7 +1266,7 @@ tr:hover td{background: var(--card-hover);}
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.18s cubic-bezier(.22,1,.36,1), border-color 0.18s cubic-bezier(.22,1,.36,1), color 0.18s cubic-bezier(.22,1,.36,1), transform 0.18s cubic-bezier(.22,1,.36,1), box-shadow 0.18s cubic-bezier(.22,1,.36,1);
 }
 .status-pill-btn .sp-dot {
   width: 8px;
@@ -1385,12 +1389,21 @@ tr:hover td{background: var(--card-hover);}
   padding: 4px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s cubic-bezier(.22,1,.36,1), background-color 0.2s cubic-bezier(.22,1,.36,1), color 0.2s cubic-bezier(.22,1,.36,1), box-shadow 0.2s cubic-bezier(.22,1,.36,1), transform 0.2s cubic-bezier(.22,1,.36,1), opacity 0.2s cubic-bezier(.22,1,.36,1);
 }
 .log-filter-btn.active {
   background: var(--blue);
   color: #fff;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 </style>
@@ -1404,9 +1417,9 @@ tr:hover td{background: var(--card-hover);}
   <div class="login-box">
     <img src="assets/logo.jpg" class="login-brand-icon" alt="Portal"/>
     <h1>ระบบจัดการตู้ชาร์จ</h1>
-    <p>Smart Charger Admin Portal · เข้าสู่ระบบด้วย Google</p>
+    <p>Smart Charger Admin Portal · เข้าสู่ระบบด้วย Google เท่านั้น</p>
 
-    <!-- Google Sign-In Button -->
+    <!-- Google Sign-In Only (Zero PIN Policy) -->
     <div id="loginFormContainer">
       <button class="google-signin-btn" onclick="signInWithGoogle()" id="googleSignInBtn">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 48 48">
@@ -1417,17 +1430,9 @@ tr:hover td{background: var(--card-hover);}
         </svg>
         เข้าสู่ระบบด้วย Google
       </button>
-
-      <!-- หรือเข้าสู่ระบบด้วย PIN / Password -->
-      <div style="display:flex;align-items:center;gap:10px;margin:1.15rem 0 0.85rem;color:var(--muted);font-size:0.78rem">
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span>หรือเข้าสู่ระบบด้วยรหัสผ่านแอดมิน</span>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="margin-top:0.85rem;font-size:0.76rem;color:var(--muted);line-height:1.5">
+        เฉพาะบัญชี Google ที่อยู่ในรายชื่อผู้ดูแลระบบ (Admin Whitelist)
       </div>
-      <form onsubmit="handlePinLogin(event)" style="display:flex;gap:8px;margin-bottom:0.35rem">
-        <input type="password" id="adminPinInput" class="form-input" placeholder="PIN หรือรหัสผ่านแอดมิน" style="flex:1;font-size:0.88rem;padding:8px 12px" />
-        <button type="submit" class="btn-primary" style="padding:8px 14px;border-radius:10px;font-size:0.85rem;white-space:nowrap;cursor:pointer">เข้าสู่ระบบ</button>
-      </form>
 
       <div id="loginErr" class="login-err" style="margin-top:0.75rem"></div>
     </div>
@@ -1548,43 +1553,46 @@ tr:hover td{background: var(--card-hover);}
       <div class="test-panel" style="margin-bottom:0;border-left:4px solid var(--cyan);box-shadow:var(--shadow-card);">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(6,182,212,0.15);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:18px">🔌</div>
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(6,182,212,0.15);display:flex;align-items:center;justify-content:center;color:var(--cyan)">
+              <svg viewBox="0 0 24 24" style="width:19px;height:19px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            </div>
             <div>
               <div style="font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:8px">
-                <span>ฮาร์ดแวร์บอร์ด ESP32 & Arduino</span>
+                <span>ฮาร์ดแวร์บอร์ด ESP32 &amp; Arduino</span>
                 <span id="esp32OnlineBadge" class="badge-status-offline">
                   <span class="status-pulse-dot"></span>
                   <span id="esp32OnlineText">กำลังตรวจเช็ค...</span>
                 </span>
               </div>
-              <div style="font-size:0.8rem;color:var(--muted)">ระบบสั่งจ่ายไฟและควบคุมรีเลย์ 4 ช่องผ่าน WiFi อัตโนมัติ (Plug & Play เสียบปลั๊กเชื่อมต่อเอง)</div>
+              <div style="font-size:0.8rem;color:var(--muted)">ระบบสั่งจ่ายไฟและควบคุมรีเลย์ 4 ช่องผ่าน Wi-Fi อัตโนมัติ (Fail-Safe Cutoff Timer)</div>
             </div>
           </div>
           <div style="display:flex;gap:0.5rem;align-items:center">
-            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;padding:6px 12px;border-radius:8px;cursor:pointer" onclick="refreshAdminLogs()">
-              🔄 เช็คสถานะสด
+            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:0.8rem;padding:6px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px" onclick="refreshAdminLogs()">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2.2;fill:none"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              เช็คสถานะสด
             </button>
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:0.85rem;background:var(--card2);padding:1rem;border-radius:12px;border:1px solid var(--border)">
           <div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">📍 IP Address ของบอร์ด ESP32:</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">IP Address ของบอร์ด ESP32:</div>
             <div style="display:flex;gap:6px">
-              <input type="text" id="esp32IpInput" class="form-input" style="padding:6px 10px;font-size:0.88rem;font-family:monospace;font-weight:600" placeholder="192.168.1.124" />
+              <input type="text" id="esp32IpInput" class="form-input" style="padding:6px 10px;font-size:0.88rem;font-family:monospace;font-weight:600" placeholder="192.168.x.x" />
               <button class="btn-sm btn-primary" style="padding:6px 12px;font-size:0.8rem;white-space:nowrap" onclick="saveEsp32Ip()">บันทึก</button>
             </div>
           </div>
           <div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">📶 ความแรงสัญญาณ WiFi:</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">ความแรงสัญญาณ Wi-Fi:</div>
             <div id="esp32RssiDisplay" style="font-size:0.95rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--cyan)">— dBm</div>
           </div>
           <div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">💓 รับสัญญาณล่าสุด (Heartbeat):</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">รับสัญญาณล่าสุด (Heartbeat):</div>
             <div id="esp32LastSeenDisplay" style="font-size:0.88rem;font-weight:500;padding:6px 0;color:var(--muted)">—</div>
           </div>
           <div>
-            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">🎯 คอมพิวเตอร์เซิร์ฟเวอร์ (Target):</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">เซิร์ฟเวอร์เป้าหมาย (Target):</div>
             <div id="esp32TargetServerDisplay" style="font-size:0.88rem;font-weight:600;font-family:monospace;padding:6px 0;color:var(--green)">https://usb-charger.onrender.com</div>
           </div>
         </div>
@@ -1594,9 +1602,11 @@ tr:hover td{background: var(--card-hover);}
       <div class="test-panel" style="margin-bottom:0;border-left:4px solid var(--purple);box-shadow:var(--shadow-card);background:var(--card);">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem">
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,0.15);display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:18px">📋</div>
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,0.15);display:flex;align-items:center;justify-content:center;color:var(--purple)">
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
             <div>
-              <div style="font-size:1.05rem;font-weight:700">บันทึกการทำงานสด (Live Activity Logs & Arduino Events)</div>
+              <div style="font-size:1.05rem;font-weight:700">บันทึกการทำงานสด (Live Activity Logs &amp; Arduino Events)</div>
               <div style="font-size:0.8rem;color:var(--muted)">แสดงทุกเหตุการณ์: ESP32 ต่อสำเร็จ, สแกนจ่ายเงิน, สั่งเปิด-ตัดไฟรีเลย์แบบเรียลไทม์</div>
             </div>
           </div>
@@ -1607,8 +1617,9 @@ tr:hover td{background: var(--card-hover);}
               <button class="log-filter-btn" data-filter="SERVER" onclick="filterLogs('SERVER')">เซิร์ฟเวอร์</button>
               <button class="log-filter-btn" data-filter="RELAY" onclick="filterLogs('RELAY')">รีเลย์ / สั่งไฟ</button>
             </div>
-            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:0.8rem;padding:6px 10px;border-radius:8px;cursor:pointer" onclick="clearAdminLogs()" title="ล้างบันทึก">
-              🧹 ล้าง
+            <button class="btn-sm" style="background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:0.8rem;padding:6px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" onclick="clearAdminLogs()" title="ล้างบันทึก">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              ล้าง
             </button>
           </div>
         </div>
@@ -1620,6 +1631,18 @@ tr:hover td{background: var(--card-hover);}
       </div>
     </div>
 
+    <!-- Pending Manual Slip Approvals Queue -->
+    <div id="pendingApprovalsSection" class="test-panel" style="display:none;border-left:4px solid var(--yellow);margin:1.75rem 0 0">
+      <div class="test-panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--yellow);stroke-width:2;fill:none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>คำขออนุมัติสลิปด้วยมือ (Manual Verification Queue)</span>
+        </div>
+        <span id="pendingApprovalsBadge" style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(245,158,11,0.16);color:var(--yellow)">0 รายการ</span>
+      </div>
+      <div class="test-panel-desc">รายการสลิปที่ไม่สามารถยืนยันอัตโนมัติได้ (เช่น สลิป TrueMoney หรือช่วงที่ระบบตรวจสลิปขัดข้อง) ระบบจะไม่จ่ายไฟอัตโนมัติจนกว่าผู้ดูแลจะตรวจสอบยอดเงินจริงและกดอนุมัติ</div>
+      <div id="pendingApprovalsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:0.85rem"></div>
+    </div>
 
     <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin:2rem 0 1rem">
       <h2 style="font-size:1.1rem;font-weight:700">รายการล่าสุด 5 รายการ</h2>
@@ -1627,7 +1650,7 @@ tr:hover td{background: var(--card-hover);}
     </div>
     <div class="tbl-wrap-container">
       <div class="tbl-wrap"><table>
-        <thead><tr><th>ID / รหัสอ้างอิง</th><th>พอร์ต</th><th>จำนวนเงิน</th><th>วิธี</th><th>สถานะ</th><th>ผู้โอน / สลิป</th><th>เวลา</th><th>รายละเอียด</th></tr></thead>
+        <thead><tr><th>รหัส TX / ผู้ใช้</th><th>ผู้จ่าย -&gt; ผู้รับ</th><th>ช่องชาร์จ</th><th>ยอดเงิน / เวลา</th><th>ช่องทาง</th><th>สถานะ</th><th>เวลาโอน</th><th>รายละเอียด</th></tr></thead>
         <tbody id="txTable5"></tbody>
       </table></div>
       <div class="tbl-fade-hint"></div>
@@ -1640,9 +1663,10 @@ tr:hover td{background: var(--card-hover);}
       <div class="stat-card green"><div class="lbl">รายได้เฉลี่ย/รายการ</div><div class="val" id="stAvgTx">฿0</div></div>
       <div class="stat-card blue"><div class="lbl">เวลาชาร์จสะสมรวม</div><div class="val" id="stTotalHours">0 ชม.</div></div>
       <div class="stat-card cyan"><div class="lbl">Conversion Rate</div><div class="val" id="stConversion">0%</div></div>
-      <div class="stat-card yellow"><div class="lbl">พร้อมเพย์ & โอน</div><div class="val" id="stOnlineAmt">฿0</div></div>
+      <div class="stat-card yellow"><div class="lbl">พร้อมเพย์ &amp; โอน</div><div class="val" id="stOnlineAmt">฿0</div></div>
       <div class="stat-card purple"><div class="lbl">เงินสด (หยอดเหรียญ)</div><div class="val" id="stCashAmt">฿0</div></div>
       <div class="stat-card green"><div class="lbl">ผู้เข้าชมเว็บรวม</div><div class="val" id="stVisitsCount">0 ครั้ง</div></div>
+      <div class="stat-card cyan"><div class="lbl">ผู้ใช้งานไม่ซ้ำ (Unique)</div><div class="val" id="stUniqueVisits">0 คน</div></div>
     </div>
 
     <div class="chart-card" style="margin-bottom:1.5rem">
@@ -1666,19 +1690,47 @@ tr:hover td{background: var(--card-hover);}
         <div class="chart-wrapper"><canvas id="analyticsMethodPie"></canvas></div>
       </div>
     </div>
+
+    <!-- Visitor Logs Table -->
+    <div class="chart-card" style="margin-top:1.5rem">
+      <div class="chart-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h3>ประวัติผู้เข้าชมเว็บไซต์ล่าสุด (Visitor Log)</h3>
+        <span id="visitorSummaryHint" style="font-size:0.78rem;color:var(--muted)">กำลังโหลดข้อมูลผู้เข้าชม...</span>
+      </div>
+      <div class="tbl-wrap-container">
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>รหัสเข้าชม (VIS)</th><th>รหัสผู้ใช้งาน (USR)</th><th>อุปกรณ์</th><th>หน้า</th><th>เวลาเข้าชม</th></tr></thead>
+          <tbody id="visitorLogTableBody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Admin Audit Logs Table -->
+    <div class="chart-card" style="margin-top:1.5rem">
+      <div class="chart-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h3>บันทึกการดำเนินการผู้ดูแล (Admin Audit Log)</h3>
+        <span style="font-size:0.78rem;color:var(--muted)">ตรวจสอบได้ทุกคำสั่ง Admin (Google Auth Only)</span>
+      </div>
+      <div class="tbl-wrap-container">
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>รหัส AUD</th><th>ผู้ดูแลระบบ</th><th>การดำเนินการ</th><th>เป้าหมาย</th><th>รายละเอียด</th><th>เวลา</th></tr></thead>
+          <tbody id="auditLogTableBody"></tbody>
+        </table></div>
+      </div>
+    </div>
   </div>
 
   <!-- ─── TAB: Transactions ───────────────────── -->
   <div id="tab-transactions" class="content" style="display:none">
     <div class="toolbar">
-      <input type="text" id="txSearchInput" class="search-input" placeholder="ค้นหา ID, พอร์ต, ผู้โอน..." oninput="filterTransactions()" />
+      <input type="text" id="txSearchInput" class="search-input" placeholder="ค้นหารหัส TX / USR, ผู้จ่าย, ผู้รับ, ช่องชาร์จ..." oninput="filterTransactions()" />
       <button class="btn-sm btn-green" onclick="exportTransactionsCSV()" title="ดาวน์โหลด Excel">
         ส่งออก CSV
       </button>
     </div>
     <div class="tbl-wrap-container">
       <div class="tbl-wrap"><table>
-        <thead><tr><th>ID / รหัสอ้างอิง</th><th>พอร์ต</th><th>จำนวนเงิน</th><th>วิธี</th><th>สถานะ</th><th>ผู้โอน / รายละเอียด</th><th>เวลา</th><th>จัดการ</th></tr></thead>
+        <thead><tr><th>รหัส TX / ผู้ใช้</th><th>ผู้จ่าย -&gt; ผู้รับ</th><th>ช่องชาร์จ</th><th>ยอดเงิน / เวลา</th><th>ช่องทาง</th><th>สถานะ</th><th>เวลาโอน</th><th>จัดการ</th></tr></thead>
         <tbody id="txTableAll"></tbody>
       </table></div>
       <div class="tbl-fade-hint"></div>
@@ -1757,9 +1809,9 @@ tr:hover td{background: var(--card-hover);}
         <span>เชื่อมต่อเซิร์ฟเวอร์ตู้ชาร์จ</span>
         <span id="serverConnBadge" style="font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(100,100,100,.2);color:var(--muted)">ยังไม่ได้ตั้งค่า</span>
       </div>
-      <div class="test-panel-desc">ถ้าเปิดหน้าแอดมินผ่าน Firebase (web.app) ต้องกรอก URL/IP ของตู้ชาร์จเพื่อให้ระบบดึงข้อมูลการแจ้งปัญหาและควบคุมตู้ได้ เช่น <code style="font-family:monospace;background:var(--card2);padding:2px 6px;border-radius:4px">http://192.168.1.100:3000</code></div>
+      <div class="test-panel-desc">หากเปิดหน้าแอดมินแยกจากเซิร์ฟเวอร์ตู้ชาร์จ สามารถระบุ URL เซิร์ฟเวอร์ได้ที่นี่ เช่น <code style="font-family:monospace;background:var(--card2);padding:2px 6px;border-radius:4px">https://usb-charger.onrender.com</code></div>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
-        <input type="url" id="serverBaseInput" class="form-input" style="flex:1;min-width:220px;font-family:monospace" placeholder="http://192.168.x.x:3000" />
+        <input type="url" id="serverBaseInput" class="form-input" style="flex:1;min-width:220px;font-family:monospace" placeholder="https://usb-charger.onrender.com" />
         <button class="btn-sm btn-primary" onclick="saveServerBase()" style="white-space:nowrap">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           บันทึกและเชื่อมต่อ
@@ -1772,13 +1824,13 @@ tr:hover td{background: var(--card-hover);}
     <div class="test-panel" style="border-left:4px solid var(--purple);margin-bottom:1.5rem">
       <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
         <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--purple);stroke-width:2;fill:none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>จัดการผู้ดูแลระบบ (Admin Whitelist)</span>
+        <span>จัดการผู้ดูแลระบบ (Google Sign-In Whitelist)</span>
       </div>
-      <div class="test-panel-desc">เพิ่มหรือลบ Gmail ที่อนุญาตให้เข้าใช้ระบบ Admin ได้ที่นี่ (ใช้ Firebase Firestore)</div>
+      <div class="test-panel-desc">เพิ่มหรือลบอีเมล Google ที่ได้รับอนุญาตให้เข้าใช้งานระบบ Admin (ตรวจสอบสิทธิ์ผ่าน Firebase Authentication เท่านั้น ไม่มีระบบ PIN)</div>
       <div id="whitelistLoadingMsg" style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem">กำลังโหลดรายการ...</div>
       <div id="whitelistList" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem"></div>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <input type="email" id="newAdminEmailInput" class="form-input" style="flex:1;min-width:200px" placeholder="email@gmail.com" />
+        <input type="email" id="newAdminEmailInput" class="form-input" style="flex:1;min-width:200px" placeholder="admin@gmail.com" />
         <button class="btn-sm btn-primary" onclick="addAdminEmail()" style="white-space:nowrap">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           เพิ่ม Admin
@@ -1786,6 +1838,45 @@ tr:hover td{background: var(--card-hover);}
       </div>
       <div id="whitelistMsg" style="display:none;margin-top:0.75rem;font-size:0.82rem"></div>
     </div>
+
+    <!-- Payment & Rate Config Panel -->
+    <div class="test-panel" style="border-left:4px solid var(--blue);margin-bottom:1.5rem">
+      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--blue);stroke-width:2;fill:none"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>ตั้งค่าบัญชีรับชำระเงิน &amp; อัตราค่าบริการ</span>
+      </div>
+      <div class="test-panel-desc">กำหนดเบอร์พร้อมเพย์, บัญชีธนาคารรับโอน (ใช้เทียบชื่อบัญชีผู้รับในสลิป) และอัตราเวลาชาร์จต่อ 1 บาท</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:0.75rem">
+        <div class="field-row">
+          <label>เบอร์ PromptPay (สร้าง QR):</label>
+          <input type="text" id="cfgPhone" class="form-input" placeholder="0xxxxxxxxx" />
+        </div>
+        <div class="field-row">
+          <label>ชื่อธนาคารรับโอน:</label>
+          <input type="text" id="cfgBank" class="form-input" placeholder="เช่น กสิกรไทย (KBANK)" />
+        </div>
+        <div class="field-row">
+          <label>เลขที่บัญชีธนาคาร:</label>
+          <input type="text" id="cfgAccount" class="form-input" placeholder="xxx-x-xxxxx-x" />
+        </div>
+        <div class="field-row">
+          <label>ชื่อเจ้าของบัญชี (ผู้รับเงิน):</label>
+          <input type="text" id="cfgAccountName" class="form-input" placeholder="ชื่อ-นามสกุล เจ้าของบัญชี" />
+        </div>
+        <div class="field-row">
+          <label>อัตราค่าบริการ (วินาที / 1 บาท):</label>
+          <input type="number" id="cfgRate" class="form-input" min="10" max="3600" placeholder="180" />
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+        <button class="btn-sm btn-primary" onclick="saveSettings()" style="display:inline-flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          บันทึกบัญชีรับเงิน &amp; อัตราค่าบริการ
+        </button>
+        <span id="saveSettingsStatus" style="font-size:0.82rem;color:var(--muted)"></span>
+      </div>
+    </div>
+
     <div class="test-panel" style="border-left:4px solid var(--cyan)">
       <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
         <i class="pic-icon ic-phone" style="font-size:18px;color:var(--cyan)"></i>
@@ -1795,54 +1886,27 @@ tr:hover td{background: var(--card-hover);}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
         <div class="field-row">
           <label>เบอร์โทรศัพท์ผู้ดูแล:</label>
-          <input type="text" id="cfgSupportPhone" class="form-input" placeholder="0969679951 (ว่าง = ไม่แสดง)" />
+          <input type="text" id="cfgSupportPhone" class="form-input" placeholder="0xxxxxxxxx (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
           <label>Line ID ผู้ดูแล:</label>
-          <input type="text" id="cfgSupportLine" class="form-input" placeholder="@smartcharger (ว่าง = ไม่แสดง)" />
+          <input type="text" id="cfgSupportLine" class="form-input" placeholder="@lineid (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
           <label>Instagram (IG) ผู้ดูแล:</label>
-          <input type="text" id="cfgSupportIg" class="form-input" placeholder="_exoba_ หรือ @instagram (ว่าง = ไม่แสดง)" />
+          <input type="text" id="cfgSupportIg" class="form-input" placeholder="@instagram (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
-          <label>จุดบริการ / ห้องคอมพิวเตอร์:</label>
-          <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ห้องคอมพิวเตอร์ อาคาร 1 (ว่าง = ไม่แสดง)" />
+          <label>จุดบริการ / สถานที่ติดตั้งตู้:</label>
+          <input type="text" id="cfgSupportLocation" class="form-input" placeholder="ระบุสถานที่ตั้งตู้ (ว่าง = ไม่แสดง)" />
         </div>
         <div class="field-row">
           <label>เบอร์ TrueMoney Wallet รับซองอั่งเปา:</label>
-          <input type="text" id="cfgTruemoneyPhone" class="form-input" placeholder="0969679951" />
+          <input type="text" id="cfgTruemoneyPhone" class="form-input" placeholder="0xxxxxxxxx" />
         </div>
       </div>
       <div style="margin-top:1rem">
         <button class="btn-sm btn-primary" onclick="saveSupportSettings()">บันทึกข้อมูลช่องทางติดต่อ &amp; ทรูมันนี่</button>
-      </div>
-    </div>
-
-    <!-- Change Admin PIN / Password Panel -->
-    <div class="test-panel" style="border-left:4px solid #f59e0b;margin-bottom:1.5rem">
-      <div class="test-panel-title" style="display:flex;align-items:center;gap:8px">
-        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#f59e0b;stroke-width:2;fill:none"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>🔐 เปลี่ยนรหัสผ่านแอดมิน (Change Admin PIN)</span>
-      </div>
-      <div class="test-panel-desc">เปลี่ยนรหัส PIN หรือรหัสผ่านสำหรับเข้าสู่ระบบแอดมิน โดยรหัสใหม่จะถูกบันทึกและใช้งานได้ทันที</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:0.75rem">
-        <div class="field-row">
-          <label>รหัสผ่านเดิม (Old PIN):</label>
-          <input type="password" id="adminOldPin" class="form-input" placeholder="รหัสผ่านปัจจุบัน" autocomplete="current-password" />
-        </div>
-        <div class="field-row">
-          <label>รหัสผ่านใหม่ (New PIN):</label>
-          <input type="password" id="adminNewPin" class="form-input" placeholder="รหัสใหม่ (อย่างน้อย 4 ตัว)" autocomplete="new-password" />
-        </div>
-        <div class="field-row">
-          <label>ยืนยันรหัสผ่านใหม่ (Confirm):</label>
-          <input type="password" id="adminConfirmPin" class="form-input" placeholder="พิมพ์รหัสใหม่อีกครั้ง" autocomplete="new-password" />
-        </div>
-      </div>
-      <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
-        <button class="btn-sm btn-primary" onclick="submitChangeAdminPin()">💾 บันทึกรหัสผ่านใหม่</button>
-        <span id="changePinStatus" style="font-size:0.85rem"></span>
       </div>
     </div>
 
@@ -2077,28 +2141,40 @@ tr:hover td{background: var(--card-hover);}
       </div>
       <div class="slip-info-list">
         <div class="slip-info-row">
-          <span class="lbl">ชื่อผู้โอน:</span>
+          <span class="lbl">รหัสผู้ใช้งาน (USR ID):</span>
+          <span class="val" id="modalPayerId" style="font-family:monospace">—</span>
+        </div>
+        <div class="slip-info-row">
+          <span class="lbl">ผู้โอน (Payer):</span>
           <span class="val" id="modalSender">—</span>
         </div>
         <div class="slip-info-row">
-          <span class="lbl">ธนาคารผู้โอน:</span>
+          <span class="lbl">ธนาคาร / ช่องทางผู้โอน:</span>
           <span class="val" id="modalSenderBank">—</span>
         </div>
         <div class="slip-info-row">
-          <span class="lbl">ชื่อผู้รับ:</span>
-          <span class="val" id="modalReceiver">ศุภกฤต ส. (PROMPTPAY)</span>
+          <span class="lbl">ผู้รับ (Receiver):</span>
+          <span class="val" id="modalReceiver">—</span>
         </div>
         <div class="slip-info-row">
-          <span class="lbl">จำนวนเงิน:</span>
+          <span class="lbl">บัญชี / ปลายทางรับเงิน:</span>
+          <span class="val" id="modalReceiverAcc">—</span>
+        </div>
+        <div class="slip-info-row">
+          <span class="lbl">จำนวนเงิน &amp; เวลาชาร์จ:</span>
           <span class="val" style="color:var(--green);font-size:.95rem" id="modalAmount">฿0</span>
         </div>
         <div class="slip-info-row">
-          <span class="lbl">พอร์ตที่เลือก:</span>
+          <span class="lbl">พอร์ตที่ใช้งาน:</span>
           <span class="val" id="modalPort">—</span>
         </div>
         <div class="slip-info-row">
-          <span class="lbl">API Status:</span>
-          <span class="val" style="color:var(--green)">สำเร็จ (EasySlip)</span>
+          <span class="lbl">เวลาทำรายการ:</span>
+          <span class="val" id="modalPaidAt">—</span>
+        </div>
+        <div class="slip-info-row">
+          <span class="lbl">การตรวจสอบ:</span>
+          <span class="val" style="color:var(--green)" id="modalStatusText">ยืนยันแล้ว</span>
         </div>
       </div>
       <button class="btn-sm btn-primary" style="width:100%;margin-top:1.25rem;padding:.65rem" onclick="hideSlipModal()">
@@ -2114,7 +2190,12 @@ tr:hover td{background: var(--card-hover);}
 function adminToast(msg, type) {
   // type: 'success' | 'error' | 'info' | 'warn'
   const colors = { success:'var(--green)', error:'var(--red)', warn:'var(--yellow)', info:'var(--cyan)' };
-  const icons  = { success:'✓', error:'✕', warn:'!', info:'i' };
+  const icons  = {
+    success: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>',
+    error: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="17" r="1"/></svg>',
+    info: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.8"/></svg>'
+  };
   const c = colors[type] || colors.info;
   const ic = icons[type]  || icons.info;
 
@@ -2126,13 +2207,15 @@ function adminToast(msg, type) {
     border-radius:12px;padding:14px 18px;
     box-shadow:0 8px 32px rgba(0,0,0,0.4);
     font-size:.88rem;color:var(--text);max-width:360px;
-    animation:slideUpFade .3s cubic-bezier(.16,1,.3,1) both;
-    transition:opacity .3s;
+    animation:slideUpFade .3s cubic-bezier(.22,1,.36,1) both;
+    transition:opacity .3s cubic-bezier(.22,1,.36,1);
   `;
   t.innerHTML = `
-    <span style="width:22px;height:22px;border-radius:50%;background:${c};color:#000;font-weight:900;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
+    <span style="width:24px;height:24px;border-radius:50%;background:${c};color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic}</span>
     <span style="flex:1;line-height:1.45">${msg}</span>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0;line-height:1">×</button>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;display:flex;align-items:center" aria-label="Close">
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
   `;
   document.body.appendChild(t);
   setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),320); }, 4000);
@@ -2183,20 +2266,7 @@ function toggleAdminTheme() {
   applyAdminTheme(saved);
 })();
 
-// ─── Auth ──────────────────────────────────────
-
-function togglePassVisibility() {
-  const inp = document.getElementById('passInput');
-  const icon = document.getElementById('eyeIcon');
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    icon.textContent = 'ซ่อน';
-  } else {
-    inp.type = 'password';
-    icon.textContent = 'แสดง';
-  }
-}
-
+// ─── Auth & Local Fallback Config ───────────────
 function getLocalRealTransactions() {
   try {
     return JSON.parse(localStorage.getItem('usb_charger_transactions') || '[]');
@@ -2217,32 +2287,58 @@ function getLocalSavedConfig() {
   try {
     const saved = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
     return {
-      promptpayPhone: saved.promptpayPhone || '0969679951',
-      supportPhone: saved.supportPhone || saved.promptpayPhone || '0969679951',
-      supportLine: saved.supportLine || '@smartcharger',
-      supportLocation: saved.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1',
-      bankName: saved.bankName || 'กสิกรไทย (kbank)',
-      bankAccount: saved.bankAccount || '193-3-86131-3',
-      bankAccountName: saved.bankAccountName || 'ศุภกฤต สอนบุญมา',
+      promptpayPhone: saved.promptpayPhone || '',
+      supportPhone: saved.supportPhone || '',
+      supportLine: saved.supportLine || '',
+      supportIg: saved.supportIg || '',
+      supportLocation: saved.supportLocation || '',
+      bankName: saved.bankName || '',
+      bankAccount: saved.bankAccount || '',
+      bankAccountName: saved.bankAccountName || '',
       secondsPerBaht: Number(saved.secondsPerBaht) || 180,
-      truemoneyPhone: saved.truemoneyPhone || saved.promptpayPhone || '0969679951'
+      truemoneyPhone: saved.truemoneyPhone || ''
     };
   } catch(e) {
     return {
-      promptpayPhone: '0969679951',
-      supportPhone: '0969679951',
-      supportLine: '@smartcharger',
-      supportLocation: 'ห้องคอมพิวเตอร์ อาคาร 1',
-      bankName: 'กสิกรไทย (kbank)',
-      bankAccount: '193-3-86131-3',
-      bankAccountName: 'ศุภกฤต สอนบุญมา',
+      promptpayPhone: '',
+      supportPhone: '',
+      supportLine: '',
+      supportIg: '',
+      supportLocation: '',
+      bankName: '',
+      bankAccount: '',
+      bankAccountName: '',
       secondsPerBaht: 180,
-      truemoneyPhone: '0969679951'
+      truemoneyPhone: ''
     };
   }
 }
 
-// ─── Google Sign-In with Firestore Whitelist ──
+async function verifyAdminAccess(user) {
+  if (!user || !user.email) return { ok: false, idToken: '' };
+  const emailLower = user.email.toLowerCase();
+  const idToken = await user.getIdToken();
+  let isAllowed = false;
+  try {
+    const doc = await fbDb.collection('admin_whitelist').doc(emailLower).get();
+    if (doc && doc.exists) isAllowed = true;
+  } catch (_) {}
+  if (!isAllowed && idToken) {
+    try {
+      const res = await fetch((SERVER_BASE || '') + '/api/admin/me?_t=' + Date.now(), {
+        headers: { 'Authorization': 'Bearer ' + idToken },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const d = await res.json().catch(() => null);
+        if (d && d.success) isAllowed = true;
+      }
+    } catch (_) {}
+  }
+  return { ok: isAllowed, idToken };
+}
+
+// ─── Google Sign-In Only (Zero PIN Policy) ─────
 async function signInWithGoogle() {
   const btn = document.getElementById('googleSignInBtn');
   const errEl = document.getElementById('loginErr');
@@ -2259,25 +2355,12 @@ async function signInWithGoogle() {
     const user = result.user;
     const email = user.email;
 
-    // Show loading
     if (formEl) formEl.style.display = 'none';
     if (loadingEl) loadingEl.style.display = 'flex';
     if (loadingText) loadingText.textContent = `ตรวจสอบสิทธิ์ ${email}...`;
 
-    // Check Firestore whitelist or Master Admins
-    const MASTER_ADMINS = ['palmtawanlaothaisong00@gmail.com', 'sukitlowkey@gmail.com'];
-    const emailLower = (email || '').toLowerCase();
-    const isMaster = MASTER_ADMINS.includes(emailLower);
-    let isAllowed = isMaster;
-    try {
-      const doc = await fbDb.collection('admin_whitelist').doc(emailLower).get();
-      if (doc && doc.exists) isAllowed = true;
-      if (isMaster && (!doc || !doc.exists)) {
-        fbDb.collection('admin_whitelist').doc(emailLower).set({}).catch(() => {});
-      }
-    } catch (_) {}
-
-    if (!isAllowed) {
+    const check = await verifyAdminAccess(user);
+    if (!check.ok) {
       await fbAuth.signOut();
       if (loadingEl) loadingEl.style.display = 'none';
       if (formEl) formEl.style.display = 'block';
@@ -2289,9 +2372,8 @@ async function signInWithGoogle() {
       return;
     }
 
-    // Authorized!
     currentUser = user;
-    token = await user.getIdToken();
+    token = check.idToken;
     sessionStorage.setItem('adminToken', token);
     localStorage.setItem('adminToken', token);
     tryLoadDashboard();
@@ -2304,55 +2386,13 @@ async function signInWithGoogle() {
     if (errEl) {
       errEl.style.display = 'block';
       if (err.code === 'auth/unauthorized-domain') {
-        errEl.innerHTML = `⚠️ โดเมนนี้ยังไม่ได้เพิ่มใน Firebase Authorized Domains<br/>👉 <strong>เข้าสู่ระบบด้วยรหัสผ่านแอดมิน (PIN) ด้านล่างได้ทันที</strong><br/>หรือเปิดผ่าน <a href="https://usb-charger-project.web.app/admin.html" style="color:var(--cyan);text-decoration:underline">usb-charger-project.web.app/admin.html</a>`;
+        errEl.innerHTML = `โดเมนนี้ยังไม่ได้เพิ่มใน Firebase Authorized Domains<br/>กรุณาเปิดผ่าน <a href="https://usb-charger-project.web.app/admin.html" style="color:var(--cyan);text-decoration:underline">usb-charger-project.web.app/admin.html</a>`;
       } else {
         errEl.textContent = 'เกิดข้อผิดพลาด: ' + (err.message || 'กรุณาลองใหม่');
       }
     }
   }
 }
-
-async function handlePinLogin(e) {
-  if (e) e.preventDefault();
-  const input = document.getElementById('adminPinInput');
-  const errEl = document.getElementById('loginErr');
-  const pin = (input?.value || '').trim();
-  if (!pin) {
-    if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'กรุณากรอก PIN หรือรหัสผ่าน'; }
-    return;
-  }
-  if (errEl) errEl.style.display = 'none';
-  try {
-    const res = await fetch((SERVER_BASE || '') + '/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin })
-    });
-    const d = await res.json().catch(() => null);
-    if (res.ok && d && d.token) {
-      token = d.token;
-      sessionStorage.setItem('adminToken', token);
-      localStorage.setItem('adminToken', token);
-      currentUser = { email: 'admin@system', displayName: 'Master Admin' };
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appScreen').style.display = 'block';
-      adminToast('ยินดีต้อนรับ เข้าสู่ระบบสำเร็จ', 'success');
-      tryLoadDashboard();
-      autoRefresh();
-    } else {
-      if (errEl) {
-        errEl.style.display = 'block';
-        errEl.textContent = d?.error || 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่';
-      }
-    }
-  } catch(err) {
-    if (errEl) {
-      errEl.style.display = 'block';
-      errEl.textContent = `ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์: ${err.message}`;
-    }
-  }
-}
-window.handlePinLogin = handlePinLogin;
 
 function logout() {
   fbAuth.signOut().catch(() => {});
@@ -2374,22 +2414,11 @@ function logout() {
 // ─── Firebase Auth State Persistence ──────────
 fbAuth.onAuthStateChanged(async (user) => {
   if (user) {
-    const email = user.email;
     try {
-      const MASTER_ADMINS = ['palmtawanlaothaisong00@gmail.com', 'sukitlowkey@gmail.com'];
-      const emailLower = (email || '').toLowerCase();
-      const isMaster = MASTER_ADMINS.includes(emailLower);
-      let docExists = false;
-      try {
-        const doc = await fbDb.collection('admin_whitelist').doc(emailLower).get();
-        if (doc && doc.exists) docExists = true;
-      } catch (_) {}
-      if (docExists || isMaster) {
-        if (isMaster && !docExists) {
-          fbDb.collection('admin_whitelist').doc(emailLower).set({}).catch(() => {});
-        }
+      const check = await verifyAdminAccess(user);
+      if (check.ok) {
         currentUser = user;
-        token = await user.getIdToken();
+        token = check.idToken;
         sessionStorage.setItem('adminToken', token);
         localStorage.setItem('adminToken', token);
         if (document.getElementById('appScreen').style.display !== 'flex') {
@@ -2675,13 +2704,33 @@ function saveAdminPersistentPorts(ports) {
   syncAdminToFirestore({ ports });
 }
 
-// ─── Load & Refresh (100% Real Data) ──────────
+// ─── Load & Refresh (100% Real Data + Firestore Fallback) ──────────
 let refreshInterval = null;
+
+async function fetchFirestoreAdminFallback() {
+  if (typeof fbDb === 'undefined' || !fbDb) return {};
+  const out = {};
+  const tasks = [
+    fbDb.collection('transactions').orderBy('createdAt', 'desc').limit(200).get().then(s => {
+      out.transactions = s.docs.map(d => d.data());
+    }).catch(() => {}),
+    fbDb.collection('visits').orderBy('timestamp', 'desc').limit(300).get().then(s => {
+      out.visits = s.docs.map(d => d.data());
+    }).catch(() => {}),
+    fbDb.collection('pending_approvals').where('status', '==', 'pending').get().then(s => {
+      out.pendingApprovals = s.docs.map(d => d.data());
+    }).catch(() => {}),
+    fbDb.collection('audit_logs').orderBy('timestamp', 'desc').limit(100).get().then(s => {
+      out.auditLogs = s.docs.map(d => d.data());
+    }).catch(() => {})
+  ];
+  await Promise.allSettled(tasks);
+  return out;
+}
 
 async function tryLoadDashboard() {
   let data = await adminApi('GET', '/api/admin/dashboard');
   if (!data || !data.ports) {
-    // Check if Firestore cloud state exists
     let fsDoc = null;
     try {
       if (fbDb) {
@@ -2692,10 +2741,10 @@ async function tryLoadDashboard() {
       console.warn('[Firestore load notice]', e.message);
     }
 
-    // Load 100% REAL DATA from persistent state / cloud
-    const realTxs = getLocalRealTransactions();
-    const realVisits = getLocalVisits();
-    const realRev = realTxs.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const fsCollections = await fetchFirestoreAdminFallback();
+    const realTxs = (fsCollections.transactions && fsCollections.transactions.length) ? fsCollections.transactions : getLocalRealTransactions();
+    const realVisits = (fsCollections.visits && fsCollections.visits.length) ? fsCollections.visits : getLocalVisits();
+    const realRev = realTxs.filter(t => t.method !== 'test').reduce((sum, t) => sum + Number(t.amount || 0), 0);
     const savedPorts = (fsDoc && fsDoc.ports && Array.isArray(fsDoc.ports) && fsDoc.ports.length > 0) ? fsDoc.ports : loadAdminPersistentPorts();
     const localCfg = getLocalSavedConfig();
     const cfg = { ...localCfg, ...(fsDoc?.config || {}), ...(fsDoc?.secondsPerBaht ? { secondsPerBaht: fsDoc.secondsPerBaht } : {}) };
@@ -2705,7 +2754,6 @@ async function tryLoadDashboard() {
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e){}
 
-    // ซิงค์สถานะสดจาก /api/state เผื่อกรณี Token กำลังรีเฟรช
     let liveState = null;
     try {
       const sUrl = (SERVER_BASE || '') + '/api/state?_t=' + Date.now();
@@ -2713,72 +2761,61 @@ async function tryLoadDashboard() {
       if (sRes.ok) liveState = await sRes.json();
     } catch (_) {}
 
+    const fsStats = fsDoc?.stats || liveState?.stats || {};
     data = {
       summary: {
         revenue: realRev,
         transactionCount: realTxs.length,
         activeCount: (liveState?.ports || savedPorts).filter(p => p.status === 'in-use').length,
-        finishedCount: realTxs.length
+        finishedCount: realTxs.filter(t => t.status === 'finished').length,
+        totalVisits: Math.max(realVisits.length, Number(fsStats.totalVisits || 0)),
+        todayVisits: Number(fsStats.todayVisits || 0),
+        uniqueVisitors: Math.max(new Set(realVisits.map(v => v.visitorId).filter(Boolean)).size, Number(fsStats.uniqueVisitors || 0))
       },
       ports: liveState?.ports || savedPorts,
       transactions: realTxs,
       visits: realVisits,
+      pendingApprovals: fsCollections.pendingApprovals || [],
+      auditLogs: fsCollections.auditLogs || [],
       config: cfg,
-      esp32: liveState?.esp32 || null,
-      lastEsp32: liveState?.esp32 || null
+      esp32: liveState?.esp32 || fsDoc?.esp32 || null,
+      lastEsp32: liveState?.esp32 || fsDoc?.esp32 || null,
+      logs: liveState?.systemLogs || fsDoc?.systemLogs || []
     };
-
-    // If Firestore document does not exist, seed it immediately from admin
-    if (!fsDoc) {
-      syncAdminToFirestore({
-        ports: savedPorts,
-        config: cfg,
-        secondsPerBaht: cfg.secondsPerBaht,
-        supportPhone: cfg.supportPhone,
-        supportLine: cfg.supportLine,
-        supportLocation: cfg.supportLocation,
-        promptpayPhone: cfg.promptpayPhone,
-        bankName: cfg.bankName,
-        bankAccount: cfg.bankAccount,
-        bankAccountName: cfg.bankAccountName
-      });
-    }
   } else {
     saveAdminPersistentPorts(data.ports);
   }
-  
+
   dashData = data;
   allTransactions = data.transactions || [];
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'flex';
-  
+
   if (document.getElementById('pingUrlInput')) {
-    document.getElementById('pingUrlInput').value = `${window.location.origin}/api/ping`;
+    document.getElementById('pingUrlInput').value = `${SERVER_BASE || window.location.origin}/api/ping`;
   }
 
   renderAll(data);
-  startRealtimeIssuesListener(); // เปิด real-time listener (Firestore + Storage) ทันที
-  syncAdminIssuesFromBackend(); // ดึง issues จาก backend ทันทีตอน login
-  requestNotificationPermission(); // ขอสิทธิ์แจ้งเตือน
+  startRealtimeIssuesListener();
+  syncAdminIssuesFromBackend();
+  requestNotificationPermission();
   updateNotifBellUI();
   if (!refreshInterval) refreshInterval = setInterval(autoRefresh, 3000);
 }
 
 async function autoRefresh() {
-  const isLocalHost = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1') || window.location.hostname.includes('192.168.');
-  if (!token && !isLocalHost) return;
+  if (!token) return;
   const data = await adminApi('GET', '/api/admin/dashboard');
-  if (data && data.ports) { 
-    dashData = data; 
+  if (data && data.ports) {
+    dashData = data;
     allTransactions = data.transactions || [];
     saveAdminPersistentPorts(data.ports);
-    renderAll(data); 
+    renderAll(data);
   } else if (dashData) {
     dashData.ports = loadAdminPersistentPorts();
     dashData.summary.activeCount = dashData.ports.filter(p => p.status === 'in-use').length;
     renderAll(dashData);
   }
-  // ตรวจจับการแจ้งปัญหาใหม่ทุกรอบ (3 วิ) และ sync backend ทุก 9 วิ
   checkLocalIssuesDiff();
   if (!autoRefresh._issueCount) autoRefresh._issueCount = 0;
   autoRefresh._issueCount++;
@@ -2795,33 +2832,39 @@ function setActionNotice(msg) {
 // ─── Render Components ────────────────────────
 function renderAll(d) {
   const chip = document.getElementById('easyslipChip');
-  chip.innerHTML = d.config.easyslipEnabled 
-    ? '<img src="assets/icon-success.png" style="width:11px;height:11px"/> EasySlip'
-    : 'EasySlip: ปิด';
-  chip.className = `chip ${d.config.easyslipEnabled ? '' : 'warn'}`;
+  if (chip) {
+    chip.innerHTML = d.config?.easyslipEnabled
+      ? '<img src="assets/icon-success.png" style="width:11px;height:11px"/> EasySlip: เปิด'
+      : 'EasySlip: ปิด (ส่งแอดมินตรวจ)';
+    chip.className = `chip ${d.config?.easyslipEnabled ? '' : 'warn'}`;
+  }
 
   const txs = d.transactions || [];
-  const visits = d.visits && d.visits.length ? d.visits : getLocalVisits();
-  
-  // Real calculations
-  const totalRev = txs.reduce((sum, t) => sum + (t.amount || 0), 0);
+  const realTxs = txs.filter(t => t.method !== 'test');
+  const visits = (Array.isArray(d.visits) && d.visits.length > 0) ? d.visits : getLocalVisits();
+
+  const totalRev = realTxs.reduce((sum, t) => sum + Number(t.amount || 0), 0);
   const todayStr = new Date().toDateString();
-  const todayRev = txs
-    .filter(t => new Date(t.createdAt).toDateString() === todayStr)
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
-  const todayVisits = visits.filter(v => new Date(v.timestamp).toDateString() === todayStr).length;
-  const activeCount = d.ports.filter(p => p.status === 'in-use').length;
+  const todayRev = realTxs
+    .filter(t => new Date(t.paidAt || t.createdAt).toDateString() === todayStr)
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+  const todayVisitsFromList = visits.filter(v => new Date(v.timestamp || v.createdAt).toDateString() === todayStr).length;
+  const totalVisitsCount = Math.max(visits.length, Number(d.summary?.totalVisits || 0));
+  const todayVisits = Math.max(todayVisitsFromList, visits.length === 0 ? Number(d.summary?.todayVisits || 0) : 0);
+  const uniqueVisitors = Math.max(new Set(visits.map(v => v.visitorId).filter(Boolean)).size, Number(d.summary?.uniqueVisitors || 0));
+  const activeCount = (d.ports || []).filter(p => p.status === 'in-use').length;
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yestStr = yesterday.toDateString();
 
-  const yestRev = txs
-    .filter(t => new Date(t.createdAt).toDateString() === yestStr)
-    .reduce((sum, t) => sum + (t.amount || 0), 0);
+  const yestRev = realTxs
+    .filter(t => new Date(t.paidAt || t.createdAt).toDateString() === yestStr)
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   const yestVisits = visits
-    .filter(v => new Date(v.timestamp).toDateString() === yestStr).length;
+    .filter(v => new Date(v.timestamp || v.createdAt).toDateString() === yestStr).length;
 
   function getCompHtml(todayVal, yestVal, label = 'เมื่อวาน') {
     if (yestVal === 0 && todayVal === 0) {
@@ -2850,8 +2893,8 @@ function renderAll(d) {
   document.getElementById('stRevenue').textContent = `฿${Math.round(totalRev)}`;
   document.getElementById('stToday').textContent   = `฿${Math.round(todayRev)}`;
   document.getElementById('stTodayVisits').textContent = `${todayVisits} ครั้ง`;
-  document.getElementById('stTotalVisits').textContent = `${visits.length} ครั้ง`;
-  document.getElementById('stCount').textContent   = txs.length;
+  document.getElementById('stTotalVisits').textContent = `${totalVisitsCount} ครั้ง`;
+  document.getElementById('stCount').textContent   = realTxs.length;
   document.getElementById('stActive').textContent  = `${activeCount} ช่อง`;
 
   if (document.getElementById('stTodayComp')) {
@@ -2861,132 +2904,181 @@ function renderAll(d) {
     document.getElementById('stTodayVisitsComp').innerHTML = getCompHtml(todayVisits, yestVisits);
   }
 
-  // Analytics Stats
-  const avg = txs.length > 0 ? (totalRev / txs.length) : 0;
-  const totalHours = Math.round((totalRev * (d.config.secondsPerBaht || 180)) / 3600);
-  const onlineAmt = txs.filter(t => t.method !== 'cash' && t.method !== 'coin').reduce((sum, t) => sum + (t.amount || 0), 0);
-  const cashAmt = txs.filter(t => t.method === 'cash' || t.method === 'coin').reduce((sum, t) => sum + (t.amount || 0), 0);
-  const convRate = visits.length > 0 ? Math.min(100, Math.round((txs.length / visits.length) * 100)) : 0;
+  const avg = realTxs.length > 0 ? (totalRev / realTxs.length) : 0;
+  const totalHours = Math.round((totalRev * (d.config?.secondsPerBaht || 180)) / 3600);
+  const onlineAmt = realTxs.filter(t => t.method !== 'cash' && t.method !== 'coin').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const cashAmt = realTxs.filter(t => t.method === 'cash' || t.method === 'coin').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  const convRate = totalVisitsCount > 0 ? Math.min(100, Math.round((realTxs.length / totalVisitsCount) * 100)) : 0;
 
   document.getElementById('stAvgTx').textContent = `฿${Math.round(avg)}`;
   document.getElementById('stTotalHours').textContent = `${totalHours} ชม.`;
   document.getElementById('stConversion').textContent = `${convRate}%`;
   document.getElementById('stOnlineAmt').textContent = `฿${Math.round(onlineAmt)}`;
   document.getElementById('stCashAmt').textContent = `฿${Math.round(cashAmt)}`;
-  document.getElementById('stVisitsCount').textContent = `${visits.length} ครั้ง`;
+  document.getElementById('stVisitsCount').textContent = `${totalVisitsCount} ครั้ง`;
+  if (document.getElementById('stUniqueVisits')) {
+    document.getElementById('stUniqueVisits').textContent = `${uniqueVisitors} คน`;
+  }
 
-  renderPortGrid(d.ports);
-  renderTestingTab(d.ports);
+  renderPendingApprovals(d.pendingApprovals || []);
+  renderPortGrid(d.ports || []);
+  renderTestingTab(d.ports || []);
   renderTxTable5(txs);
   renderTxTableAll(txs);
-    populateSettingsForm(d.config);
+  renderVisitorLogs(visits, uniqueVisitors, totalVisitsCount);
+  renderAuditLogs(d.auditLogs || []);
+  populateSettingsForm(d.config);
   if (d.esp32 || d.lastEsp32) renderEsp32Status(d.esp32 || d.lastEsp32);
   if (d.logs || d.systemLogs) renderAdminLogs(d.logs || d.systemLogs);
-  
-  // Render visible charts
+
   const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick') || '';
   if (activeTab.includes('dashboard') || activeTab.includes('analytics')) {
-    updateCharts(txs, visits);
+    updateCharts(realTxs, visits);
   }
 }
 
 const fmtSecs = s => {
-  if (s >= 3600) {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sc = s % 60;
+  const n = Math.max(0, Number(s) || 0);
+  if (n >= 3600) {
+    const h = Math.floor(n / 3600);
+    const m = Math.floor((n % 3600) / 60);
+    const sc = n % 60;
     return `${h}:${String(m).padStart(2, '0')}:${String(sc).padStart(2, '0')}`;
   }
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
 };
 
-const fmtDate = s => { 
-  try { 
-    return new Date(s).toLocaleString('th-TH', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' }); 
-  } catch { return s; } 
+const fmtDate = s => {
+  if (!s) return '—';
+  try {
+    return new Date(s).toLocaleString('th-TH', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short' });
+  } catch { return String(s); }
 };
 
-// ─── Render Port Grid (High-Tech 3D Kiosk Modules) ──
+// ─── Render Port Grid (Surgical Per-Card Patching, scaleX Progress) ──
+function buildPortCardHtml(p) {
+  const st = p.status;
+  let badgeHtml = '';
+  if (st === 'available') {
+    badgeHtml = `<span class="port-badge pb-available"><i class="pic-icon ic-checked" style="font-size:12px"></i> ว่าง</span>`;
+  } else if (st === 'pending_payment') {
+    badgeHtml = `<span class="port-badge pb-pending"><i class="pic-icon ic-info" style="font-size:12px"></i> รอชำระ</span>`;
+  } else if (p.isPaused) {
+    badgeHtml = `<span class="port-badge pb-paused"><i class="pic-icon ic-idea" style="font-size:12px"></i> พักชั่วคราว</span>`;
+  } else {
+    badgeHtml = `<span class="port-badge pb-inuse"><i class="pic-icon ic-zap" style="font-size:12px"></i> กำลังชาร์จ</span>`;
+  }
+
+  let timerHtml = '';
+  let progressHtml = '';
+  if (st === 'in-use') {
+    timerHtml = `<div class="port-timer-big ${p.isPaused ? 'paused' : ''}" data-role="port-timer">${fmtSecs(p.remainingSeconds)} ${p.isPaused ? '<small style="font-size:0.9rem;opacity:0.8">(พัก)</small>' : ''}</div>`;
+    const total = p.totalSeconds || p.currentTx?.chargeSeconds || 180;
+    const ratio = Math.min(1, Math.max(0.03, p.remainingSeconds / total));
+    const pct = Math.round(ratio * 100);
+    progressHtml = `
+      <div class="port-progress-track" data-role="port-track" title="เวลาคงเหลือ ${pct}%">
+        <div class="port-progress-fill" data-role="port-fill" style="transform:scaleX(${ratio.toFixed(4)})"></div>
+      </div>
+    `;
+  } else {
+    progressHtml = `
+      <div style="padding:0.4rem 0;color:var(--muted);font-size:0.8rem;display:flex;align-items:center;gap:6px">
+        <i class="pic-icon ${st === 'available' ? 'ic-checked' : 'ic-info'}" style="color:${st === 'available' ? 'var(--green)' : 'var(--yellow)'}"></i>
+        <span>${st === 'available' ? 'พร้อมให้บริการ จ่ายไฟเสถียร' : 'ผู้ใช้กำลังสแกน / หยอดเหรียญ'}</span>
+      </div>
+    `;
+  }
+
+  const methodHtml = (p.paymentSession || p.currentTx)
+    ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">วิธี: <strong style="color:var(--cyan)">${escapeHtml((p.currentTx && p.currentTx.method) || p.sessionMethod || (p.paymentSession && p.paymentSession.method) || '—')}</strong> · ยอด: <strong style="color:var(--green)">฿${(p.currentTx && p.currentTx.amount) || (p.paymentSession && p.paymentSession.amount) || '0'}</strong>${p.currentTx?.payerId ? ` · <span style="font-family:monospace">${escapeHtml(p.currentTx.payerId)}</span>` : ''}</div>`
+    : '';
+
+  let actions = '';
+  if (st === 'in-use') {
+    if (p.isPaused) {
+      actions += `<button class="btn-sm btn-green" onclick="resumePort('${p.id}')"><i class="pic-icon ic-power"></i> ชาร์จต่อ</button>`;
+    } else {
+      actions += `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')"><i class="pic-icon ic-idea"></i> พัก</button>`;
+    }
+    actions += `<button class="btn-sm btn-primary" onclick="setTimeRemaining('${p.id}', 5)" title="เร่งเวลาเหลือ 5 วินาที">เร่ง 5วิ</button>`;
+    actions += `<button class="btn-sm btn-red" onclick="stopPort('${p.id}')"><i class="pic-icon ic-power"></i> ตัดไฟ</button>`;
+  } else if (st === 'pending_payment') {
+    actions = `<button class="btn-sm btn-yellow" onclick="clearPortSession('${p.id}')" style="width:100%">ล้างการรอชำระ</button>`;
+  } else if (st === 'available') {
+    actions = `<button class="btn-sm btn-primary" onclick="quickTestPort('${p.id}')" style="width:100%"><i class="pic-icon ic-zap"></i> ทดสอบจ่ายไฟ 30 วิ</button>`;
+  }
+
+  const typeClass = p.type === 'USB-C' ? 'type-c' : 'type-a';
+  return `
+    <div class="port-head">
+      <div class="name">
+        <span class="admin-usb-icon ${typeClass}"></span>
+        <span>${escapeHtml(p.label)}</span>
+        <span style="font-size:0.72rem;color:var(--muted);margin-left:0.35rem;font-weight:600">(${escapeHtml(p.type)})</span>
+      </div>
+      ${badgeHtml}
+    </div>
+    <div style="font-size:0.75rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center">
+      <span>GPIO ${p.relayGpio}</span>
+      <span>สถานะรีเลย์: <strong style="color:${p.relayOn ? 'var(--green)' : 'var(--red)'}">${p.relayOn ? 'เปิดไฟ' : 'ตัดไฟ'}</strong></span>
+    </div>
+    ${timerHtml}
+    ${progressHtml}
+    ${methodHtml}
+    ${actions ? `<div class="port-actions">${actions}</div>` : ''}
+  `;
+}
+
 function renderPortGrid(ports) {
   const g = document.getElementById('adminPortGrid');
   if (!g) return;
-  g.innerHTML = '';
+  const orderMatches = g.children.length === ports.length &&
+    Array.from(g.children).every((el, idx) => el.dataset.portId === ports[idx].id);
+
+  if (!orderMatches) {
+    g.innerHTML = '';
+    ports.forEach(p => {
+      const d = document.createElement('div');
+      d.dataset.portId = p.id;
+      d.className = `port-card-admin ${p.status}`;
+      d.dataset.baseSig = [p.status, p.relayOn, !!p.isPaused, p.totalSeconds, p.currentTx?.id, p.sessionMethod, p.paymentSession?.amount].join('|');
+      d.dataset.remSig = String(p.remainingSeconds);
+      d.innerHTML = buildPortCardHtml(p);
+      g.appendChild(d);
+    });
+    return;
+  }
+
   ports.forEach(p => {
-    const d = document.createElement('div');
-    const st = p.status;
-    d.className = `port-card-admin ${st}`;
-    
-    let badgeHtml = '';
-    if (st === 'available') {
-      badgeHtml = `<span class="port-badge pb-available"><i class="pic-icon ic-checked" style="font-size:12px"></i> ว่าง</span>`;
-    } else if (st === 'pending_payment') {
-      badgeHtml = `<span class="port-badge pb-pending"><i class="pic-icon ic-info" style="font-size:12px"></i> รอชำระ</span>`;
-    } else if (p.isPaused) {
-      badgeHtml = `<span class="port-badge pb-paused"><i class="pic-icon ic-idea" style="font-size:12px"></i> พักชั่วคราว</span>`;
-    } else {
-      badgeHtml = `<span class="port-badge pb-inuse"><i class="pic-icon ic-zap" style="font-size:12px"></i> กำลังชาร์จ</span>`;
+    const d = g.querySelector(`[data-port-id="${p.id}"]`);
+    if (!d) return;
+    const baseSig = [p.status, p.relayOn, !!p.isPaused, p.totalSeconds, p.currentTx?.id, p.sessionMethod, p.paymentSession?.amount].join('|');
+    const remSig = String(p.remainingSeconds);
+
+    if (d.dataset.baseSig !== baseSig) {
+      d.className = `port-card-admin ${p.status}`;
+      d.dataset.baseSig = baseSig;
+      d.dataset.remSig = remSig;
+      d.innerHTML = buildPortCardHtml(p);
+      return;
     }
 
-    let timerHtml = '';
-    let progressHtml = '';
-    if (st === 'in-use') {
-      timerHtml = `<div class="port-timer-big ${p.isPaused ? 'paused' : ''}">${fmtSecs(p.remainingSeconds)} ${p.isPaused ? '<small style="font-size:0.9rem;opacity:0.8">(พัก)</small>' : ''}</div>`;
-      const total = p.totalSeconds || 180;
-      const pct = Math.min(100, Math.max(0, Math.round((p.remainingSeconds / total) * 100)));
-      progressHtml = `
-        <div class="port-progress-track" title="เวลาคงเหลือ ${pct}%">
-          <div class="port-progress-fill" style="width:${pct}%"></div>
-        </div>
-      `;
-    } else {
-      progressHtml = `
-        <div style="padding:0.4rem 0;color:var(--muted);font-size:0.8rem;display:flex;align-items:center;gap:6px">
-          <i class="pic-icon ${st === 'available' ? 'ic-checked' : 'ic-info'}" style="color:${st === 'available' ? 'var(--green)' : 'var(--yellow)'}"></i>
-          <span>${st === 'available' ? 'พร้อมให้บริการ จ่ายไฟเสถียร' : 'ผู้ใช้กำลังสแกน / หยอดเหรียญ'}</span>
-        </div>
-      `;
-    }
-
-    const methodHtml = (p.paymentSession || p.currentTx) 
-      ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem">วิธี: <strong style="color:var(--cyan)">${(p.currentTx && p.currentTx.method) || (p.paymentSession && p.paymentSession.method) || '—'}</strong> · ยอด: <strong style="color:var(--green)">฿${(p.currentTx && p.currentTx.amount) || (p.paymentSession && p.paymentSession.amount) || '0'}</strong></div>`
-      : '';
-
-    let actions = '';
-    if (st === 'in-use') {
-      if (p.isPaused) {
-        actions += `<button class="btn-sm btn-green" onclick="resumePort('${p.id}')"><i class="pic-icon ic-power"></i> ชาร์จต่อ</button>`;
-      } else {
-        actions += `<button class="btn-sm btn-yellow" onclick="pausePort('${p.id}')"><i class="pic-icon ic-idea"></i> พัก</button>`;
+    if (d.dataset.remSig !== remSig && p.status === 'in-use') {
+      d.dataset.remSig = remSig;
+      const timerEl = d.querySelector('[data-role="port-timer"]');
+      const fillEl = d.querySelector('[data-role="port-fill"]');
+      const trackEl = d.querySelector('[data-role="port-track"]');
+      if (timerEl) {
+        timerEl.innerHTML = `${fmtSecs(p.remainingSeconds)} ${p.isPaused ? '<small style="font-size:0.9rem;opacity:0.8">(พัก)</small>' : ''}`;
       }
-      actions += `<button class="btn-sm btn-primary" onclick="setTimeRemaining('${p.id}', 5)" title="เร่งเวลาเหลือ 5 วินาที">เร่ง 5วิ</button>`;
-      actions += `<button class="btn-sm btn-red" onclick="stopPort('${p.id}')"><i class="pic-icon ic-power"></i> ตัดไฟ</button>`;
-    } else if (st === 'pending_payment') {
-      actions = `<button class="btn-sm btn-yellow" onclick="clearPortSession('${p.id}')" style="width:100%">ล้างการรอชำระ</button>`;
-    } else if (st === 'available') {
-      actions = `<button class="btn-sm btn-primary" onclick="quickTestPort('${p.id}')" style="width:100%"><i class="pic-icon ic-zap"></i> ทดสอบจ่ายไฟ 30 วิ</button>`;
+      if (fillEl) {
+        const total = p.totalSeconds || p.currentTx?.chargeSeconds || 180;
+        const ratio = Math.min(1, Math.max(0.03, p.remainingSeconds / total));
+        fillEl.style.transform = `scaleX(${ratio.toFixed(4)})`;
+        if (trackEl) trackEl.title = `เวลาคงเหลือ ${Math.round(ratio * 100)}%`;
+      }
     }
-
-    const typeClass = p.type === 'USB-C' ? 'type-c' : 'type-a';
-
-    d.innerHTML = `
-      <div class="port-head">
-        <div class="name">
-          <span class="admin-usb-icon ${typeClass}"></span>
-          <span>${p.label}</span>
-          <span style="font-size:0.72rem;color:var(--muted);margin-left:0.35rem;font-weight:600">(${p.type})</span>
-        </div>
-        ${badgeHtml}
-      </div>
-      <div style="font-size:0.75rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center">
-        <span>GPIO ${p.relayGpio}</span>
-        <span>สถานะรีเลย์: <strong style="color:${p.relayOn ? 'var(--green)' : 'var(--red)'}">${p.relayOn ? 'เปิดไฟ' : 'ตัดไฟ'}</strong></span>
-      </div>
-      ${timerHtml}
-      ${progressHtml}
-      ${methodHtml}
-      ${actions ? `<div class="port-actions">${actions}</div>` : ''}
-    `;
-    g.appendChild(d);
   });
 }
 
@@ -3000,7 +3092,7 @@ async function quickTestPort(portId) {
       p.isPaused = false;
       p.remainingSeconds = durationSeconds;
       p.totalSeconds = durationSeconds;
-      p.currentTx = { amount: 1, chargeSeconds: durationSeconds, method: 'test' };
+      p.currentTx = { amount: 0, chargeSeconds: durationSeconds, method: 'test' };
       dashData.summary.activeCount = dashData.ports.filter(x => x.status === 'in-use').length;
       saveAdminPersistentPorts(dashData.ports);
       renderAll(dashData);
@@ -3021,45 +3113,84 @@ async function quickTestPort(portId) {
   autoRefresh();
 }
 
-// ─── Render Tables ────────────────────────────
+// ─── Render Tables & Attribution ──────────────
+function formatMethodBadge(method) {
+  if (method === 'qr') return '<span class="badge b-qr">พร้อมเพย์ QR</span>';
+  if (method === 'transfer') return '<span class="badge b-transfer">โอนธนาคาร</span>';
+  if (method === 'cash' || method === 'coin') return '<span class="badge b-cash">หยอดเหรียญ</span>';
+  if (method === 'truemoney') return '<span class="badge" style="background:#ea580c;color:#fff">TrueMoney สลิป</span>';
+  if (method === 'truemoney_voucher') return '<span class="badge" style="background:#f97316;color:#fff">ซองอั่งเปา TMN</span>';
+  return '<span class="badge b-test">ทดสอบ</span>';
+}
+
+function getTxParties(t) {
+  const isCash = (t.method === 'cash' || t.method === 'coin');
+  const payerId = t.payerId || t.visitorId || '—';
+  const payerName = t.payerName || t.verification?.sender || (isCash ? 'ผู้หยอดเหรียญหน้าตู้' : t.method === 'truemoney_voucher' ? 'ผู้ส่งซอง TrueMoney' : 'ผู้ใช้งาน');
+  const payerBank = t.payerBank || t.verification?.senderBank || '';
+  const receiverName = t.receiverName || t.verification?.receiver || dashData?.config?.bankAccountName || 'บัญชีตู้ชาร์จ';
+  const receiverAccount = t.receiverAccount || '';
+  return { payerId, payerName, payerBank, receiverName, receiverAccount };
+}
+
 function renderTxTable5(txs) {
   const tb = document.getElementById('txTable5');
+  if (!tb) return;
   if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.25rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
   tb.innerHTML = txs.slice(0, 5).map(t => txRowHtml(t, true)).join('');
 }
 
 function renderTxTableAll(txs) {
   const tb = document.getElementById('txTableAll');
+  if (!tb) return;
   if (!txs.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">ยังไม่มีรายการชำระเงินจริง</td></tr>`; return; }
   tb.innerHTML = txs.map(t => txRowHtml(t, true)).join('');
 }
 
 function txRowHtml(t, withActions=false) {
-  const isCash = (t.method === 'cash' || t.method === 'coin');
-  const mBadge = t.method === 'qr' ? '<span class="badge b-qr">พร้อมเพย์</span>' : t.method === 'transfer' ? '<span class="badge b-transfer">โอนเงิน</span>' : isCash ? '<span class="badge b-cash">หยอดเหรียญ</span>' : t.method === 'truemoney' ? '<span class="badge" style="background:#ff5800;color:#fff">TrueMoney</span>' : '<span class="badge b-test">ทดสอบ</span>';
-  const stBadge = t.status==='active'?'<span class="badge b-active">กำลังชาร์จ</span>':'<span class="badge b-finished"><i class="pic-icon ic-checked" style="font-size:11px"></i> สำเร็จ</span>';
-  const sender = t.verification?.sender || (isCash ? 'หยอดเหรียญที่ตู้' : t.method === 'truemoney' ? 'TrueMoney' : 'ผู้ใช้');
-  
+  const mBadge = formatMethodBadge(t.method);
+  const stBadge = t.status === 'active'
+    ? '<span class="badge b-active">กำลังชาร์จ</span>'
+    : '<span class="badge b-finished"><i class="pic-icon ic-checked" style="font-size:11px"></i> สำเร็จ</span>';
+  const { payerId, payerName, payerBank, receiverName, receiverAccount } = getTxParties(t);
+  const mins = t.chargeSeconds ? Math.max(1, Math.round(Number(t.chargeSeconds) / 60)) : 0;
+  const portLabel = t.portLabel || t.portId || '—';
+  const paidTime = t.paidAt || t.createdAt;
+
   return `<tr>
-    <td><strong style="font-family:'JetBrains Mono',monospace">${t.id}</strong></td>
-    <td><strong style="font-family:'JetBrains Mono',sans-serif">${t.portId}</strong></td>
-    <td><strong style="color:var(--green);font-family:'JetBrains Mono',monospace">฿${Number(t.amount||0)}</strong></td>
+    <td>
+      <strong style="font-family:'JetBrains Mono',monospace;font-size:.82rem">${escapeHtml(t.id)}</strong>
+      <div style="font-size:.7rem;color:var(--cyan);font-family:'JetBrains Mono',monospace">${escapeHtml(payerId)}</div>
+    </td>
+    <td>
+      <div style="font-weight:600;font-size:.8rem">${escapeHtml(payerName)}${payerBank ? ` <span style="color:var(--muted);font-weight:400">(${escapeHtml(payerBank)})</span>` : ''}</div>
+      <div style="font-size:.72rem;color:var(--muted)">โอนให้: <strong style="color:var(--text)">${escapeHtml(receiverName)}</strong>${receiverAccount ? ` · ${escapeHtml(receiverAccount)}` : ''}</div>
+    </td>
+    <td><strong style="font-family:'JetBrains Mono',sans-serif">${escapeHtml(portLabel)}</strong></td>
+    <td>
+      <strong style="color:var(--green);font-family:'JetBrains Mono',monospace">฿${Number(t.amount || 0)}</strong>
+      ${mins ? `<div style="font-size:.7rem;color:var(--muted)">${mins} นาที</div>` : ''}
+    </td>
     <td>${mBadge}</td>
     <td>${stBadge}</td>
-    <td>${escapeHtml(sender)}</td>
-    <td style="color:var(--muted);font-size:.74rem">${fmtDate(t.createdAt)}</td>
-    ${withActions ? `<td><button class="btn-sm btn-gray" style="padding:.3rem .6rem;font-size:.76rem;min-height:32px" onclick="viewTxDetail('${t.id}')">ดูสลิป</button></td>` : ''}
+    <td style="color:var(--muted);font-size:.74rem">${fmtDate(paidTime)}</td>
+    ${withActions ? `<td><button class="btn-sm btn-gray" style="padding:.3rem .6rem;font-size:.76rem;min-height:32px" onclick="viewTxDetail('${escapeHtml(t.id)}')">ดูสลิป</button></td>` : ''}
   </tr>`;
 }
 
 function filterTransactions() {
   const q = document.getElementById('txSearchInput')?.value?.toLowerCase() || '';
-  const filtered = allTransactions.filter(t => 
-    t.id.toLowerCase().includes(q) ||
-    t.portId.toLowerCase().includes(q) ||
-    t.method.toLowerCase().includes(q) ||
-    (t.verification?.sender || '').toLowerCase().includes(q)
-  );
+  const filtered = allTransactions.filter(t => {
+    const { payerId, payerName, receiverName, receiverAccount } = getTxParties(t);
+    return (t.id || '').toLowerCase().includes(q) ||
+      (t.portId || '').toLowerCase().includes(q) ||
+      (t.portLabel || '').toLowerCase().includes(q) ||
+      (t.method || '').toLowerCase().includes(q) ||
+      payerId.toLowerCase().includes(q) ||
+      payerName.toLowerCase().includes(q) ||
+      receiverName.toLowerCase().includes(q) ||
+      receiverAccount.toLowerCase().includes(q);
+  });
   renderTxTableAll(filtered);
 }
 
@@ -3067,15 +3198,26 @@ function filterTransactions() {
 function viewTxDetail(id) {
   const t = allTransactions.find(x => x.id === id);
   if (!t) return;
-  
-  document.getElementById('modalVerifyDate').textContent = `ตรวจสอบวันที่ ${fmtDate(t.createdAt)}`;
-  document.getElementById('modalTransRef').textContent = t.id || t.verification?.transRef || '—';
-  document.getElementById('modalSender').textContent = t.verification?.sender || ((t.method === 'cash' || t.method === 'coin') ? 'หยอดเหรียญที่ตู้' : (t.method === 'truemoney' ? 'TrueMoney ซองของขวัญ' : 'ผู้ใช้งาน'));
-  document.getElementById('modalSenderBank').textContent = t.verification?.senderBank || ((t.method === 'cash' || t.method === 'coin') ? 'ช่องหยอดเหรียญ' : (t.method === 'truemoney' ? 'TrueMoney Wallet' : 'พร้อมเพย์'));
-  document.getElementById('modalReceiver').textContent = t.verification?.receiver || (dashData?.config?.bankAccountName ? `${dashData.config.bankAccountName} (PROMPTPAY)` : 'ด.ช. ศุภกฤต ส. (PROMPTPAY)');
-  document.getElementById('modalAmount').textContent = `฿${Number(t.amount || 0)}`;
-  document.getElementById('modalPort').textContent = t.portId || '—';
-  
+  const { payerId, payerName, payerBank, receiverName, receiverAccount } = getTxParties(t);
+  const mins = t.chargeSeconds ? Math.max(1, Math.round(Number(t.chargeSeconds) / 60)) : 0;
+  const paidTime = t.paidAt || t.createdAt;
+
+  document.getElementById('modalVerifyDate').textContent = `ทำรายการเมื่อ ${fmtDate(paidTime)}`;
+  document.getElementById('modalTransRef').textContent = `${t.id}${t.verification?.transRef ? ` · Ref: ${t.verification.transRef}` : ''}`;
+  if (document.getElementById('modalPayerId')) document.getElementById('modalPayerId').textContent = payerId;
+  document.getElementById('modalSender').textContent = payerName;
+  document.getElementById('modalSenderBank').textContent = payerBank || t.method || '—';
+  document.getElementById('modalReceiver').textContent = receiverName;
+  if (document.getElementById('modalReceiverAcc')) document.getElementById('modalReceiverAcc').textContent = receiverAccount || t.receiverBank || '—';
+  document.getElementById('modalAmount').textContent = `฿${Number(t.amount || 0)}${mins ? ` (${mins} นาที)` : ''}`;
+  document.getElementById('modalPort').textContent = `${t.portLabel || t.portId || '—'} (${t.portId || ''})`;
+  if (document.getElementById('modalPaidAt')) document.getElementById('modalPaidAt').textContent = fmtDate(paidTime);
+  if (document.getElementById('modalStatusText')) {
+    document.getElementById('modalStatusText').textContent = t.approvedBy
+      ? `อนุมัติโดยแอดมิน (${t.approvedBy})`
+      : (t.status === 'active' ? 'กำลังจ่ายไฟ' : 'เสร็จสมบูรณ์');
+  }
+
   document.getElementById('slipModal').style.display = 'flex';
 }
 
@@ -3093,10 +3235,11 @@ function exportTransactionsCSV() {
     adminToast('ไม่มีข้อมูลรายการชำระเงินจริงให้ส่งออก', 'warn');
     return;
   }
-  let csv = '\uFEFFID,พอร์ต,ยอดเงิน (บาท),วิธีชำระ,สถานะ,ผู้โอน / รายละเอียด,เวลา\n';
+  let csv = '\uFEFFTX ID,USR ID,ผู้จ่าย,ธนาคารผู้จ่าย,ผู้รับ,บัญชีผู้รับ,พอร์ต,ยอดเงิน (บาท),เวลาชาร์จ (วินาที),วิธีชำระ,สถานะ,เวลาโอน\n';
   allTransactions.forEach(t => {
-    const sender = (t.verification?.sender || t.method || '').replace(/,/g, ' ');
-    csv += `"${t.id}","${t.portId}",${t.amount},"${t.method}","${t.status}","${sender}","${fmtDate(t.createdAt)}"\n`;
+    const { payerId, payerName, payerBank, receiverName, receiverAccount } = getTxParties(t);
+    const clean = v => String(v || '').replace(/["\r\n,]/g, ' ');
+    csv += `"${clean(t.id)}","${clean(payerId)}","${clean(payerName)}","${clean(payerBank)}","${clean(receiverName)}","${clean(receiverAccount)}","${clean(t.portLabel || t.portId)}",${Number(t.amount || 0)},${Number(t.chargeSeconds || 0)},"${clean(t.method)}","${clean(t.status)}","${clean(fmtDate(t.paidAt || t.createdAt))}"\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -3114,7 +3257,6 @@ let charts = {};
 function updateCharts(txs, visits = []) {
   if (typeof Chart === 'undefined') return;
 
-  // 1. Group revenue and visits by last 7 days (100% Real)
   const dayNames = [];
   const dayRevenues = [];
   const dayCounts = [];
@@ -3124,23 +3266,22 @@ function updateCharts(txs, visits = []) {
     d.setDate(d.getDate() - i);
     const dStr = d.toDateString();
     dayNames.push(d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric' }));
-    
-    const dayTxs = txs.filter(t => new Date(t.createdAt).toDateString() === dStr);
-    const dayRev = dayTxs.reduce((sum, t) => sum + (t.amount || 0), 0);
-    const dayV = visits.filter(v => new Date(v.timestamp).toDateString() === dStr).length;
+
+    const dayTxs = txs.filter(t => new Date(t.paidAt || t.createdAt).toDateString() === dStr);
+    const dayRev = dayTxs.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    const dayV = visits.filter(v => new Date(v.timestamp || v.createdAt).toDateString() === dStr).length;
 
     dayRevenues.push(dayRev);
     dayCounts.push(dayTxs.length);
     dayVisits.push(dayV);
   }
 
-  // 2. Group by payment method
   const qrCount = txs.filter(t => t.method === 'qr').length;
   const trCount = txs.filter(t => t.method === 'transfer').length;
+  const tmnCount = txs.filter(t => t.method === 'truemoney' || t.method === 'truemoney_voucher').length;
   const cashCount = txs.filter(t => t.method === 'cash' || t.method === 'coin').length;
-  const hasMethodData = (qrCount + trCount + cashCount) > 0;
+  const hasMethodData = (qrCount + trCount + tmnCount + cashCount) > 0;
 
-  // 3. Group by port usage
   const portCounts = [
     txs.filter(t => t.portId === 'usb-a-1').length,
     txs.filter(t => t.portId === 'usb-a-2').length,
@@ -3148,12 +3289,10 @@ function updateCharts(txs, visits = []) {
     txs.filter(t => t.portId === 'usb-c-2').length
   ];
 
-  // Theme colors
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const textColor = isDark ? '#94a3b8' : '#64748b';
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
-  // Chart 1: Dashboard Revenue Bar
   createOrUpdateChart('dashRevenueChart', 'bar', {
     labels: dayNames,
     datasets: [{
@@ -3164,12 +3303,11 @@ function updateCharts(txs, visits = []) {
     }]
   }, { textColor, gridColor });
 
-  // Chart 2: Dashboard Method Doughnut (No spinning loop)
   createOrUpdateChart('dashMethodChart', 'doughnut', hasMethodData ? {
-    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'หยอดเหรียญ'],
+    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'TrueMoney', 'หยอดเหรียญ'],
     datasets: [{
-      data: [qrCount, trCount, cashCount],
-      backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+      data: [qrCount, trCount, tmnCount, cashCount],
+      backgroundColor: ['#3b82f6', '#f59e0b', '#f97316', '#10b981'],
       borderWidth: 0
     }]
   } : {
@@ -3181,7 +3319,6 @@ function updateCharts(txs, visits = []) {
     }]
   }, { textColor, gridColor, legend: hasMethodData });
 
-  // Chart 3: Analytics Daily Trend (Bar Revenue + Line Visits)
   createOrUpdateChart('analyticsBarChart', 'bar', {
     labels: dayNames,
     datasets: [
@@ -3205,7 +3342,6 @@ function updateCharts(txs, visits = []) {
     ]
   }, { textColor, gridColor, dualY: true });
 
-  // Chart 4: Analytics Port Usage
   createOrUpdateChart('analyticsPortChart', 'bar', {
     labels: ['USB-A 1', 'USB-A 2', 'USB-C 1', 'USB-C 2'],
     datasets: [{
@@ -3216,12 +3352,11 @@ function updateCharts(txs, visits = []) {
     }]
   }, { textColor, gridColor });
 
-  // Chart 5: Analytics Method Pie (No spinning loop)
   createOrUpdateChart('analyticsMethodPie', 'pie', hasMethodData ? {
-    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'หยอดเหรียญ'],
+    labels: ['พร้อมเพย์ QR', 'โอนธนาคาร', 'TrueMoney', 'หยอดเหรียญ'],
     datasets: [{
-      data: [qrCount, trCount, cashCount],
-      backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+      data: [qrCount, trCount, tmnCount, cashCount],
+      backgroundColor: ['#3b82f6', '#f59e0b', '#f97316', '#10b981'],
       borderWidth: 0
     }]
   } : {
@@ -3326,71 +3461,72 @@ function populateSettingsForm(cfg, force = false) {
   if (isUserFocused) return;
   if (isSettingsLoadedOnce && !force) return;
 
-  if (document.getElementById('cfgPhone')) document.getElementById('cfgPhone').value = cfg.promptpayPhone || '0969679951';
-  if (document.getElementById('cfgBank')) document.getElementById('cfgBank').value = cfg.bankName || 'กสิกรไทย (kbank)';
-  if (document.getElementById('cfgAccount')) document.getElementById('cfgAccount').value = cfg.bankAccount || '193-3-86131-3';
-  if (document.getElementById('cfgAccountName')) document.getElementById('cfgAccountName').value = cfg.bankAccountName || 'ศุภกฤต สอนบุญมา';
+  if (document.getElementById('cfgPhone')) document.getElementById('cfgPhone').value = cfg.promptpayPhone || '';
+  if (document.getElementById('cfgBank')) document.getElementById('cfgBank').value = cfg.bankName || '';
+  if (document.getElementById('cfgAccount')) document.getElementById('cfgAccount').value = cfg.bankAccount || '';
+  if (document.getElementById('cfgAccountName')) document.getElementById('cfgAccountName').value = cfg.bankAccountName || '';
   if (document.getElementById('cfgRate')) document.getElementById('cfgRate').value = String(cfg.secondsPerBaht || 180);
-  
+
   isSettingsLoadedOnce = true;
 }
 
 async function saveSettings() {
-  const promptpayPhone = document.getElementById('cfgPhone')?.value?.trim() || '0969679951';
-  const bankName = document.getElementById('cfgBank')?.value?.trim() || 'กสิกรไทย (kbank)';
-  const bankAccount = document.getElementById('cfgAccount')?.value?.trim() || '193-3-86131-3';
-  const bankAccountName = document.getElementById('cfgAccountName')?.value?.trim() || 'ศุภกฤต สอนบุญมา';
+  const promptpayPhone = document.getElementById('cfgPhone')?.value?.trim() || '';
+  const bankName = document.getElementById('cfgBank')?.value?.trim() || '';
+  const bankAccount = document.getElementById('cfgAccount')?.value?.trim() || '';
+  const bankAccountName = document.getElementById('cfgAccountName')?.value?.trim() || '';
   const secondsPerBaht = Number(document.getElementById('cfgRate')?.value) || 180;
 
+  if (!Number.isFinite(secondsPerBaht) || secondsPerBaht < 10 || secondsPerBaht > 3600) {
+    adminToast('อัตราค่าชาร์จต้องอยู่ระหว่าง 10 ถึง 3600 วินาที/บาท', 'error');
+    return;
+  }
+
+  const prev = getLocalSavedConfig();
   const updatedConfig = {
+    ...prev,
     promptpayPhone,
     bankName,
     bankAccount,
     bankAccountName,
-    secondsPerBaht
+    secondsPerBaht: Math.round(secondsPerBaht)
   };
 
-  // 1. Save to localStorage for instant client persistence
   localStorage.setItem('usb_charger_config', JSON.stringify(updatedConfig));
-  
-  if (dashData) {
-    dashData.config = updatedConfig;
-  }
+  if (dashData) dashData.config = { ...(dashData.config || {}), ...updatedConfig };
 
-  // 2. Save to Server if backend connected
-  try {
-    await adminApi('POST', '/api/admin/config', updatedConfig);
-  } catch(e){}
+  const statusEl = document.getElementById('saveSettingsStatus');
+  if (statusEl) statusEl.textContent = 'กำลังบันทึก...';
 
-  // 3. Sync to Firestore Cloud for instant real-time sync across all devices/mobiles
-  syncAdminToFirestore({
-    config: updatedConfig,
-    secondsPerBaht: updatedConfig.secondsPerBaht,
-    promptpayPhone: updatedConfig.promptpayPhone,
-    bankName: updatedConfig.bankName,
-    bankAccount: updatedConfig.bankAccount,
-    bankAccountName: updatedConfig.bankAccountName
+  const res = await adminApi('POST', '/api/admin/config', {
+    promptpayPhone,
+    bankName,
+    bankAccount,
+    bankAccountName,
+    secondsPerBaht: Math.round(secondsPerBaht)
   });
 
-  // 4. Show feedback toast
-  const toast = document.getElementById('saveSettingsToast');
-  if (toast) {
-    toast.style.display = 'flex';
-    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+  if (res && res.success) {
+    if (statusEl) statusEl.textContent = 'บันทึกสำเร็จ';
+    adminToast('บันทึกบัญชีรับเงิน & อัตราค่าบริการเรียบร้อยแล้ว', 'success');
+    setActionNotice('บันทึกบัญชีรับเงิน & อัตราค่าบริการเรียบร้อย');
+  } else {
+    if (statusEl) statusEl.textContent = res?.error || 'บันทึกในเครื่องแล้ว (รอซิงค์เซิร์ฟเวอร์)';
+    adminToast(res?.error || 'ไม่สามารถส่งไปยังเซิร์ฟเวอร์ได้ บันทึกลงเครื่องไว้แล้ว', 'warn');
   }
 
-  setActionNotice('บันทึกการตั้งค่าระบบเรียบร้อย');
   populateSettingsForm(updatedConfig, true);
 }
 
 // ─── Health Check & Ping Tester ───────────────
 async function testHealthPing() {
   const resultEl = document.getElementById('pingTestResult');
+  if (!resultEl) return;
   resultEl.style.display = 'block';
   resultEl.innerHTML = '<span style="color:var(--yellow)">กำลังส่งคำขอตรวจสอบสถานะ (Ping)...</span>';
   const t0 = performance.now();
   try {
-    const res = await fetch('/api/ping');
+    const res = await fetch((SERVER_BASE || '') + '/api/ping');
     const t1 = performance.now();
     const data = await res.json();
     const ms = Math.round(t1 - t0);
@@ -3422,24 +3558,13 @@ async function testHealthPing() {
 async function runTestStart() {
   const portId = document.getElementById('testPortSelect').value;
   const durationSeconds = Number(document.getElementById('testDurationSelect').value) || 30;
-  
-  adminToast(`⚡ กำลังส่งคำสั่งเปิดไฟชาร์จ ${portId} (${durationSeconds} วินาที)...`, 'info');
 
-  let res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
-  if (!res || !res.success) {
-    try {
-      const fullBase = SERVER_BASE || '';
-      const fRes = await fetch(fullBase + `/api/admin/port/${portId}/test-start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ durationSeconds })
-      });
-      if (fRes.ok) res = await fRes.json();
-    } catch (_) {}
-  }
+  adminToast(`กำลังส่งคำสั่งเปิดไฟชาร์จ ${portId} (${durationSeconds} วินาที)...`, 'info');
+
+  const res = await adminApi('POST', `/api/admin/port/${portId}/test-start`, { durationSeconds });
 
   if (res && res.success) {
-    adminToast(`🟢 สั่งเปิดไฟรีเลย์ ${portId} (${durationSeconds} วิ) สำเร็จแล้ว!`, 'success');
+    adminToast(`สั่งเปิดไฟรีเลย์ ${portId} (${durationSeconds} วิ) สำเร็จแล้ว`, 'success');
     if (res.port && dashData && dashData.ports) {
       const idx = dashData.ports.findIndex(x => x.id === portId);
       if (idx !== -1) {
@@ -3550,7 +3675,7 @@ function renderEsp32Status(esp32) {
     if (esp32.lastSeen) {
       const diffSec = Math.max(0, Math.floor((Date.now() - new Date(esp32.lastSeen).getTime()) / 1000));
       if (diffSec < 4) {
-        lastSeenEl.innerHTML = `<span style="color:var(--green)">⚡ ติดต่อสดๆ (${diffSec} วิที่แล้ว)</span>`;
+        lastSeenEl.innerHTML = `<span style="color:var(--green)">ติดต่อสด (${diffSec} วิที่แล้ว)</span>`;
       } else if (diffSec < 60) {
         lastSeenEl.textContent = `${diffSec} วินาทีที่แล้ว`;
       } else {
@@ -3605,13 +3730,13 @@ function renderAdminLogs(logs) {
     
     html += `
       <div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-        <span style="color:#64748b;flex-shrink:0;font-size:0.75rem">${time}</span>
-        <span style="background:${badgeBg};color:${badgeColor};font-size:0.7rem;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;letter-spacing:0.5px">${src}</span>
-        <span style="color:${msgColor};word-break:break-word;flex:1">${item.message || ''}</span>
+        <span style="color:#64748b;flex-shrink:0;font-size:0.75rem">${escapeHtml(time)}</span>
+        <span style="background:${badgeBg};color:${badgeColor};font-size:0.7rem;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;letter-spacing:0.5px">${escapeHtml(src)}</span>
+        <span style="color:${msgColor};word-break:break-word;flex:1">${escapeHtml(item.message || '')}</span>
       </div>
     `;
   });
-  
+
   terminal.innerHTML = html;
 }
 
@@ -3619,11 +3744,11 @@ async function saveEsp32Ip() {
   const input = document.getElementById('esp32IpInput');
   const ip = (input?.value || '').trim();
   if (!ip) {
-    adminToast('กรุณากรอก IP เช่น 192.168.1.124', 'error');
+    adminToast('กรุณากรอก IP ของบอร์ด ESP32 เช่น 192.168.x.x', 'error');
     return;
   }
   if (ip.startsWith('http://') || ip.startsWith('https://')) {
-    adminToast('ช่องนี้สำหรับใส่ IP Address ประจำตัวของบอร์ด ESP32 เช่น 192.168.1.124 (ไม่ใช่ URL เซิร์ฟเวอร์)', 'warn');
+    adminToast('ช่องนี้สำหรับใส่ IP Address ประจำตัวของบอร์ด ESP32 (ไม่ใช่ URL เซิร์ฟเวอร์)', 'warn');
     return;
   }
   const res = await adminApi('POST', '/api/admin/esp32/set-ip', { ip });
@@ -3661,21 +3786,10 @@ async function toggleRelay(portId, on) {
     stateSpan.style.color = 'var(--yellow)';
   }
   if (noticeEl) {
-    noticeEl.textContent = `สถานะ: กำลังส่งคำสั่ง ${portId} -> ${on ? '⚡ เปิดไฟ' : '🛑 ตัดไฟ'} ไปยังตู้ชาร์จ...`;
+    noticeEl.textContent = `สถานะ: กำลังส่งคำสั่ง ${portId} -> ${on ? 'เปิดไฟ' : 'ตัดไฟ'} ไปยังตู้ชาร์จ...`;
   }
 
-  let res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
-  
-  if (!res || !res.success) {
-    try {
-      const fRes = await fetch(`/api/admin/port/${portId}/toggle-relay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ on })
-      });
-      if (fRes.ok) res = await fRes.json();
-    } catch (_) {}
-  }
+  const res = await adminApi('POST', `/api/admin/port/${portId}/toggle-relay`, { on });
 
   if (res && res.success) {
     const isActuallyOn = res.relayOn;
@@ -3684,7 +3798,7 @@ async function toggleRelay(portId, on) {
       stateSpan.style.color = isActuallyOn ? 'var(--green)' : 'var(--red)';
     }
     if (noticeEl) {
-      noticeEl.textContent = `สถานะ: สวิตช์ ${portId} -> ${isActuallyOn ? '🟢 เปิดไฟสำเร็จ' : '🔴 ตัดไฟสำเร็จ'}`;
+      noticeEl.textContent = `สถานะ: สวิตช์ ${portId} -> ${isActuallyOn ? 'เปิดไฟสำเร็จ' : 'ตัดไฟสำเร็จ'}`;
     }
     if (dashData && dashData.ports) {
       const p = dashData.ports.find(x => x.id === portId);
@@ -3700,15 +3814,9 @@ async function toggleRelay(portId, on) {
       stateSpan.style.color = prevColor || 'var(--red)';
     }
     if (noticeEl) {
-      noticeEl.textContent = '❌ ส่งคำสั่งไม่สำเร็จ — เบราว์เซอร์ติดต่อเซิร์ฟเวอร์ตู้ชาร์จไม่ได้';
+      noticeEl.textContent = 'ส่งคำสั่งไม่สำเร็จ — ติดต่อเซิร์ฟเวอร์ตู้ชาร์จไม่ได้';
     }
-    const isHttps = window.location.protocol === 'https:';
-    if (isHttps) {
-      adminToast('❌ เบราว์เซอร์บล็อกคำสั่งส่งเข้า IP คอมในบ้าน (Mixed Content) กรุณาเปิดผ่าน http://localhost:3000/admin บนคอมตู้ชาร์จ', 'error');
-      alert('⚠️ ส่งคำสั่งไปยังตู้ชาร์จไม่ได้:\n\nเนื่องจากเปิดหน้าเว็บผ่าน Firebase (HTTPS) ซึ่งระบบรักษาความปลอดภัยของเบราว์เซอร์จะบล็อกไม่ให้ส่งข้อมูลเข้า IP ในบ้าน (HTTP 192.168.1.107)\n\n👉 วิธีใช้งานที่ถูกต้อง:\nให้เปิดหน้าแอดมินผ่าน:\nhttp://localhost:3000/admin\nบนเครื่องคอมพิวเตอร์ตู้ชาร์จโดยตรงครับ');
-    } else {
-      adminToast('❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ตู้ชาร์จได้ กรุณาตรวจเช็คว่าเปิด node server.js อยู่หรือไม่', 'error');
-    }
+    adminToast('ไม่สามารถติดต่อเซิร์ฟเวอร์ตู้ชาร์จได้ กรุณาตรวจสอบการเชื่อมต่อหรือสถานะเซิร์ฟเวอร์', 'error');
   }
 }
 
@@ -4526,22 +4634,150 @@ async function deleteCurrentIssue() {
   adminToast(`ลบรายการ ${targetId} เรียบร้อยแล้ว`, 'info');
 }
 
+/* ── Pending Manual Slip Approvals & Visitor/Audit Logs ── */
+function renderPendingApprovals(list) {
+  const section = document.getElementById('pendingApprovalsSection');
+  const container = document.getElementById('pendingApprovalsList');
+  const badge = document.getElementById('pendingApprovalsBadge');
+  if (!section || !container) return;
+
+  const items = Array.isArray(list) ? list.filter(p => p.status === 'pending') : [];
+  if (items.length === 0) {
+    section.style.display = 'none';
+    container.innerHTML = '';
+    if (badge) badge.textContent = '0 รายการ';
+    return;
+  }
+
+  section.style.display = 'block';
+  if (badge) badge.textContent = `${items.length} รายการรออนุมัติ`;
+
+  container.innerHTML = items.map(p => {
+    const safeImg = (p.imageDataUrl && String(p.imageDataUrl).startsWith('data:image/'))
+      ? `<img src="${p.imageDataUrl}" alt="Slip preview" style="width:100%;max-height:160px;object-fit:contain;border-radius:8px;background:#090d16;margin:0.55rem 0;border:1px solid var(--border)"/>`
+      : '';
+    return `
+      <div class="test-box" style="border:1px solid rgba(245,158,11,0.45);background:var(--card2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:0.35rem">
+          <strong style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">${escapeHtml(p.id)}</strong>
+          <span style="font-size:0.75rem;color:var(--muted)">${fmtDate(p.createdAt)}</span>
+        </div>
+        <div style="font-size:0.84rem;font-weight:700;color:var(--text)">
+          ${escapeHtml(p.portLabel || p.portId)} · <span style="color:var(--green)">฿${Number(p.amount || 0)}</span> (${escapeHtml(p.method || 'slip')})
+        </div>
+        <div style="font-size:0.76rem;color:var(--muted);margin-top:0.2rem">
+          ผู้โอน: <strong style="color:var(--cyan)">${escapeHtml(p.visitorId || '—')}</strong> (${escapeHtml(p.payerName || 'ผู้ใช้งาน')})
+        </div>
+        <div style="font-size:0.76rem;color:var(--muted)">
+          โอนให้: ${escapeHtml(p.receiverName || 'บัญชีตู้ชาร์จ')} ${p.receiverAccount ? `(${escapeHtml(p.receiverAccount)})` : ''}
+        </div>
+        <div style="font-size:0.72rem;color:var(--yellow);margin-top:0.2rem">เหตุผล: ${escapeHtml(p.reason || 'MANUAL_REVIEW')}</div>
+        ${safeImg}
+        <div class="btn-group" style="margin-top:0.65rem">
+          <button class="btn-sm btn-green" onclick="approvePendingPayment('${escapeHtml(p.id)}')">อนุมัติจ่ายไฟ</button>
+          <button class="btn-sm btn-red" onclick="rejectPendingPayment('${escapeHtml(p.id)}')">ปฏิเสธสลิป</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function approvePendingPayment(pendingId) {
+  const ok = await adminConfirm('อนุมัติสลิปและจ่ายไฟ', `ยืนยันว่าตรวจพบยอดเงินจริงเข้าบัญชีแล้วสำหรับคำขอ ${pendingId} และต้องการเปิดจ่ายไฟทันทีใช่หรือไม่?`, 'อนุมัติและจ่ายไฟ');
+  if (!ok) return;
+  const res = await adminApi('POST', `/api/admin/pending-payments/${encodeURIComponent(pendingId)}/approve`);
+  if (res && res.success) {
+    adminToast(`อนุมัติคำขอ ${pendingId} (${res.transaction?.id || ''}) และสั่งจ่ายไฟแล้ว`, 'success');
+    setActionNotice(`อนุมัติสลิป ${pendingId} สำเร็จ`);
+    autoRefresh();
+  } else {
+    adminToast(res?.error || 'ไม่สามารถอนุมัติคำขอนี้ได้', 'error');
+  }
+}
+
+async function rejectPendingPayment(pendingId) {
+  const ok = await adminConfirm('ปฏิเสธสลิป', `ต้องการปฏิเสธคำขอ ${pendingId} และปลดล็อคพอร์ตให้ว่างใช่หรือไม่?`, 'ปฏิเสธคำขอ');
+  if (!ok) return;
+  const res = await adminApi('POST', `/api/admin/pending-payments/${encodeURIComponent(pendingId)}/reject`, { reason: 'ผู้ดูแลตรวจสอบไม่พบยอดโอน' });
+  if (res && res.success) {
+    adminToast(`ปฏิเสธคำขอ ${pendingId} และคืนสถานะพอร์ตว่างแล้ว`, 'warn');
+    setActionNotice(`ปฏิเสธสลิป ${pendingId}`);
+    autoRefresh();
+  } else {
+    adminToast(res?.error || 'ไม่สามารถปฏิเสธคำขอนี้ได้', 'error');
+  }
+}
+
+function renderVisitorLogs(visits, uniqueCount = 0, totalCount = 0) {
+  const tb = document.getElementById('visitorLogTableBody');
+  const hint = document.getElementById('visitorSummaryHint');
+  const list = Array.isArray(visits) ? visits : [];
+  const uniq = uniqueCount || new Set(list.map(v => v.visitorId).filter(Boolean)).size;
+  const total = totalCount || list.length;
+
+  if (hint) {
+    hint.textContent = `เข้าชมทั้งหมด ${total} ครั้ง · ผู้ใช้งานไม่ซ้ำ ${uniq} คน (แสดงล่าสุด 50 รายการ)`;
+  }
+  if (!tb) return;
+  if (!list.length) {
+    tb.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.25rem">ยังไม่มีประวัติผู้เข้าชมเว็บไซต์</td></tr>`;
+    return;
+  }
+
+  const sorted = [...list]
+    .sort((a, b) => new Date(b.timestamp || b.createdAt || 0) - new Date(a.timestamp || a.createdAt || 0))
+    .slice(0, 50);
+
+  tb.innerHTML = sorted.map(v => `<tr>
+    <td><strong style="font-family:'JetBrains Mono',monospace;font-size:.8rem">${escapeHtml(v.id || v.visitId || '—')}</strong></td>
+    <td><span style="font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:.8rem">${escapeHtml(v.visitorId || '—')}</span></td>
+    <td>${escapeHtml(v.device || v.deviceType || 'Web')}</td>
+    <td style="font-family:monospace;font-size:.76rem;color:var(--muted)">${escapeHtml(v.page || '/')}</td>
+    <td style="font-size:.76rem;color:var(--muted)">${fmtDate(v.timestamp || v.createdAt)}</td>
+  </tr>`).join('');
+}
+
+function renderAuditLogs(auditLogs) {
+  const tb = document.getElementById('auditLogTableBody');
+  if (!tb) return;
+  const list = Array.isArray(auditLogs) ? auditLogs : [];
+  if (!list.length) {
+    tb.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.25rem">ยังไม่มีบันทึกการดำเนินการผู้ดูแล</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = list.slice(0, 40).map(a => {
+    let detailStr = '—';
+    try {
+      if (a.details && Object.keys(a.details).length > 0) detailStr = JSON.stringify(a.details);
+    } catch (_) {}
+    return `<tr>
+      <td><strong style="font-family:'JetBrains Mono',monospace;font-size:.78rem">${escapeHtml(a.id || '—')}</strong></td>
+      <td style="font-size:.78rem">${escapeHtml(a.adminEmail || 'system')}</td>
+      <td><span class="badge b-qr">${escapeHtml(a.action || '—')}</span></td>
+      <td style="font-family:monospace;font-size:.78rem">${escapeHtml(a.target || 'system')}</td>
+      <td style="font-size:.74rem;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(detailStr)}">${escapeHtml(detailStr)}</td>
+      <td style="font-size:.74rem;color:var(--muted)">${fmtDate(a.timestamp)}</td>
+    </tr>`;
+  }).join('');
+}
+
 /* ── Support Contact & TrueMoney Settings in Admin ── */
 function loadSupportSettings() {
   const cfg = getLocalSavedConfig();
-  if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || cfg.promptpayPhone || '0969679951';
+  if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || '';
   if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '';
   if (document.getElementById('cfgSupportIg')) document.getElementById('cfgSupportIg').value = cfg.supportIg || cfg.supportInstagram || '';
-  if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || 'ห้องคอมพิวเตอร์ อาคาร 1';
-  if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = cfg.truemoneyPhone || cfg.promptpayPhone || '0969679951';
+  if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || '';
+  if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = cfg.truemoneyPhone || '';
 }
 
 async function saveSupportSettings() {
-  const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '0969679951';
+  const phone = document.getElementById('cfgSupportPhone')?.value?.trim() || '';
   const line = document.getElementById('cfgSupportLine')?.value?.trim() || '';
   const ig = document.getElementById('cfgSupportIg')?.value?.trim() || '';
-  const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || 'ห้องคอมพิวเตอร์ อาคาร 1';
-  const truemoneyPhone = document.getElementById('cfgTruemoneyPhone')?.value?.trim() || phone;
+  const loc = document.getElementById('cfgSupportLocation')?.value?.trim() || '';
+  const truemoneyPhone = document.getElementById('cfgTruemoneyPhone')?.value?.trim() || '';
 
   const cfg = getLocalSavedConfig();
   cfg.supportPhone = phone;
@@ -4551,9 +4787,7 @@ async function saveSupportSettings() {
   cfg.truemoneyPhone = truemoneyPhone;
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
 
-  // Sync to Firestore Cloud for instant multi-device update
-  syncAdminToFirestore({
-    config: cfg,
+  const res = await adminApi('POST', '/api/admin/config', {
     supportPhone: phone,
     supportLine: line,
     supportIg: ig,
@@ -4561,19 +4795,13 @@ async function saveSupportSettings() {
     truemoneyPhone: truemoneyPhone
   });
 
-  // Sync to backend API if available
-  try {
-    await adminApi('POST', '/api/admin/config', {
-      supportPhone: phone,
-      supportLine: line,
-      supportIg: ig,
-      supportLocation: loc,
-      truemoneyPhone: truemoneyPhone
-    });
-  } catch(e) {}
-
-  setActionNotice('บันทึกข้อมูลช่องทางติดต่อ & TrueMoney เรียบร้อย');
-  adminToast('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney เรียบร้อยแล้ว', 'success');
+  if (res && res.success) {
+    setActionNotice('บันทึกข้อมูลช่องทางติดต่อ & TrueMoney เรียบร้อย');
+    adminToast('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney เรียบร้อยแล้ว', 'success');
+  } else {
+    setActionNotice('บันทึกข้อมูลในเครื่องแล้ว (รอซิงค์เซิร์ฟเวอร์)');
+    adminToast(res?.error || 'บันทึกลงเครื่องแล้ว แต่ยังไม่สามารถติดต่อเซิร์ฟเวอร์ได้', 'warn');
+  }
 }
 
 // Initial load for admin issues badge
@@ -4600,59 +4828,8 @@ window.copyIssueContact = copyIssueContact;
 window.openIssueFromBanner = openIssueFromBanner;
 window.dismissNativeBanner = dismissNativeBanner;
 window.closeAdminConfirm = closeAdminConfirm;
-
-async function submitChangeAdminPin() {
-  const oldPin = (document.getElementById('adminOldPin')?.value || '').trim();
-  const newPin = (document.getElementById('adminNewPin')?.value || '').trim();
-  const confirmPin = (document.getElementById('adminConfirmPin')?.value || '').trim();
-  const statusEl = document.getElementById('changePinStatus');
-
-  if (!newPin) {
-    alert('กรุณากรอกรหัสผ่านใหม่');
-    return;
-  }
-  if (newPin.length < 4) {
-    alert('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร');
-    return;
-  }
-  if (newPin !== confirmPin) {
-    alert('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน');
-    return;
-  }
-
-  if (statusEl) {
-    statusEl.textContent = 'กำลังบันทึกรหัสผ่าน...';
-    statusEl.style.color = 'var(--muted)';
-  }
-
-  try {
-    const res = await adminApi('POST', '/api/admin/change-pin', { oldPin, newPin });
-    if (res && res.success) {
-      if (statusEl) {
-        statusEl.textContent = '✅ ' + (res.message || 'เปลี่ยนรหัสผ่านสำเร็จแล้ว!');
-        statusEl.style.color = 'var(--green)';
-      }
-      alert('เปลี่ยนรหัสผ่านแอดมินเรียบร้อยแล้ว!\nสามารถใช้รหัสผ่านใหม่นี้เข้าสู่ระบบได้ทันที');
-      const o = document.getElementById('adminOldPin'); if (o) o.value = '';
-      const n = document.getElementById('adminNewPin'); if (n) n.value = '';
-      const c = document.getElementById('adminConfirmPin'); if (c) c.value = '';
-    } else {
-      const err = res?.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ';
-      if (statusEl) {
-        statusEl.textContent = '❌ ' + err;
-        statusEl.style.color = 'var(--red)';
-      }
-      alert(err);
-    }
-  } catch(e) {
-    if (statusEl) {
-      statusEl.textContent = '❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
-      statusEl.style.color = 'var(--red)';
-    }
-    alert('เกิดข้อผิดพลาด: ' + e.message);
-  }
-}
-window.submitChangeAdminPin = submitChangeAdminPin;
+window.approvePendingPayment = approvePendingPayment;
+window.rejectPendingPayment = rejectPendingPayment;
 
 
 // ─── Session Timer ─────────────────────────────

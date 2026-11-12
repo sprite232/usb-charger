@@ -1,6 +1,6 @@
 /*
-  🔌 ESP32 Smart USB Charger Controller (4 Ports) with Smart Wi-Fi Captive Portal
-  
+  ESP32 Smart USB Charger Controller (4 Ports) with Smart Wi-Fi Captive Portal
+
   GPIO Pin Mapping:
   - Port 1: USB-A 1 -> GPIO 26 (Relay 1)
   - Port 2: USB-A 2 -> GPIO 27 (Relay 2)
@@ -9,15 +9,16 @@
   - Reset / Config Button: GPIO 0 (BOOT Button on board)
 
   Features:
-  1. Smart Wi-Fi & Captive Portal:
-     - Saves Wi-Fi credentials in Flash memory (Preferences).
-     - If unable to connect within 15 seconds, broadcasts Hotspot "SmartCharger-Setup" (pass: admin1234).
-     - Captive Portal at 192.168.4.1 opens automatically on smartphone to select Wi-Fi and save without computer.
-     - Hold BOOT button (GPIO 0) for 3 seconds anytime to force setup mode.
-  2. Cloud Sync:
-     - Polls /api/esp32/command every 2 seconds via HTTPS.
-     - Controls 4 relays with active-high logic.
-     - Reports local IP, RSSI signal, and heartbeat.
+  1. Hardware Fail-Safe:
+     - Initializes all 4 relay pins LOW immediately on boot before Wi-Fi starts.
+     - Tracks local millis() remaining charge timer per port and shuts relay OFF automatically if Wi-Fi drops.
+  2. Smart Wi-Fi & Captive Portal:
+     - Saves Wi-Fi credentials, Server URL, and ESP32_SECRET in Flash memory (Preferences).
+     - Broadcasts SoftAP "SmartCharger-Setup" (default setup passphrase configured in Captive Portal / placeholder constant) when Wi-Fi fails or BOOT button is held 3s.
+     - Captive Portal at 192.168.4.1 opens on smartphone for setup without reflashing.
+  3. Cloud Sync:
+     - Polls /api/esp32/command every 2 seconds via HTTPS using X-ESP32-Secret header only.
+     - Reports local IP, RSSI signal, and active port heartbeat.
 */
 
 #include <WiFi.h>
@@ -28,18 +29,18 @@
 #include <DNSServer.h>
 #include <Preferences.h>
 
-// Default Fallbacks
-#define DEFAULT_SSID "Palm_tawan_2.4G"
-#define DEFAULT_PASS "0626097440"
+// Default Placeholders (Override via Captive Portal at 192.168.4.1 — do NOT commit real credentials)
+#define DEFAULT_SSID "YOUR_WIFI_SSID"
+#define DEFAULT_PASS "YOUR_WIFI_PASSWORD"
 #define DEFAULT_SERVER "https://usb-charger.onrender.com"
-#define ESP32_SECRET "usb-charger-esp32-hw-secret-key-2026"
+#define DEFAULT_ESP32_SECRET "CHANGE_ME_ESP32_SECRET"
 
-// SoftAP Config
+// SoftAP Config (Change AP passphrase before deploying hardware)
 #define AP_SSID "SmartCharger-Setup"
-#define AP_PASS "admin1234"
+#define AP_PASS "CHANGE_ME_AP_PASS"
 #define BOOT_PIN 0
 
-// 4 Relays Pins
+// 4 Relay Pins (Active-High: LOW = OFF, HIGH = ON)
 const int RELAY_PINS[4] = { 26, 27, 25, 33 };
 const char* PORT_KEYS[4] = { "usb-a-1", "usb-a-2", "usb-c-1", "usb-c-2" };
 
@@ -52,64 +53,100 @@ DNSServer dnsServer;
 String currentSSID = DEFAULT_SSID;
 String currentPass = DEFAULT_PASS;
 String currentServer = DEFAULT_SERVER;
+String currentSecret = DEFAULT_ESP32_SECRET;
+
 bool isApMode = false;
 bool currentRelayState[4] = { false, false, false, false };
+bool portPausedState[4] = { false, false, false, false };
+unsigned long portRemainingMs[4] = { 0, 0, 0, 0 };
+unsigned long portLastSyncMs[4] = { 0, 0, 0, 0 };
+
 int pollCount = 0;
 bool isFirstConnect = true;
 unsigned long bootPressStart = 0;
 unsigned long lastDisconnectTime = 0;
+unsigned long lastPollMs = 0;
 
 void fetchRelayCommands();
+void enforceLocalFailsafe();
 void startConfigPortal();
 void handleRoot();
 void handleSave();
 void handleNotFound();
+String htmlEscape(const String& src);
+
+String htmlEscape(const String& src) {
+  String out = src;
+  out.replace("&", "&amp;");
+  out.replace("<", "&lt;");
+  out.replace(">", "&gt;");
+  out.replace("\"", "&quot;");
+  out.replace("'", "&#39;");
+  return out;
+}
+
+void setRelayHardware(int idx, bool turnOn, const char* reasonTag) {
+  if (idx < 0 || idx >= 4) return;
+  if (currentRelayState[idx] != turnOn) {
+    currentRelayState[idx] = turnOn;
+    digitalWrite(RELAY_PINS[idx], turnOn ? HIGH : LOW);
+    Serial.printf("[RELAY] Port %d (%s | GPIO %d) -> %s (%s)\n",
+                  idx + 1, PORT_KEYS[idx], RELAY_PINS[idx],
+                  turnOn ? "ON" : "OFF", reasonTag);
+  }
+}
 
 void setup() {
-  Serial.begin(115200);
-  delay(1000);
-
-  // Setup Button
-  pinMode(BOOT_PIN, INPUT_PULLUP);
-
-  // Setup Relay Pins
+  // 1. Hardware Fail-Safe FIRST: force all relay pins OFF before anything else initializes
   for (int i = 0; i < 4; i++) {
     pinMode(RELAY_PINS[i], OUTPUT);
-    digitalWrite(RELAY_PINS[i], LOW); // ปิดไฟเริ่มต้น (Active-High: LOW = OFF, HIGH = ON)
+    digitalWrite(RELAY_PINS[i], LOW);
+    currentRelayState[i] = false;
   }
 
-  // Read saved settings
+  pinMode(BOOT_PIN, INPUT_PULLUP);
+  Serial.begin(115200);
+  delay(500);
+
+  // 2. Load saved credentials & server secret from NVS Flash
   prefs.begin("charger", false);
   currentSSID = prefs.getString("ssid", DEFAULT_SSID);
   currentPass = prefs.getString("pass", DEFAULT_PASS);
   currentServer = prefs.getString("server", DEFAULT_SERVER);
+  currentSecret = prefs.getString("secret", DEFAULT_ESP32_SECRET);
   prefs.end();
 
   Serial.println("\n==========================================");
-  Serial.println("🔌 Smart USB Charger ESP32 starting...");
-  Serial.printf("📡 Target WiFi: %s\n", currentSSID.c_str());
-  Serial.printf("🎯 Target Server: %s\n", currentServer.c_str());
-  Serial.println("💡 กดปุ่ม BOOT ค้าง 3 วินาที เพื่อปล่อย Hotspot ตั้งค่า");
+  Serial.println("[BOOT] Smart USB Charger ESP32 starting...");
+  Serial.printf("[CFG] Target WiFi: %s\n", currentSSID.c_str());
+  Serial.printf("[CFG] Target Server: %s\n", currentServer.c_str());
+  Serial.println("[INFO] Hold BOOT button (GPIO 0) for 3s to open Captive Portal setup");
   Serial.println("==========================================");
 
-  // Check if BOOT pressed during startup
+  // 3. Open Captive Portal immediately if BOOT is held at startup or Wi-Fi is still placeholder
   if (digitalRead(BOOT_PIN) == LOW) {
     delay(500);
     if (digitalRead(BOOT_PIN) == LOW) {
-      Serial.println("🔘 ตรวจพบการกดปุ่ม BOOT — เข้าสู่โหมดปล่อย Hotspot ทันที");
+      Serial.println("[BOOT] BOOT button held -> entering Hotspot setup mode");
       startConfigPortal();
       return;
     }
   }
 
-  // Try connecting to STA WiFi
+  if (currentSSID == DEFAULT_SSID || currentSSID.length() == 0) {
+    Serial.println("[CFG] Wi-Fi not configured yet -> starting Smart Charger Setup Hotspot");
+    startConfigPortal();
+    return;
+  }
+
+  // 4. Connect to configured STA Wi-Fi
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
   WiFi.begin(currentSSID.c_str(), currentPass.c_str());
 
   int attempts = 0;
-  Serial.print("⏳ กำลังเชื่อมต่อ Wi-Fi");
+  Serial.print("[WIFI] Connecting");
   while (WiFi.status() != WL_CONNECTED && attempts < 30) {
     delay(500);
     Serial.print(".");
@@ -117,32 +154,53 @@ void setup() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n✅ WiFi Connected Successfully!");
-    Serial.println("📍 ESP32 Local IP: " + WiFi.localIP().toString());
-    Serial.printf("🎯 Target Server: %s\n", currentServer.c_str());
-    Serial.println("📡 เริ่มต้นรับคำสั่งจากเซิร์ฟเวอร์...");
+    Serial.println("\n[WIFI] Connected successfully");
+    Serial.println("[NET] ESP32 Local IP: " + WiFi.localIP().toString());
+    Serial.printf("[NET] Target Server: %s\n", currentServer.c_str());
+    Serial.println("[SYNC] Polling server commands every 2 seconds...");
   } else {
-    Serial.printf("\n⚠️ ไม่สามารถเชื่อมต่อ Wi-Fi '%s' ได้ (Status: %d)\n", currentSSID.c_str(), WiFi.status());
-    Serial.println("🔄 กำลังเปิดระบบ Smart Wi-Fi Hotspot ให้ตั้งค่าผ่านมือถือ...");
+    Serial.printf("\n[WARN] Unable to connect to Wi-Fi '%s' (status=%d)\n", currentSSID.c_str(), WiFi.status());
+    Serial.println("[AP] Starting Captive Portal Hotspot...");
     startConfigPortal();
   }
 }
 
+void enforceLocalFailsafe() {
+  unsigned long nowMs = millis();
+  for (int i = 0; i < 4; i++) {
+    if (!currentRelayState[i] || portPausedState[i]) continue;
+    if (portRemainingMs[i] == 0) {
+      setRelayHardware(i, false, "failsafe_zero");
+      continue;
+    }
+    unsigned long elapsed = nowMs - portLastSyncMs[i];
+    // Overflow-safe unsigned subtraction; cut power immediately when local timer expires (even offline)
+    if (elapsed >= portRemainingMs[i]) {
+      portRemainingMs[i] = 0;
+      setRelayHardware(i, false, "failsafe_timeout");
+    }
+  }
+}
+
 void loop() {
-  // Check BOOT button (GPIO 0)
+  // Always run local fail-safe cutoff timer even when disconnected
+  enforceLocalFailsafe();
+
+  // Check BOOT button (GPIO 0) hold for 3 seconds
   if (digitalRead(BOOT_PIN) == LOW) {
     if (bootPressStart == 0) bootPressStart = millis();
     else if (millis() - bootPressStart > 3000) {
-      Serial.println("\n🔘 กดปุ่ม BOOT ค้าง 3 วินาที -> เปิด Hotspot ตั้งค่า Wi-Fi ใหม่");
+      Serial.println("\n[BTN] BOOT held 3s -> restarting into Captive Portal setup");
+      for (int i = 0; i < 4; i++) setRelayHardware(i, false, "setup_mode");
       startConfigPortal();
       bootPressStart = 0;
-      delay(1000);
+      delay(500);
     }
   } else {
     bootPressStart = 0;
   }
 
-  // AP Mode Execution
+  // AP Setup Mode Execution
   if (isApMode) {
     dnsServer.processNextRequest();
     server.handleClient();
@@ -150,29 +208,32 @@ void loop() {
     return;
   }
 
-  // Normal Connected Execution
+  // Normal STA Connected Execution
   if (WiFi.status() == WL_CONNECTED) {
     lastDisconnectTime = 0;
-    fetchRelayCommands();
-    delay(2000);
+    if (millis() - lastPollMs >= 2000) {
+      lastPollMs = millis();
+      fetchRelayCommands();
+    }
+    delay(50);
   } else {
     if (lastDisconnectTime == 0) lastDisconnectTime = millis();
-    
-    // If disconnected for more than 45 seconds, start AP setup mode
+
+    // If disconnected for more than 45 seconds, cut inactive sessions via fail-safe & open AP setup
     if (millis() - lastDisconnectTime > 45000) {
-      Serial.println("\n⚠️ สัญญาณ Wi-Fi ขาดหายเกิน 45 วินาที -> สลับเข้าสู่ Hotspot ให้ตั้งค่าอัตโนมัติ");
+      Serial.println("\n[WARN] Wi-Fi offline > 45s -> opening Hotspot setup mode");
       startConfigPortal();
       return;
     }
 
-    Serial.printf("⚠️ Wi-Fi ขาดการเชื่อมต่อ (สถานะ: %d) กำลังลองใหม่...\n", WiFi.status());
+    Serial.printf("[WIFI] Disconnected (status=%d), retrying...\n", WiFi.status());
     WiFi.reconnect();
-    delay(3000);
+    delay(1000);
   }
 }
 
 // ----------------------------------------------------
-// 🌐 Smart Wi-Fi Hotspot & Captive Portal
+// Smart Wi-Fi Hotspot & Captive Portal
 // ----------------------------------------------------
 void startConfigPortal() {
   isApMode = true;
@@ -184,20 +245,17 @@ void startConfigPortal() {
 
   IPAddress apIP = WiFi.softAPIP();
   Serial.println("\n==========================================");
-  Serial.println("📶 [เปิดระบบ Smart Wi-Fi Hotspot สำเร็จ]");
-  Serial.printf("📲 เชื่อมต่อ Wi-Fi ชื่อ: %s\n", AP_SSID);
-  Serial.printf("🔑 รหัสผ่าน Wi-Fi: %s\n", AP_PASS);
-  Serial.printf("🌐 เข้าหน้าตั้งค่าที่: http://%s\n", apIP.toString().c_str());
+  Serial.println("[AP] Smart Wi-Fi Hotspot Active");
+  Serial.printf("[AP] SSID: %s\n", AP_SSID);
+  Serial.printf("[AP] URL: http://%s\n", apIP.toString().c_str());
   Serial.println("==========================================");
 
-  // DNS Server for Captive Portal (redirect all requests to AP IP)
   dnsServer.start(53, "*", apIP);
 
-  // WebServer routes
   server.on("/", handleRoot);
   server.on("/save", HTTP_POST, handleSave);
-  server.on("/generate_204", handleRoot); // Android captive portal
-  server.on("/hotspot-detect.html", handleRoot); // Apple captive portal
+  server.on("/generate_204", handleRoot);
+  server.on("/hotspot-detect.html", handleRoot);
   server.onNotFound(handleNotFound);
   server.begin();
 }
@@ -209,8 +267,9 @@ void handleRoot() {
     String ssidName = WiFi.SSID(i);
     if (ssidName.length() > 0) {
       int rssi = WiFi.RSSI(i);
+      String escaped = htmlEscape(ssidName);
       String selected = (ssidName == currentSSID) ? "selected" : "";
-      options += "<option value='" + ssidName + "' " + selected + ">" + ssidName + " (" + String(rssi) + " dBm)</option>";
+      options += "<option value='" + escaped + "' " + selected + ">" + escaped + " (" + String(rssi) + " dBm)</option>";
     }
   }
 
@@ -226,28 +285,32 @@ void handleRoot() {
     body { background: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
     .card { background: #1e293b; border-radius: 16px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
     .header { text-align: center; margin-bottom: 20px; }
-    .icon { font-size: 40px; margin-bottom: 8px; }
+    .icon-box { width: 52px; height: 52px; border-radius: 14px; background: rgba(56,189,248,0.12); color: #38bdf8; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px; border: 1px solid rgba(56,189,248,0.28); }
     h2 { font-size: 20px; color: #38bdf8; }
     p { font-size: 13px; color: #94a3b8; margin-top: 4px; }
-    .form-group { margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
     label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-    select, input { width: 100%; padding: 12px; background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; color: #fff; font-size: 14px; outline: none; }
+    select, input { width: 100%; padding: 11px 12px; background: #0f172a; border: 1.5px solid #475569; border-radius: 10px; color: #fff; font-size: 14px; outline: none; }
     select:focus, input:focus { border-color: #38bdf8; }
-    .btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; border-radius: 10px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 8px; transition: transform 0.18s cubic-bezier(.22,1,.36,1), opacity 0.18s ease; }
     .btn:active { transform: scale(0.98); }
-    .footer { text-align: center; font-size: 12px; color: #64748b; margin-top: 20px; }
+    .footer { text-align: center; font-size: 12px; color: #64748b; margin-top: 18px; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="header">
-      <div class="icon">🔌⚡</div>
+      <div class="icon-box">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
       <h2>Smart USB Charger</h2>
-      <p>ตั้งค่า Wi-Fi เพื่อให้ตู้ชาร์จเชื่อมต่อระบบออนไลน์</p>
+      <p>ตั้งค่า Wi-Fi และข้อมูลเชื่อมต่อเซิร์ฟเวอร์ตู้ชาร์จ</p>
     </div>
     <form action="/save" method="POST">
       <div class="form-group">
-        <label>📡 เลือก Wi-Fi (2.4GHz):</label>
+        <label>เลือกเครือข่าย Wi-Fi (2.4GHz):</label>
         <select name="ssid" id="ssidSelect">
   )rawliteral";
 
@@ -256,23 +319,27 @@ void handleRoot() {
         </select>
       </div>
       <div class="form-group">
-        <label>✏️ หรือพิมพ์ชื่อ Wi-Fi เอง:</label>
-        <input type="text" name="custom_ssid" placeholder="กรอกกรณี Wi-Fi ซ่อนชื่อ">
+        <label>หรือระบุชื่อ Wi-Fi ด้วยตนเอง:</label>
+        <input type="text" name="custom_ssid" placeholder="กรอกกรณีซ่อนชื่อ Wi-Fi">
       </div>
       <div class="form-group">
-        <label>🔑 รหัสผ่าน Wi-Fi:</label>
+        <label>รหัสผ่าน Wi-Fi:</label>
         <input type="password" name="password" placeholder="รหัสผ่าน Wi-Fi" required>
       </div>
       <div class="form-group">
-        <label>🎯 เซิร์ฟเวอร์ตู้ชาร์จ (Server URL):</label>
+        <label>URL เซิร์ฟเวอร์ตู้ชาร์จ (Server URL):</label>
         <input type="text" name="server" value=")rawliteral";
-  html += currentServer;
+  html += htmlEscape(currentServer);
   html += R"rawliteral(">
       </div>
-      <button type="submit" class="btn">💾 บันทึกและเชื่อมต่อทันที</button>
+      <div class="form-group">
+        <label>ESP32 Secret Key (ตรงกับค่า ENV ESP32_SECRET บนเซิร์ฟเวอร์):</label>
+        <input type="password" name="secret" placeholder="เว้นว่างหากใช้ค่าเดิม">
+      </div>
+      <button type="submit" class="btn">บันทึกและเชื่อมต่อทันที</button>
     </form>
     <div class="footer">
-      ฮอตสปอตตู้ชาร์จ: SmartCharger-Setup (IP: 192.168.4.1)
+      ฮอตสปอตตั้งค่าตู้ชาร์จ: SmartCharger-Setup (192.168.4.1)
     </div>
   </div>
 </body>
@@ -289,13 +356,19 @@ void handleSave() {
   }
   String reqPass = server.arg("password");
   String reqServer = server.arg("server");
+  reqServer.trim();
   if (reqServer.length() == 0) reqServer = DEFAULT_SERVER;
+  String reqSecret = server.arg("secret");
+  reqSecret.trim();
 
   if (reqSSID.length() > 0) {
     prefs.begin("charger", false);
     prefs.putString("ssid", reqSSID);
     prefs.putString("pass", reqPass);
     prefs.putString("server", reqServer);
+    if (reqSecret.length() > 0) {
+      prefs.putString("secret", reqSecret);
+    }
     prefs.end();
 
     String reply = R"rawliteral(
@@ -313,9 +386,9 @@ void handleSave() {
 </head>
 <body>
   <div class="box">
-    <h2>✅ บันทึกสำเร็จ!</h2>
+    <h2>บันทึกการตั้งค่าสำเร็จ</h2>
     <p>ESP32 กำลังรีสตาร์ทเพื่อเชื่อมต่อ Wi-Fi: <strong>)rawliteral";
-    reply += reqSSID;
+    reply += htmlEscape(reqSSID);
     reply += R"rawliteral(</strong></p>
     <p style="margin-top:16px;">บอร์ดจะเชื่อมต่อไปยังตู้ชาร์จและเริ่มทำงานทันที</p>
   </div>
@@ -323,7 +396,7 @@ void handleSave() {
 </html>
     )rawliteral";
     server.send(200, "text/html", reply);
-    delay(2000);
+    delay(1500);
     ESP.restart();
   } else {
     server.send(400, "text/plain", "กรุณาระบุชื่อ Wi-Fi");
@@ -331,31 +404,31 @@ void handleSave() {
 }
 
 void handleNotFound() {
-  // Captive Portal redirect
   server.sendHeader("Location", "http://192.168.4.1/", true);
   server.send(302, "text/plain", "");
 }
 
 // ----------------------------------------------------
-// ⚡ Relay Commands Fetcher from Cloud Server
+// Relay Commands Fetcher from Cloud Server
 // ----------------------------------------------------
 void fetchRelayCommands() {
   HTTPClient http;
   String myIp = WiFi.localIP().toString();
   long rssi = WiFi.RSSI();
-  String url = currentServer + "/api/esp32/command?secret=" + ESP32_SECRET + "&ip=" + myIp + "&rssi=" + String(rssi);
-  
+  // Send ESP32_SECRET strictly in X-ESP32-Secret HTTP header (never in URL query string)
+  String url = currentServer + "/api/esp32/command?ip=" + myIp + "&rssi=" + String(rssi);
+
   WiFiClientSecure secClient;
   if (url.startsWith("https://")) {
-    secClient.setInsecure(); // SSL Insecure bypass for Cloud domains
+    secClient.setInsecure();
     secClient.setTimeout(15000);
     http.begin(secClient, url);
   } else {
     http.begin(url);
   }
   http.setTimeout(15000);
-  http.addHeader("X-ESP32-Secret", ESP32_SECRET);
-  
+  http.addHeader("X-ESP32-Secret", currentSecret);
+
   int httpCode = http.GET();
   if (httpCode == 200) {
     String payload = http.getString();
@@ -368,36 +441,43 @@ void fetchRelayCommands() {
 
     if (!error && !doc["relays"].isNull()) {
       JsonObject relays = doc["relays"].as<JsonObject>();
-      
+      unsigned long syncNow = millis();
+
       for (int i = 0; i < 4; i++) {
         const char* key = PORT_KEYS[i];
         if (!relays[key].isNull()) {
           bool isOn = relays[key]["on"] | false;
-          int gpio = RELAY_PINS[i];
-          
-          if (isOn != currentRelayState[i]) {
-            currentRelayState[i] = isOn;
-            digitalWrite(gpio, isOn ? HIGH : LOW);
-            Serial.printf("⚡ [คำสั่งจากเซิร์ฟเวอร์] พอร์ต %d (%s | GPIO %d) -> %s\n", 
-                          i + 1, key, gpio, isOn ? "🟢 เปิดไฟ (ON)" : "🔴 ปิดไฟ (OFF)");
+          bool isPaused = relays[key]["isPaused"] | false;
+          unsigned long remSec = relays[key]["remainingSeconds"] | 0UL;
+
+          portPausedState[i] = isPaused;
+          portRemainingMs[i] = remSec * 1000UL;
+          portLastSyncMs[i] = syncNow;
+
+          // If server instructs ON but remainingSeconds is positive, update timer; allow direct relay tests when server explicitly sends on=true
+          if (isOn && remSec == 0 && !isPaused) {
+            // Direct GPIO test mode uses small 30s safety watchdog unless refreshed
+            portRemainingMs[i] = 30000UL;
           }
+
+          setRelayHardware(i, isOn, "server_sync");
         }
       }
 
       if (isFirstConnect) {
         isFirstConnect = false;
-        Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        Serial.printf("🟢 [เชื่อมต่อกับเว็บและเซิร์ฟเวอร์สำเร็จแล้ว!]\n");
-        Serial.printf("📍 IP ตัวเอง: %s\n", myIp.c_str());
-        Serial.printf("🎯 เซิร์ฟเวอร์: %s\n", currentServer.c_str());
-        Serial.println("✨ ระบบพร้อมควบคุมและแสดงสถานะบนหน้าเว็บได้ทันที");
-        Serial.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        Serial.println("----------------------------------------------");
+        Serial.println("[ONLINE] Connected to Smart Charger Server");
+        Serial.printf("[NET] ESP32 IP: %s\n", myIp.c_str());
+        Serial.printf("[NET] Server: %s\n", currentServer.c_str());
+        Serial.println("[READY] Hardware relays synced");
+        Serial.println("----------------------------------------------");
       }
 
       pollCount++;
       if (pollCount >= 5) {
         pollCount = 0;
-        Serial.printf("📡 [Sync OK] สถานะรีเลย์: P1=%s | P2=%s | P3=%s | P4=%s (WiFi: %ld dBm)\n",
+        Serial.printf("[SYNC] Relays: P1=%s P2=%s P3=%s P4=%s (WiFi: %ld dBm)\n",
                       currentRelayState[0] ? "ON" : "OFF",
                       currentRelayState[1] ? "ON" : "OFF",
                       currentRelayState[2] ? "ON" : "OFF",
@@ -406,9 +486,9 @@ void fetchRelayCommands() {
       }
     }
   } else if (httpCode > 0) {
-    Serial.printf("❌ HTTP Code จากเซิร์ฟเวอร์: %d\n", httpCode);
+    Serial.printf("[ERR] Server HTTP Status: %d\n", httpCode);
   } else {
-    Serial.printf("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (%s)\n", http.errorToString(httpCode).c_str());
+    Serial.printf("[ERR] Server unreachable: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
 }

@@ -1,34 +1,33 @@
-# 🧠 PROJECT MEMORY & ARCHITECTURE CONTEXT
+# PROJECT MEMORY & ARCHITECTURE CONTEXT
 > **Smart USB Charger (ตู้ชาร์จมือถืออัจฉริยะ 4 ช่อง)**
-> ไฟล์นี้เป็นสมองและความจำหลักของโปรเจกต์ (Project Brain & Knowledge Base) บันทึกประวัติ ความต้องการ สถาปัตยกรรม และรายละเอียดทางเทคนิคทั้งหมดตั้งแต่เริ่มต้น เพื่อให้ AI (Antigravity) และผู้พัฒนารู้เรื่องราวและทำงานต่อได้อย่างไร้รอยต่อในทุกที่ทุกเวลา
+> เอกสารอ้างอิงสถาปัตยกรรม ความปลอดภัย และโครงสร้างข้อมูลหลักของโปรเจกต์
 
 ---
 
-## 1. 📌 ที่มาและเป้าหมายของระบบ (Project Mission & Vision)
-- **วัตถุประสงค์:** สร้างระบบควบคุมตู้ชาร์จแบตเตอรี่โทรศัพท์มือถืออัจฉริยะ 4 พอร์ต (USB-A 2 ช่อง, USB-C 2 ช่อง) สำหรับใช้งานจริงที่โรงเรียนหรือสถานที่สาธารณะ
-- **กลุ่มผู้พัฒนา:** นักเรียนชั้นมัธยมศึกษาปีที่ 3/13 (ผู้พัฒนาหลัก: ศุภกฤต สอนบุญมา)
-- **ประสบการณ์ผู้ใช้ (UX/UI):** 
-  - สวยงาม ทันสมัย สไตล์ Cyberpunk / Modern Kiosk 
-  - มีเสียงพูดภาษาไทย (Voice Guidance) และเสียงเอฟเฟกต์ (Sound Effects)
-  - ผู้ใช้ไม่ต้องสับสน ไม่ต้องถามกันว่าใครชาร์จช่องไหน เพราะหน้าเว็บจะแสดงสถานะสดแบบ Real-time:
-    - 🟢 **ว่าง** (Available)
-    - 🟡 **ไม่ว่าง / กำลังชำระเงิน** (Pending Payment / Holding) เมื่อมีคนกดเลือกช่องหรือกำลังสแกนจ่าย
-    - 🔵 **กำลังจ่ายไฟ** (In Use / Charging) พร้อมแท่งบาร์เปอร์เซ็นต์และเวลานับถอยหลัง
+## 1. ภาพรวมและเป้าหมายของระบบ (Project Mission & Vision)
+- **วัตถุประสงค์:** ระบบควบคุมตู้ชาร์จแบตเตอรี่โทรศัพท์มือถืออัจฉริยะ 4 พอร์ต (USB-A 2 ช่อง, USB-C 2 ช่อง) สำหรับใช้งานจริงในสถานศึกษาหรือพื้นที่สาธารณะ
+- **ผู้จัดทำ:** คณะผู้จัดทำโครงงาน ชั้นมัธยมศึกษาปีที่ 3/13
+- **ประสบการณ์ผู้ใช้ (UX/UI):**
+  - อินเทอร์เฟซ Modern Kiosk รองรับ Dark/Light Mode, SVG ไอคอนสะอาดตา, เสียงพูดภาษาไทย (Voice Guidance) และ Animation แบบ GPU-composited (`transform`/`opacity`)
+  - สถานะพอร์ตแบบ Real-time:
+    - **ว่าง** (`available`)
+    - **ไม่ว่าง / กำลังชำระเงิน** (`pending_payment`) เมื่อมีผู้กำลังทำรายการหรือรอตรวจสลิป
+    - **กำลังจ่ายไฟ** (`in-use`) พร้อมแถบสถานะแบบ `scaleX` และเวลานับถอยหลัง
 
 ---
 
-## 2. ⚡ สถาปัตยกรรมระบบ (System Architecture)
+## 2. สถาปัตยกรรมระบบ (System Architecture)
 
-```
+```text
 [ ลูกค้าหน้าตู้ / มือถือ ]           [ ฮาร์ดแวร์ตู้ชาร์จ (ESP32) ]
-        │                                    │
-        │ HTTPS / WSS                        │ Poll ทุก 2 วินาที (HTTPS)
-        ▼                                    ▼
-[ Firebase Hosting ] ──(Proxy/API)──► [ Render Cloud Server ]
-(usb-charger-project.web.app)       (usb-charger.onrender.com)
-        │                                    │
-        └──────────► [ Firestore ] ◄─────────┘
-                   (Real-time State)
+        |                                    |
+        | HTTPS / REST                       | Poll ทุก 2 วินาที (Header X-ESP32-Secret)
+        v                                    v
+[ Firebase Hosting ] --(API Request)--> [ Render Cloud Server ]
+(usb-charger-project.web.app)          (charging-server.js)
+        |                                    |
+        +-----------> [ Firestore ] <--------+
+                   (State & Logs Sync)
 ```
 
 1. **Frontend (Kiosk & Admin UI):**
@@ -36,102 +35,83 @@
    - ไฟล์หลัก: `public/index.html` (หน้าตู้ชาร์จ) และ `public/admin.html` (หน้าแดชบอร์ดแอดมิน)
 2. **Backend Server (API & Hardware Controller):**
    - Host: **Render Cloud** (`https://usb-charger.onrender.com`)
-   - โค้ดหลัก: `charging-server.js` (Node.js + Express)
-   - Source Code Git: `https://github.com/sprite232/usb-charger.git` (Branch: `master`)
+   - โค้ดหลัก: `charging-server.js` (Node.js + Express, Entry point: `server.js`)
 3. **Database & Real-time State:**
    - **Google Firebase Firestore** (Project: `usb-charger-project`)
-   - ซิงค์สถานะพอร์ตแบบ Real-time Listener (`onSnapshot`)
+   - Collections หลัก:
+     - `charger/charger01`: สถานะพอร์ต, Config สาธารณะ, และสถิติสรุป (Public Read, Server-only Write)
+     - `charger_private/state`: `usedTransRefs` และข้อมูลบัญชีรับเงินภายใน (Server-only / No client access)
+     - `transactions/{txId}`: ประวัติธุรกรรม `TX-XXXXXX` (ระบุผู้จ่าย `USR-XXXXXX` -> ผู้รับ, พอร์ต, เวลา, ช่องทาง)
+     - `visits/{visitId}`: ประวัติผู้เข้าชมเว็บไซต์ `VIS-XXXXXX` พร้อม `visitorId` (`USR-XXXXXX`) และชนิดอุปกรณ์
+     - `pending_approvals/{pendingId}`: คิวรออนุมัติสลิปด้วยมือ `PEN-XXXXXX`
+     - `audit_logs/{logId}`: บันทึกการกระทำของผู้ดูแล `AUD-XXXXXX`
+     - `issues/{issueId}`: รายการแจ้งปัญหาจากผู้ใช้งาน `ISSUE-XXXXXX`
+     - `admin_whitelist/{email}`: รายชื่ออีเมล Google ที่ได้รับสิทธิ์เข้าใช้งาน Admin Portal
 4. **Hardware Controller (Microcontroller):**
    - บอร์ด: **DOIT ESP32 DEVKIT V1**
    - โค้ด: `esp32-demo/esp32-demo.ino`
 
 ---
 
-## 3. 🔌 ฮาร์ดแวร์ & พินรีเลย์ (Hardware GPIO Mapping)
+## 3. ฮาร์ดแวร์และพินรีเลย์ (Hardware GPIO Mapping & Fail-Safe)
 
 | ช่องชาร์จ | ชนิดพอร์ต | พิน ESP32 (GPIO) | รีเลย์ (Active-High) |
 | :--- | :--- | :--- | :--- |
-| **พอร์ต 1** | USB-A 1 | **GPIO 26** | Relay 1 (LOW = ดับ, HIGH = จ่ายไฟ) |
-| **พอร์ต 2** | USB-A 2 | **GPIO 27** | Relay 2 (LOW = ดับ, HIGH = จ่ายไฟ) |
-| **พอร์ต 3** | USB-C 1 | **GPIO 25** | Relay 3 (LOW = ดับ, HIGH = จ่ายไฟ) |
-| **พอร์ต 4** | USB-C 2 | **GPIO 33** | Relay 4 (LOW = ดับ, HIGH = จ่ายไฟ) |
-| **ปุ่มตั้งค่า Wi-Fi** | ปุ่ม BOOT | **GPIO 0** | กดค้าง 3 วินาที เพื่อปล่อย Hotspot |
+| **พอร์ต 1** | USB-A 1 | **GPIO 26** | Relay 1 (`LOW` = ตัดไฟ, `HIGH` = จ่ายไฟ) |
+| **พอร์ต 2** | USB-A 2 | **GPIO 27** | Relay 2 (`LOW` = ตัดไฟ, `HIGH` = จ่ายไฟ) |
+| **พอร์ต 3** | USB-C 1 | **GPIO 25** | Relay 3 (`LOW` = ตัดไฟ, `HIGH` = จ่ายไฟ) |
+| **พอร์ต 4** | USB-C 2 | **GPIO 33** | Relay 4 (`LOW` = ตัดไฟ, `HIGH` = จ่ายไฟ) |
+| **ปุ่มตั้งค่า Wi-Fi** | ปุ่ม BOOT | **GPIO 0** | กดค้าง 3 วินาที เพื่อเปิด Captive Portal |
 
-### 📶 Smart Wi-Fi & Captive Portal ของ ESP32:
-- ไม่ต้องแก้โค้ดเมื่อเปลี่ยนสถานที่ (เช่น เอาไปโรงเรียน)
-- หากต่อ Wi-Fi ที่บันทึกไว้ไม่ได้ภายใน 15 วินาที บอร์ดจะปล่อย Hotspot อัตโนมัติ:
-  - **ชื่อ Hotspot:** `SmartCharger-Setup`
-  - **รหัสผ่าน:** `admin1234`
-  - **หน้าเว็บตั้งค่า:** `http://192.168.4.1` (เปิดจากมือถือได้ทันทีเพื่อเลือก Wi-Fi โรงเรียน/มือถือ)
-  - บันทึกลง Flash Memory (Preferences) บอร์ดจะจำได้ถาวร
+### มาตรฐานความปลอดภัยของเฟิร์มแวร์ ESP32
+- กำหนดโหมด `OUTPUT` และเขียน `LOW` ให้รีเลย์ทั้ง 4 ช่องเป็นลำดับแรกสุดใน `setup()` ก่อนเริ่ม Wi-Fi เพื่อป้องกันไฟกระตุกเปิดรีเลย์ตอนบูต
+- ใช้ Captive Portal (`SmartCharger-Setup` ที่ `192.168.4.1`) สำหรับตั้งค่า Wi-Fi, Server URL และ `ESP32_SECRET` ลง Flash Memory (`Preferences`) โดยไม่ฝังรหัสผ่านจริงไว้ในโค้ด
+- ส่งความลับผ่าน HTTP Header `X-ESP32-Secret` เท่านั้น (ไม่ส่งผ่าน URL Query String เพื่อป้องกันการรั่วใน Server Access Logs)
+- มีตัวจับเวลา Fail-Safe ระดับฮาร์ดแวร์ (`millis()`) ตามค่า `remainingSeconds` ของแต่ละพอร์ต เพื่อสั่งตัดไฟอัตโนมัติทันทีเมื่อหมดเวลาแม้สัญญาณ Wi-Fi ขาดหาย
 
 ---
 
-## 4. 💰 ช่องทางการชำระเงินและข้อมูลบัญชี (Payment Info)
+## 4. ช่องทางการชำระเงินและระบบรหัสติดตาม (Random IDs)
 
-1. **พร้อมเพย์ QR Code (PromptPay):**
-   - เบอร์โทรศัพท์: `096-967-9951`
-   - ตรวจสอบสลิปอัตโนมัติด้วย **EasySlip API**
-2. **โอนเงินเข้าบัญชีธนาคาร:**
-   - ธนาคาร: **กสิกรไทย (KBank)**
-   - เลขบัญชี: `193-3-86131-3`
-   - ชื่อบัญชี: **ศุภกฤต สอนบุญมา**
-3. **TrueMoney Wallet (โอนเงินแนบสลิป & ซองของขวัญ):**
-   - เบอร์ TrueMoney: `096-967-9951` (ศุภกฤต สอนบุญมา)
-   - มีปุ่มคัดลอกเบอร์โทรศัพท์และอัปโหลดสลิป
-   - รองรับซองของขวัญ TrueMoney Gift Voucher (`gift.truemoney.com`)
-4. **หยอดเหรียญ (Coin Acceptor):**
-   - รองรับเหรียญ 5 บาท และ 10 บาท (อัตรา: 1 บาท = 180 วินาที / 3 นาที)
-
----
-
-## 5. 🛡️ ข้อมูลสิทธิ์ผู้ดูแลระบบ (Admin Access & Security)
-
-- **Master Admin Google Accounts:**
-  - `palmtawanlaothaisong00@gmail.com`
-  - `sukitlowkey@gmail.com`
-- **Master Admin PIN / Emergency Fallback Passwords:**
-  - `admin1234` หรือ `15152921Ss`
-- **ระบบเปลี่ยนรหัสผ่านแอดมิน (Dynamic Change Admin PIN):**
-  - Endpoint: `POST /api/admin/change-pin`
-  - ปรับเปลี่ยนรหัสผ่านได้โดยตรงจากหน้า `admin.html`
-  - เข้ารหัสด้วย `bcrypt` และบันทึกลงไฟล์ `data/state.json` ถาวร ไม่ต้องแก้ `.env` หรือรีสตาร์ตเซิร์ฟเวอร์
+1. **รูปแบบรหัสอ้างอิงสุ่ม (Cryptographic Random 6 Digits):**
+   - `USR-XXXXXX`: รหัสผู้ใช้งาน/ผู้เข้าชมที่สร้างและจดจำไว้ต่ออุปกรณ์
+   - `VIS-XXXXXX`: รหัสการเข้าชมเว็บไซต์แต่ละครั้ง (ป้องกันนับซ้ำในระยะสั้นและซิงค์ลง Firestore)
+   - `TX-XXXXXX`: รหัสธุรกรรมชำระเงินและการชาร์จ (ระบุผู้จ่าย `payerId`/`payerName` -> ผู้รับ `receiverName`/`receiverAccount` พอร์ต และเวลาโอน)
+   - `PEN-XXXXXX`: รหัสคำขอตรวจสลิปด้วยมือเมื่อระบบตรวจอัตโนมัติไม่สามารถยืนยันได้
+   - `AUD-XXXXXX`: รหัส Audit Log ของการดำเนินการโดย Admin
+   - `ISSUE-XXXXXX`: รหัสเรื่องแจ้งปัญหาการใช้งาน
+2. **ช่องทางชำระเงิน:**
+   - **พร้อมเพย์ QR Code (PromptPay):** ตรวจสลิปอัตโนมัติผ่าน EasySlip API
+   - **โอนเงินเข้าบัญชีธนาคาร:** ตรวจสลิปอัตโนมัติเทียบชื่อบัญชี/เลขบัญชีที่ตั้งค่าไว้
+   - **TrueMoney Wallet:** รองรับซองของขวัญ TrueMoney Voucher (`gift.truemoney.com`) และการอัปโหลดสลิป (กรณีไม่มี BOT QR หรือ EasySlip ขัดข้อง จะเข้าคิว `PEN-XXXXXX` รอแอดมินกดอนุมัติแทนการจ่ายไฟอัตโนมัติ)
+   - **หยอดเหรียญ (Coin Acceptor):** รองรับเหรียญ 5 และ 10 บาท (อัตราเริ่มต้น: 1 บาท = 180 วินาที ปรับได้ในหน้า Admin)
 
 ---
 
-## 6. 🔒 กฎเหล็กการทำงาน (Core System Rules)
-1. **Single Source of Truth:** เซิร์ฟเวอร์ Render (`https://usb-charger.onrender.com/api/state`) เป็นผู้ตัดสินสถานะพอร์ตและรีเลย์ 100% ตัวเดียวเท่านั้น
-2. **ระบบจัดการคิวและความว่าง (Port Holding & Anti-Collision Engine):** 
-   - เมื่อลูกค้ากดเลือกช่อง (`openSheet`):
-     - ล็อคพอร์ตด้วย `clientId` และ `POST /api/payment/hold` ชั่วคราว **45 วินาที** (สำหรับการเลือกยอด)
-     - ลูกค้าที่กำลังทำรายการจะเห็นป้ายสีเขียว **"คุณกำลังทำรายการ"** และกดทำรายการต่อได้เสมอ ไม่บล็อกตัวเอง
-     - ลูกค้าคนอื่นที่เปิดเว็บอยู่จะเห็นเป็น **"🟡 ไม่ว่าง (รอชำระ)"** และไม่สามารถกดชนกันได้
-     - หากลูกค้ากดยกเลิก ปิดหน้าต่าง หรือปิดเบราว์เซอร์ (`pagehide` beacon) พอร์ตจะคืนสถานะเป็น **"🟢 ว่าง"** ให้คนอื่นใช้งานได้ทันที
-   - เมื่อเลือกวิธีชำระเงินจริง: อัปเกรดอายุ session เป็น 10 นาที (600 วินาที) สำหรับโอนเงินและแนบสลิป
-   - เมื่อช่องเต็มทุกพอร์ต: แสดงแถบแจ้งเตือน **"ตู้กำลังให้บริการเต็มทุกช่อง — ช่องที่ว่างเร็วที่สุด: [ชื่อพอร์ต] (เหลือเวลาอีก X นาที)"**
-3. **Hardware Secret:** การคุยระหว่าง ESP32 กับเซิร์ฟเวอร์ต้องมี Header หรือ Query `X-ESP32-Secret: usb-charger-esp32-hw-secret-key-2026` เสมอ
+## 5. ระบบสิทธิ์ผู้ดูแลระบบ (Google Sign-In Only — ไม่มี PIN)
+
+- **การยืนยันตัวตน:** ใช้ **Google Sign-In ผ่าน Firebase Authentication** ร่วมกับ Firestore `admin_whitelist` และ Render ENV `ADMIN_EMAILS` เท่านั้น
+- **Zero PIN Policy:** ยกเลิกระบบ PIN, รหัสผ่านสำรอง, และการบายพาสด้วย LAN IP โดยสมบูรณ์
+- ทุก Admin API endpoint (`/api/admin/*`, `/api/issues/:id/reply`, `DELETE /api/issues/:id`) ตรวจสอบ Firebase ID Token แบบ Real-time ผ่าน `firebase-admin` และบันทึก `audit_logs`
 
 ---
 
-## 7. 📊 ข้อมูลเล่มโครงงานและแบบประเมินความพึงพอใจ (Academic Context)
-- **ประชากรและกลุ่มตัวอย่าง:** นักเรียนชั้นมัธยมศึกษาปีที่ 3/13 โรงเรียน... จำนวน **26 คน** ($N = 26$)
-- **ผลการประเมินความพึงพอใจ (Likert Scale 5 ระดับ):**
-  - ด้านที่ 1 ด้านประสิทธิภาพและการทำงานของระบบ: $\bar{x} = 4.67, S.D. = 0.50$ (ระดับมากที่สุด)
-  - ด้านที่ 2 ด้านการออกแบบและประสบการณ์การใช้งาน: $\bar{x} = 4.67, S.D. = 0.49$ (ระดับมากที่สุด)
-  - **ภาพรวมทั้ง 2 ด้าน:** $\bar{x} = 4.67, S.D. = 0.49$ (ระดับมากที่สุด)
-- **เครื่องมือการประเมิน:** ทำผ่าน **Google Forms** เพื่อความสะดวกรวดเร็ว ประหยัดค่าพิมพ์ สแกนผ่านมือถือได้ทันที คำนวณ $\bar{x}$ และ $S.D.$ ลง Google Sheets อัตโนมัติ และนำกราฟผลลัพธ์มาใส่ในภาคผนวกของรายงานโครงงาน
+## 6. ตัวแปรสภาพแวดล้อมที่ต้องตั้งค่าบน Render (Environment Variables)
+
+- `PROMPTPAY_PHONE`: เบอร์พร้อมเพย์รับเงิน (เช่น `0xxxxxxxxx`)
+- `TRUEMONEY_PHONE`: เบอร์ TrueMoney Wallet สำหรับรับซองของขวัญและแจ้งโอน
+- `BANK_NAME`: ชื่อธนาคารรับโอน
+- `BANK_ACCOUNT`: เลขบัญชีธนาคารรับโอน
+- `BANK_ACCOUNT_NAME`: ชื่อเจ้าของบัญชี (ใช้เทียบชื่อผู้รับในสลิป EasySlip)
+- `SECONDS_PER_BAHT`: อัตราวินาทีต่อ 1 บาท (ค่าเริ่มต้น `180`)
+- `EASYSLIP_API_KEY`: API Key จาก EasySlip สำหรับตรวจสอบสลิปอัตโนมัติ
+- `ESP32_SECRET`: Secret Key สำหรับยืนยันตัวตนบอร์ด ESP32 ผ่าน `X-ESP32-Secret`
+- `ADMIN_EMAILS`: อีเมล Google ของผู้ดูแลระบบ (คั่นด้วย `,`)
+- `FIREBASE_SERVICE_ACCOUNT`: JSON Key ของ Firebase Service Account
+- `ALLOWED_ORIGINS`: รายชื่อโดเมนต้นทางที่อนุญาตสำหรับ CORS
 
 ---
 
-## 8. 📱 คู่มือการสนทนากับ AI และการแก้ไขเว็บจากนอกบ้าน (Remote AI & Coding Guide)
-
-เมื่อคุณอยู่นอกบ้าน (เช่น ใช้มือถือ, แท็บเล็ต หรือคอมเครื่องอื่น):
-1. **เมื่อเปิดแชตใหม่กับ AI:**
-   - ก๊อปปี้ข้อความ **Master Prompt** ด้านล่างนี้ส่งให้ AI ได้ทันที AI จะจำโปรเจกต์ได้ 100% ครบทุกรายละเอียด
-2. **การแก้ไขโค้ดจากนอกบ้านโดยไม่ต้องมีคอมหลัก:**
-   - เข้า GitHub: `https://github.com/sprite232/usb-charger`
-   - กดปุ่ม `.` (จุด) บนคีย์บอร์ด จะเปิด **VS Code บนเว็บ** ขึ้นมาทันที
-   - แก้ไขโค้ดและกด Commit & Push ระบบ Render และ Firebase จะอัปเดตให้อัตโนมัติ
-3. **การจัดการตู้ผ่านมือถือ:**
-   - เปิด `https://usb-charger-project.web.app/admin.html` บนมือถือ
-   - สามารถเปลี่ยนราคา, เปลี่ยนรหัสผ่าน, ปลดล็อคตู้, ควบคุมรีเลย์ และดูยอดเงินได้ทันที 24 ชั่วโมง
+## 7. ข้อมูลบริบทโครงงาน (Academic Context)
+- **กลุ่มตัวอย่าง:** นักเรียนชั้นมัธยมศึกษาปีที่ 3/13 จำนวน **26 คน** ($N = 26$)
+- **ผลการประเมินความพึงพอใจ:** ค่าเฉลี่ยรวม $\bar{x} = 4.67, S.D. = 0.49$ (ระดับความพึงพอใจมากที่สุด)
