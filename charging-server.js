@@ -2,6 +2,7 @@ try { require("dotenv").config(); } catch (_) {}
 
 const crypto = require("crypto");
 const fs = require("fs");
+const https = require("https");
 const path = require("path");
 const { execFile } = require("child_process");
 const express = require("express");
@@ -1159,21 +1160,109 @@ function requireEsp32Auth(req, res, next) {
   next();
 }
 
+// ─── Google Public Certs Cache for Stateless ID Token Verification ──────────
+let googleCertsCache = null;
+let googleCertsExpiry = 0;
+
+function getGooglePublicCerts() {
+  if (googleCertsCache && Date.now() < googleCertsExpiry) {
+    return Promise.resolve(googleCertsCache);
+  }
+  return new Promise((resolve) => {
+    https.get("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com", (res) => {
+      let body = "";
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => {
+        try {
+          googleCertsCache = JSON.parse(body);
+          googleCertsExpiry = Date.now() + 6 * 3600 * 1000;
+          resolve(googleCertsCache);
+        } catch (_) {
+          resolve({});
+        }
+      });
+    }).on("error", () => resolve({}));
+  });
+}
+
+async function verifyGoogleIdTokenRaw(token, projectId) {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    const signature = Buffer.from(parts[2], "base64url");
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.warn("[AUTH] Token has expired:", payload.exp, "vs now:", now);
+      return null;
+    }
+    if (payload.aud !== projectId) {
+      console.warn("[AUTH] Audience mismatch:", payload.aud, "expected:", projectId);
+      return null;
+    }
+    if (payload.iss !== `https://securetoken.google.com/${projectId}`) {
+      console.warn("[AUTH] Issuer mismatch:", payload.iss);
+      return null;
+    }
+
+    const certs = await getGooglePublicCerts();
+    const cert = certs[header.kid];
+    if (!cert) {
+      console.warn("[AUTH] No matching Google cert for kid:", header.kid);
+      return null;
+    }
+
+    const verifier = crypto.createVerify("RSA-SHA256");
+    verifier.update(`${parts[0]}.${parts[1]}`);
+    const isValid = verifier.verify(cert, signature);
+    if (!isValid) {
+      console.warn("[AUTH] RSA signature verification failed");
+      return null;
+    }
+
+    return payload;
+  } catch (err) {
+    console.warn("[AUTH] Error verifying token:", err.message);
+    return null;
+  }
+}
+
 // ─── Admin Authentication (Google Sign-In Firebase ID Token Only, NO PIN) ────
 async function verifyAdminBearer(bearer) {
-  if (!bearer || !hasFbApps()) return null;
-  try {
-    const decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
-    if (!decodedFb || !decodedFb.email || decodedFb.email_verified === false) return null;
+  if (!bearer) return null;
+  let decodedFb = null;
 
-    const emailLower = decodedFb.email.toLowerCase();
-    const envAdmins = getEnvAdminEmails();
+  // 1. Try Firebase Admin SDK if service account is present
+  if (hasFbApps() && process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      decodedFb = await fbAdmin.auth().verifyIdToken(bearer);
+    } catch (_) {}
+  }
 
-    if (firestoreEnabled && db) {
+  // 2. Direct cryptographic verification with Google public certs (Stateless, Works on Render!)
+  if (!decodedFb) {
+    try {
+      decodedFb = await verifyGoogleIdTokenRaw(bearer, PROJECT_ID);
+    } catch (_) {}
+  }
+
+  if (!decodedFb || !decodedFb.email || decodedFb.email_verified === false) {
+    return null;
+  }
+
+  const emailLower = decodedFb.email.toLowerCase();
+  const envAdmins = getEnvAdminEmails();
+
+  if (firestoreEnabled && db) {
+    try {
       const whiteDoc = await db.collection("admin_whitelist").doc(emailLower).get();
       if (whiteDoc.exists || envAdmins.has(emailLower)) {
         return {
-          uid: decodedFb.uid,
+          uid: decodedFb.uid || decodedFb.sub,
           email: emailLower,
           name: decodedFb.name || emailLower,
           picture: decodedFb.picture || "",
@@ -1182,22 +1271,21 @@ async function verifyAdminBearer(bearer) {
         };
       }
       return null;
-    }
-
-    if (envAdmins.has(emailLower)) {
-      return {
-        uid: decodedFb.uid,
-        email: emailLower,
-        name: decodedFb.name || emailLower,
-        picture: decodedFb.picture || "",
-        role: "admin",
-        provider: "firebase",
-      };
-    }
-    return null;
-  } catch (_) {
-    return null;
+    } catch (_) {}
   }
+
+  if (envAdmins.has(emailLower)) {
+    return {
+      uid: decodedFb.uid || decodedFb.sub,
+      email: emailLower,
+      name: decodedFb.name || emailLower,
+      picture: decodedFb.picture || "",
+      role: "admin",
+      provider: "firebase",
+    };
+  }
+
+  return null;
 }
 
 async function requireAdmin(req, res, next) {

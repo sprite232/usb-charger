@@ -3711,6 +3711,7 @@ async function saveSettings() {
   if (dashData) dashData.config = { ...(dashData.config || {}), ...updatedConfig };
 
   // Sync to Firestore directly
+  let fsSaved = false;
   if (fbDb && (currentUser || fbAuth.currentUser)) {
     try {
       await fbDb.collection('charger').doc('charger01').set({
@@ -3721,6 +3722,7 @@ async function saveSettings() {
         secondsPerBaht: Math.round(secondsPerBaht),
         updatedAt: new Date().toISOString()
       }, { merge: true });
+      fsSaved = true;
     } catch(fsErr) {
       console.warn('[Firestore saveSettings notice]', fsErr);
     }
@@ -3737,7 +3739,7 @@ async function saveSettings() {
     secondsPerBaht: Math.round(secondsPerBaht)
   });
 
-  if (res && res.success) {
+  if ((res && res.success) || fsSaved) {
     if (statusEl) statusEl.textContent = 'บันทึกสำเร็จ';
     adminToast('บันทึกบัญชีรับเงิน & อัตราค่าบริการเรียบร้อยแล้ว', 'success');
     setActionNotice('บันทึกบัญชีรับเงิน & อัตราค่าบริการเรียบร้อย');
@@ -5355,6 +5357,7 @@ async function saveSupportSettings() {
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
 
   // Sync to Firestore directly so Kiosk gets update immediately
+  let fsSaved = false;
   if (fbDb && (currentUser || fbAuth.currentUser)) {
     try {
       await fbDb.collection('charger').doc('charger01').set({
@@ -5365,6 +5368,7 @@ async function saveSupportSettings() {
         truemoneyPhone: truemoneyPhone,
         updatedAt: new Date().toISOString()
       }, { merge: true });
+      fsSaved = true;
     } catch(fsErr) {
       console.warn('[Firestore saveSupportSettings notice]', fsErr);
     }
@@ -5378,7 +5382,7 @@ async function saveSupportSettings() {
     truemoneyPhone: truemoneyPhone
   });
 
-  if (res && res.success) {
+  if ((res && res.success) || fsSaved) {
     setActionNotice('บันทึกข้อมูลช่องทางติดต่อ & TrueMoney เรียบร้อย');
     adminToast('บันทึกข้อมูลช่องทางติดต่อและเบอร์ TrueMoney เรียบร้อยแล้ว', 'success');
   } else {
