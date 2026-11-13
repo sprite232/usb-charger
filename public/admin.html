@@ -419,6 +419,53 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
 }
 .btn-logout:hover{border-color: var(--red); color: var(--red); background: var(--red-bg);}
 
+/* ─── TOPBAR SURVEY & SHEETS PILLS ──────────── */
+.topbar-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: var(--card2-gradient);
+  color: var(--text);
+  box-shadow: var(--shadow-btn);
+  transition: all 0.16s cubic-bezier(.22,1,.36,1);
+  white-space: nowrap;
+}
+.topbar-link-pill:hover {
+  transform: translateY(-1px);
+}
+.topbar-link-pill.pill-forms {
+  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.1);
+  color: #c084fc;
+}
+.topbar-link-pill.pill-forms:hover {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: #a855f7;
+  color: #f3e8ff;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.25);
+}
+.topbar-link-pill.pill-sheets {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+.topbar-link-pill.pill-sheets:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  color: #ecfdf5;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+@media (max-width: 900px) {
+  .topbar-link-pill span { display: none; }
+  .topbar-link-pill { padding: 0.45rem 0.55rem; }
+}
+
 /* ─── TACTILE TABS DOCK ──────────────────────── */
 .tabs{
   display: flex;
@@ -1470,6 +1517,14 @@ tr:hover td{background: var(--card-hover);}
     </div>
     <div class="topbar-actions">
       <span class="session-badge" id="sessionTimer" style="display:none !important;"></span>
+      <a href="https://docs.google.com/forms/d/1NANtLWjY3PGUMp4V_ouCdZ4jtTMFgDIw2sD0S8DgzcA/edit" target="_blank" rel="noopener" class="topbar-link-pill pill-forms" title="เปิดหน้าแก้ไข / ตรวจคำตอบ Google Forms">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>ตรวจคำตอบ (Forms)</span>
+      </a>
+      <a href="https://docs.google.com/spreadsheets/d/1Ltc6iWb2v9JgDDNErTHTxu-MxXt5hQTzBl0jUxHk6IE/edit?resourcekey=&gid=1369989582#gid=1369989582" target="_blank" rel="noopener" class="topbar-link-pill pill-sheets" title="เปิดดูตารางสรุปผลและคะแนน Google Sheets">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        <span>สรุปผล (Sheets)</span>
+      </a>
       <button class="btn-theme" onclick="showUserInfo()" title="ข้อมูลบัญชีผู้ดูแล">
         <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
       </button>
@@ -1544,6 +1599,56 @@ tr:hover td{background: var(--card-hover);}
         <div class="lbl">ปัญหาที่รอแก้ไข</div>
         <div class="val" id="stPendingIssues" style="color:var(--red)">0 เรื่อง</div>
         <div class="comp-flex comp-muted"><span id="stPendingIssuesSub">คำร้องใหม่</span></div>
+      </div>
+    </div>
+
+    <!-- Google Forms & Google Sheets Evaluation Center -->
+    <div class="test-panel" style="margin:0 0 1.75rem;border-left:4px solid #a855f7;box-shadow:var(--shadow-card);background:linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(16,185,129,0.06) 100%), var(--card-gradient);">
+      <div class="test-panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(168,85,247,0.16);display:flex;align-items:center;justify-content:center;color:#c084fc">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div>
+            <span style="font-size:1.05rem;font-weight:700">แบบประเมินความพึงพอใจ &amp; สรุปผลตอบรับ (Admin Survey Center)</span>
+            <div style="font-size:0.8rem;color:var(--muted);font-weight:400;margin-top:2px">ตรวจดูคำตอบรายบุคคลของนักศึกษา/ผู้ใช้ และดาวน์โหลดตารางสรุปผลคะแนนได้ทันที</div>
+          </div>
+        </div>
+        <span style="font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(168,85,247,0.18);color:#d8b4fe">สำหรับ Admin เท่านั้น</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1.15rem">
+        <!-- Card 1: Google Forms -->
+        <div style="background:var(--card2-gradient);border:1px solid rgba(168,85,247,0.35);border-radius:14px;padding:1.25rem;display:flex;flex-direction:column;justify-content:space-between;gap:1rem">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.5rem">
+              <span style="font-size:1.35rem">📝</span>
+              <strong style="font-size:0.98rem;color:#e9d5ff">ตรวจคำตอบ / แก้ไขแบบฟอร์ม (Google Forms)</strong>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.55;margin:0">
+              เปิดหน้าระบบหลังบ้าน Google Forms เพื่อดูคำตอบแบบแยกรายบุคคล (Individual Responses), กราฟสรุปความพึงพอใจ หรือปรับปรุงชุดคำถาม
+            </p>
+          </div>
+          <a href="https://docs.google.com/forms/d/1NANtLWjY3PGUMp4V_ouCdZ4jtTMFgDIw2sD0S8DgzcA/edit" target="_blank" rel="noopener" class="btn-sm btn-primary" style="background:linear-gradient(135deg, #9333ea, #7e22ce);text-align:center;text-decoration:none;justify-content:center;display:flex;align-items:center;gap:8px;padding:0.65rem 1rem;font-weight:600;border-radius:10px">
+            <span>เปิด Google Forms ตรวจคำตอบ ↗</span>
+          </a>
+        </div>
+
+        <!-- Card 2: Google Sheets -->
+        <div style="background:var(--card2-gradient);border:1px solid rgba(16,185,129,0.35);border-radius:14px;padding:1.25rem;display:flex;flex-direction:column;justify-content:space-between;gap:1rem">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.5rem">
+              <span style="font-size:1.35rem">📊</span>
+              <strong style="font-size:0.98rem;color:#a7f3d0">ตารางสรุปผลและคะแนนเฉลี่ย (Google Sheets)</strong>
+            </div>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.55;margin:0">
+              เปิดดู Spreadsheet ที่บันทึกคำตอบอัตโนมัติ มีคะแนนความพึงพอใจ ตารางเวลา สามารถดาวน์โหลดเป็น Excel (.xlsx) เพื่อทำรายงานหรือวิจัยได้
+            </p>
+          </div>
+          <a href="https://docs.google.com/spreadsheets/d/1Ltc6iWb2v9JgDDNErTHTxu-MxXt5hQTzBl0jUxHk6IE/edit?resourcekey=&gid=1369989582#gid=1369989582" target="_blank" rel="noopener" class="btn-sm btn-green" style="background:linear-gradient(135deg, #10b981, #059669);text-align:center;text-decoration:none;justify-content:center;display:flex;align-items:center;gap:8px;padding:0.65rem 1rem;font-weight:600;border-radius:10px">
+            <span>เปิด Google Sheets ดูผลคะแนน ↗</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -3720,6 +3825,13 @@ async function saveSettings() {
         bankAccount,
         bankAccountName,
         secondsPerBaht: Math.round(secondsPerBaht),
+        config: {
+          promptpayPhone,
+          bankName,
+          bankAccount,
+          bankAccountName,
+          secondsPerBaht: Math.round(secondsPerBaht)
+        },
         updatedAt: new Date().toISOString()
       }, { merge: true });
       fsSaved = true;
@@ -5366,6 +5478,13 @@ async function saveSupportSettings() {
         supportIg: ig,
         supportLocation: loc,
         truemoneyPhone: truemoneyPhone,
+        config: {
+          supportPhone: phone,
+          supportLine: line,
+          supportIg: ig,
+          supportLocation: loc,
+          truemoneyPhone: truemoneyPhone
+        },
         updatedAt: new Date().toISOString()
       }, { merge: true });
       fsSaved = true;

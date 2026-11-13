@@ -1708,9 +1708,9 @@ footer{
       <span class="survey-btn-txt">แบบประเมิน</span>
     </a>
     <!-- ติดต่อ Instagram (IG) -->
-    <a href="https://instagram.com" target="_blank" rel="noopener" class="icon-nav-btn ig-nav-btn" id="igNavBtn" title="ติดต่อเราผ่าน Instagram" aria-label="Instagram">
+    <a href="https://instagram.com/smartcharger.s" target="_blank" rel="noopener" class="icon-nav-btn ig-nav-btn" id="igNavBtn" title="ติดต่อเราผ่าน Instagram (@smartcharger.s)" aria-label="Instagram">
       <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-      <span class="ig-btn-txt" id="igNavTxt">IG</span>
+      <span class="ig-btn-txt" id="igNavTxt">@smartcharger.s</span>
     </a>
     <!-- Share QR Code Button -->
     <button class="icon-nav-btn share-nav-btn" id="shareQrBtn" onclick="openShareModal()" title="แชร์เป็น QR Code ให้สแกน" aria-label="แชร์เป็น QR Code">
@@ -1840,13 +1840,13 @@ footer{
       </a>
 
       <!-- Instagram (IG) -->
-      <a href="https://instagram.com" target="_blank" rel="noopener" class="contact-pill" id="contactIgBtn" title="กดเพื่อเปิด Instagram" style="display:none">
+      <a href="https://instagram.com/smartcharger.s" target="_blank" rel="noopener" class="contact-pill" id="contactIgBtn" title="กดเพื่อเปิด Instagram" style="display:flex">
         <div class="contact-ic-box ig" style="padding:0;overflow:hidden;background:none">
           <img src="assets/icon-instagram.png" alt="Instagram" style="width:38px;height:38px;object-fit:cover;border-radius:10px;display:block"/>
         </div>
         <div class="contact-info">
           <span class="contact-lbl">Instagram ผู้ดูแล</span>
-          <strong class="contact-val" id="contactIgText">—</strong>
+          <strong class="contact-val" id="contactIgText">@smartcharger.s</strong>
         </div>
       </a>
 
@@ -3055,34 +3055,38 @@ function saveStoredIssues(issues) {
 }
 
 function getAppConfig(){
-  const fsCfg = window._fsData?.config || window._fsData || {};
+  const raw = window._fsData || {};
+  const cfgMap = raw.config || {};
   try{
     const s=JSON.parse(localStorage.getItem('usb_charger_config')||'{}');
+    if (s.supportIg === '_exoba_') s.supportIg = 'smartcharger.s';
+    const effectiveIg = raw.supportIg || cfgMap.supportIg || s.supportIg || 'smartcharger.s';
     return{
-      promptpayPhone: fsCfg.promptpayPhone || s.promptpayPhone || '',
-      truemoneyPhone: fsCfg.truemoneyPhone || s.truemoneyPhone || fsCfg.promptpayPhone || s.promptpayPhone || '',
-      bankName: fsCfg.bankName || s.bankName || '',
-      bankAccount: fsCfg.bankAccount || s.bankAccount || '',
-      bankAccountName: fsCfg.bankAccountName || s.bankAccountName || '',
-      secondsPerBaht: Number(fsCfg.secondsPerBaht || s.secondsPerBaht) || 180,
-      supportPhone: fsCfg.supportPhone !== undefined ? fsCfg.supportPhone : (s.supportPhone !== undefined ? s.supportPhone : ''),
-      supportLine: fsCfg.supportLine !== undefined ? fsCfg.supportLine : (s.supportLine !== undefined ? s.supportLine : ''),
-      supportIg: fsCfg.supportIg !== undefined ? fsCfg.supportIg : (s.supportIg !== undefined ? s.supportIg : ''),
-      supportLocation: fsCfg.supportLocation !== undefined ? fsCfg.supportLocation : (s.supportLocation !== undefined ? s.supportLocation : 'จุดบริการชาร์จไฟอัจฉริยะ')
+      promptpayPhone: raw.promptpayPhone || cfgMap.promptpayPhone || s.promptpayPhone || '',
+      truemoneyPhone: raw.truemoneyPhone || cfgMap.truemoneyPhone || s.truemoneyPhone || raw.promptpayPhone || cfgMap.promptpayPhone || s.promptpayPhone || '',
+      bankName: raw.bankName || cfgMap.bankName || s.bankName || '',
+      bankAccount: raw.bankAccount || cfgMap.bankAccount || s.bankAccount || '',
+      bankAccountName: raw.bankAccountName || cfgMap.bankAccountName || s.bankAccountName || '',
+      secondsPerBaht: Number(raw.secondsPerBaht || cfgMap.secondsPerBaht || s.secondsPerBaht) || 180,
+      supportPhone: raw.supportPhone || cfgMap.supportPhone || s.supportPhone || '',
+      supportLine: raw.supportLine || cfgMap.supportLine || s.supportLine || '',
+      supportIg: effectiveIg === '_exoba_' ? 'smartcharger.s' : effectiveIg,
+      supportLocation: raw.supportLocation || cfgMap.supportLocation || s.supportLocation || 'จุดบริการชาร์จไฟอัจฉริยะ'
     };
   }
   catch(e){
+    const effectiveIg = raw.supportIg || cfgMap.supportIg || 'smartcharger.s';
     return{
-      promptpayPhone: fsCfg.promptpayPhone || '',
-      truemoneyPhone: fsCfg.truemoneyPhone || fsCfg.promptpayPhone || '',
-      bankName: fsCfg.bankName || '',
-      bankAccount: fsCfg.bankAccount || '',
-      bankAccountName: fsCfg.bankAccountName || '',
-      secondsPerBaht: Number(fsCfg.secondsPerBaht) || 180,
-      supportPhone: fsCfg.supportPhone || '',
-      supportLine: fsCfg.supportLine || '',
-      supportIg: fsCfg.supportIg || '',
-      supportLocation: fsCfg.supportLocation || 'จุดบริการชาร์จไฟอัจฉริยะ'
+      promptpayPhone: raw.promptpayPhone || cfgMap.promptpayPhone || '',
+      truemoneyPhone: raw.truemoneyPhone || cfgMap.truemoneyPhone || '',
+      bankName: raw.bankName || cfgMap.bankName || '',
+      bankAccount: raw.bankAccount || cfgMap.bankAccount || '',
+      bankAccountName: raw.bankAccountName || cfgMap.bankAccountName || '',
+      secondsPerBaht: Number(raw.secondsPerBaht || cfgMap.secondsPerBaht) || 180,
+      supportPhone: raw.supportPhone || cfgMap.supportPhone || '',
+      supportLine: raw.supportLine || cfgMap.supportLine || '',
+      supportIg: effectiveIg === '_exoba_' ? 'smartcharger.s' : effectiveIg,
+      supportLocation: raw.supportLocation || cfgMap.supportLocation || 'จุดบริการชาร์จไฟอัจฉริยะ'
     };
   }
 }
@@ -3381,16 +3385,21 @@ window._onFsUpdate = function(d) {
   }
 
   // 2. Support Contact & Payment Config
-  const srcCfg = d.config || d;
+  const srcCfg = d.config || {};
   try {
     const localCfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
     let hasCfgUpdate = false;
     ['promptpayPhone', 'truemoneyPhone', 'bankName', 'bankAccount', 'bankAccountName', 'supportPhone', 'supportLine', 'supportIg', 'supportLocation'].forEach(k => {
-      if (srcCfg[k] !== undefined) {
-        localCfg[k] = srcCfg[k];
+      const val = d[k] !== undefined ? d[k] : (srcCfg[k] !== undefined ? srcCfg[k] : undefined);
+      if (val !== undefined) {
+        localCfg[k] = val;
         hasCfgUpdate = true;
       }
     });
+    if (localCfg.supportIg === '_exoba_') {
+      localCfg.supportIg = 'smartcharger.s';
+      hasCfgUpdate = true;
+    }
     if (rate) {
       localCfg.secondsPerBaht = Number(rate);
       hasCfgUpdate = true;
@@ -3418,13 +3427,20 @@ async function refreshPorts(){
   SPB=d.secondsPerBaht||180;
   $('rateLabel').textContent=`1฿ = ${SPB/60} นาที`;
   document.querySelectorAll('[data-for]').forEach(el=>el.textContent=fmtTime(Number(el.dataset.for)*SPB));
-  if (d.supportLocation || d.supportPhone || d.supportLine || d.supportIg) {
+  const fsIg = d.supportIg || d.config?.supportIg;
+  const fsLoc = d.supportLocation || d.config?.supportLocation;
+  const fsPhone = d.supportPhone || d.config?.supportPhone;
+  const fsLine = d.supportLine || d.config?.supportLine;
+  const fsTrueMoney = d.truemoneyPhone || d.config?.truemoneyPhone;
+
+  if (fsLoc || fsPhone || fsLine || fsIg || fsTrueMoney) {
     try {
       const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
-      if (d.supportLocation) cfg.supportLocation = d.supportLocation;
-      if (d.supportPhone !== undefined) cfg.supportPhone = d.supportPhone;
-      if (d.supportLine !== undefined) cfg.supportLine = d.supportLine;
-      if (d.supportIg !== undefined) cfg.supportIg = d.supportIg;
+      if (fsLoc) cfg.supportLocation = fsLoc;
+      if (fsPhone !== undefined) cfg.supportPhone = fsPhone;
+      if (fsLine !== undefined) cfg.supportLine = fsLine;
+      if (fsIg !== undefined) cfg.supportIg = fsIg;
+      if (fsTrueMoney !== undefined) cfg.truemoneyPhone = fsTrueMoney;
       localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
     } catch(e) {}
   }
