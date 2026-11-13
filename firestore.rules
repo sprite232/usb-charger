@@ -1,24 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function: check if authenticated user is in the admin whitelist or is master admin
-    function isMasterAdmin() {
+    // Check if authenticated user is in the admin whitelist or has admin custom claim (Zero Hardcoded Secrets)
+    function isAdmin() {
       return request.auth != null &&
         request.auth.token.email != null &&
         request.auth.token.email_verified == true &&
-        request.auth.token.email.lower() in [
-          'palmtawanlaothaisong00@gmail.com',
-          'sukitlowkey@gmail.com'
-        ];
-    }
-
-    function isAdmin() {
-      return isMasterAdmin() || (
-        request.auth != null &&
-        request.auth.token.email != null &&
-        request.auth.token.email_verified == true &&
-        exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()))
-      );
+        (
+          request.auth.token.admin == true ||
+          exists(/databases/$(database)/documents/admin_whitelist/$(request.auth.token.email.lower()))
+        );
     }
 
     // Charger & Port state - anyone can read kiosk status; Server Admin SDK writes only
@@ -44,9 +35,10 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Pending slip/voucher approvals - admins read; Server Admin SDK writes only
+    // Pending slip/voucher approvals - Anyone with exact ID can check status (get); only admins can list all or write
     match /pending_approvals/{pendingId} {
-      allow read: if isAdmin();
+      allow get: if true;
+      allow list: if isAdmin();
       allow write: if false;
     }
 
@@ -56,12 +48,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Admin Whitelist - master admins and listed admins can manage
+    // Admin Whitelist - authenticated admins can manage; users can check their own entry
     match /admin_whitelist/{email} {
-      allow get: if isMasterAdmin() || (
-                 request.auth != null && 
+      allow get: if request.auth != null && 
                  request.auth.token.email != null && 
-                 request.auth.token.email.lower() == email.lower());
+                 request.auth.token.email.lower() == email.lower();
       allow list, write: if isAdmin();
     }
 

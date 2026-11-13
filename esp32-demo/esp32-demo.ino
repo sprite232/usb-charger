@@ -85,6 +85,8 @@ bool isFirstConnect = true;
 unsigned long bootPressStart = 0;
 unsigned long lastDisconnectTime = 0;
 unsigned long lastPollMs = 0;
+unsigned long nextReconnectAttemptMs = 0;
+unsigned long reconnectIntervalMs = 2000UL;
 
 // OTA Verification & Rollback Tracking
 bool otaPendingVerify = false;
@@ -376,13 +378,14 @@ void setup() {
     Serial.printf("[NET] Target Server: %s\n", currentServer.c_str());
     Serial.printf("[SYNC] Polling server commands every %lu ms...\n", pollIntervalMs);
   } else {
-    Serial.printf("\n[WARN] Unable to connect to Wi-Fi '%s' (status=%d)\n", currentSSID.c_str(), WiFi.status());
+    Serial.printf("\n[WARN] Unable to connect to Wi-Fi '%s' at startup (status=%d)\n", currentSSID.c_str(), WiFi.status());
     if (otaPendingVerify) {
       triggerOtaRollback("wifi_connect_failed_after_ota");
       return;
     }
-    Serial.println("[AP] Starting Captive Portal Hotspot...");
-    startConfigPortal();
+    Serial.println("[WIFI] Will continue persistent auto-reconnect in loop()...");
+    lastDisconnectTime = millis();
+    nextReconnectAttemptMs = millis() + 2000UL;
   }
 }
 
@@ -437,29 +440,44 @@ void loop() {
 
   // Normal STA Connected Execution
   if (WiFi.status() == WL_CONNECTED) {
-    lastDisconnectTime = 0;
+    if (lastDisconnectTime != 0) {
+      Serial.println("\n[WIFI] Connection restored! Resuming server sync...");
+      lastDisconnectTime = 0;
+      nextReconnectAttemptMs = 0;
+      reconnectIntervalMs = 2000UL;
+    }
     if (millis() - lastPollMs >= pollIntervalMs) {
       lastPollMs = millis();
       fetchRelayCommands();
     }
     delay(50);
   } else {
-    if (lastDisconnectTime == 0) lastDisconnectTime = millis();
+    if (lastDisconnectTime == 0) {
+      lastDisconnectTime = millis();
+      nextReconnectAttemptMs = millis() + 1000UL;
+      reconnectIntervalMs = 2000UL;
+      Serial.printf("[WIFI] Connection lost (status=%d). Entering persistent auto-reconnect mode...\n", WiFi.status());
+    }
 
-    // If disconnected for more than 45 seconds, cut inactive sessions via fail-safe & open AP setup (or rollback OTA if unverified)
-    if (millis() - lastDisconnectTime > 45000) {
-      if (otaPendingVerify) {
-        triggerOtaRollback("wifi_lost_during_ota_verify");
-        return;
-      }
-      Serial.println("\n[WARN] Wi-Fi offline > 45s -> opening Hotspot setup mode");
-      startConfigPortal();
+    // OTA failsafe check
+    if (otaPendingVerify && (long)(millis() - otaVerifyDeadlineMs) >= 0) {
+      triggerOtaRollback("wifi_lost_during_ota_verify");
       return;
     }
 
-    Serial.printf("[WIFI] Disconnected (status=%d), retrying...\n", WiFi.status());
-    WiFi.reconnect();
-    delay(1000);
+    // Persistent Non-blocking Reconnect with Backoff (Never get trapped in AP mode!)
+    unsigned long nowMs = millis();
+    if ((long)(nowMs - nextReconnectAttemptMs) >= 0) {
+      Serial.printf("[WIFI] Reconnecting to '%s' (offline for %lu s, next retry in %lu s)...\n",
+                    currentSSID.c_str(), (nowMs - lastDisconnectTime) / 1000UL, reconnectIntervalMs / 1000UL);
+      WiFi.disconnect();
+      WiFi.begin(currentSSID.c_str(), currentPass.c_str());
+
+      nextReconnectAttemptMs = nowMs + reconnectIntervalMs;
+      reconnectIntervalMs = (reconnectIntervalMs < 15000UL) ? reconnectIntervalMs * 2 : 15000UL;
+    }
+
+    delay(100);
   }
 }
 

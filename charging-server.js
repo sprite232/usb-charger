@@ -98,14 +98,11 @@ try {
 }
 
 // ─── Runtime Config (from process.env; zero hardcoded secrets/PII) ─────────────
-const DEFAULT_ADMIN_EMAILS = [
-  "palmtawanlaothaisong00@gmail.com",
-  "sukitlowkey@gmail.com",
-];
+const DEFAULT_ADMIN_EMAILS = [];
 
 function getEnvAdminEmails() {
   const raw = String(process.env.ADMIN_EMAILS || "").trim();
-  const list = raw ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : DEFAULT_ADMIN_EMAILS;
+  const list = raw ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : [];
   return new Set(list);
 }
 
@@ -167,6 +164,7 @@ const state = {
   auditLogs: [],
   pendingApprovals: [],
   usedTransRefs: new Set(),
+  usedSlipHashes: new Set(),
   lastEsp32: {
     ip: null,
     lastSeen: null,
@@ -522,6 +520,7 @@ function saveState() {
     const diskData = {
       transactions: state.transactions.slice(0, 500),
       usedTransRefs: Array.from(state.usedTransRefs).slice(-1000),
+      usedSlipHashes: Array.from(state.usedSlipHashes || []).slice(-1000),
       visits: state.visits.slice(-1500),
       auditLogs: state.auditLogs.slice(0, 200),
       pendingApprovals: state.pendingApprovals.map(({ imageDataUrl, ...meta }) => meta).slice(0, 50),
@@ -549,6 +548,7 @@ function saveState() {
     const publicPayload = {
       ports,
       ...getRuntimePublicConfig(),
+      config: getRuntimePublicConfig(),
       stats: {
         totalVisits: visitStats.totalVisits,
         todayVisits: visitStats.todayVisits,
@@ -564,6 +564,7 @@ function saveState() {
     const privatePayload = {
       ports,
       usedTransRefs: Array.from(state.usedTransRefs).slice(-1000),
+      usedSlipHashes: Array.from(state.usedSlipHashes || []).slice(-1000),
       config: diskData.config,
       esp32Control: diskData.esp32Control,
       updatedAt: state.updatedAt,
@@ -628,6 +629,7 @@ function loadStateFromDisk() {
     const data = JSON.parse(raw);
     if (Array.isArray(data.transactions)) state.transactions = data.transactions;
     if (Array.isArray(data.usedTransRefs)) state.usedTransRefs = new Set(data.usedTransRefs);
+    if (Array.isArray(data.usedSlipHashes)) state.usedSlipHashes = new Set(data.usedSlipHashes);
     if (Array.isArray(data.visits)) state.visits = data.visits;
     if (Array.isArray(data.auditLogs)) state.auditLogs = data.auditLogs;
     if (Array.isArray(data.pendingApprovals)) state.pendingApprovals = data.pendingApprovals;
@@ -648,6 +650,9 @@ async function restoreFromFirestore() {
       const priv = privSnap.data();
       if (Array.isArray(priv.usedTransRefs)) {
         priv.usedTransRefs.forEach((ref) => state.usedTransRefs.add(ref));
+      }
+      if (Array.isArray(priv.usedSlipHashes)) {
+        priv.usedSlipHashes.forEach((h) => state.usedSlipHashes.add(h));
       }
       applySavedConfig(priv.config);
       applySavedEsp32Control(priv.esp32Control);
@@ -782,8 +787,28 @@ function createTx(port, amount, method, extra = {}) {
 function activatePort(portId, amount, method, extra = {}) {
   const port = getPort(portId);
   if (!port) return null;
+
+  // Atomic state guard: prevent race conditions from double activation
+  if (port.status === "in-use" && !extra.allowTopUp) {
+    console.warn(`[RELAY-GUARD] Port ${portId} is already in-use. Blocking concurrent activation.`);
+    return null;
+  }
+
   const sessionVisitorId = port.paymentSession?.visitorId || extra.visitorId || null;
   const tx = createTx(port, amount, method, { ...extra, visitorId: sessionVisitorId });
+
+  if (port.status === "in-use" && extra.allowTopUp) {
+    port.remainingSeconds += tx.chargeSeconds;
+    port.totalSeconds += tx.chargeSeconds;
+    port.isPaused = false;
+    port.relayOn = true;
+    port.paymentSession = null;
+    state.updatedAt = now();
+    saveState();
+    console.log(`[RELAY] Topped up port=${portId} +${amount}B (${tx.chargeSeconds}s) newRemaining=${port.remainingSeconds}s`);
+    addSystemLog("RELAY", "success", `พอร์ต ${port.label} เติมเวลาชาร์จ +${amount} บาท (+${Math.round(tx.chargeSeconds / 60)} นาที) [${tx.id}]`);
+    return tx;
+  }
 
   port.status = "in-use";
   port.relayOn = true;
@@ -827,7 +852,8 @@ function stopPort(portId, reason = "time_up") {
   port.totalSeconds = 0;
   state.updatedAt = now();
   saveState();
-  addSystemLog("RELAY", "info", `พอร์ต ${port.label} ตัดไฟ (${reason === "time_up" ? "ครบเวลาชาร์จแล้ว" : "คำสั่งผู้ดูแล"})`);
+  const reasonText = reason === "time_up" ? "ครบเวลาชาร์จแล้ว" : (reason === "early_stop" ? "ผู้ใช้หยุดชาร์จก่อนเวลา" : "คำสั่งผู้ดูแล");
+  addSystemLog("RELAY", "info", `พอร์ต ${port.label} ตัดไฟ (${reasonText})`);
   console.log(`[RELAY] Stopped port=${portId} reason=${reason}`);
   return true;
 }
@@ -907,9 +933,14 @@ function extractBankName(party) {
 }
 
 async function verifySlip(imageBuffer, mimetype, expectedAmount) {
+  const slipHash = crypto.createHash("sha256").update(imageBuffer).digest("hex");
+  if (state.usedSlipHashes && state.usedSlipHashes.has(slipHash)) {
+    return { valid: false, reason: "DUPLICATE_SLIP", message: "รูปสลิปนี้ถูกใช้งานในระบบไปแล้ว" };
+  }
+
   if (!CFG.easyslipKey) {
-    if (CFG.allowUnverifiedDev || process.env.NODE_ENV !== "production") {
-      console.warn("[SLIP] EASYSLIP_API_KEY not configured — dev bypass mode");
+    if (CFG.allowUnverifiedDev) {
+      console.warn("[SLIP] Explicit dev mode (ALLOW_UNVERIFIED_DEV_MODE=true) — bypass active");
       return {
         valid: true,
         isDev: true,
@@ -1047,15 +1078,19 @@ async function verifySlip(imageBuffer, mimetype, expectedAmount) {
     return { valid: false, reason: "WRONG_RECEIVER", message: "สลิปไม่ได้โอนเข้าบัญชีหรือพร้อมเพย์ของตู้ชาร์จนี้" };
   }
 
-  // Reserve transRef to prevent replay attacks
+  // Reserve transRef & slipHash to prevent replay attacks
   if (raw?.transRef) {
     state.usedTransRefs.add(raw.transRef);
-    saveState();
   }
+  if (slipHash) {
+    state.usedSlipHashes.add(slipHash);
+  }
+  saveState();
 
   return {
     valid: true,
     transRef: raw?.transRef || generateRandomId("SLIP"),
+    slipHash,
     amount: slipAmount,
     sender: extractPartyName(raw?.sender, "ผู้โอนผ่านสลิป"),
     senderBank: extractBankName(raw?.sender) || "Bank",
@@ -1442,7 +1477,7 @@ app.post("/api/payment/create", limiterPaymentCreate, async (req, res) => {
   res.json({ success: true, session });
 });
 
-function queueManualApproval({ port, session, amount, method, visitorId, reason, senderLabel, imageBuffer, mimetype }) {
+function queueManualApproval({ port, session, amount, method, visitorId, reason, senderLabel, imageBuffer, mimetype, slipHash }) {
   const pendingId = generateRandomId("PEN", state.pendingApprovals.map((p) => p.id));
   const safeVisitorId = sanitizeTaggedId(visitorId, "USR") || session?.visitorId || generateRandomId("USR");
   const base64Thumb = imageBuffer && mimetype && imageBuffer.length <= 1.2 * 1024 * 1024
@@ -1464,6 +1499,7 @@ function queueManualApproval({ port, session, amount, method, visitorId, reason,
     status: "pending",
     createdAt: now(),
     imageDataUrl: base64Thumb,
+    slipHash: slipHash || null,
   };
 
   state.pendingApprovals.unshift(pendingItem);
@@ -1475,6 +1511,9 @@ function queueManualApproval({ port, session, amount, method, visitorId, reason,
   return pendingItem;
 }
 
+const inFlightSlipHashes = new Set();
+const inFlightPortVerifications = new Set();
+
 app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), async (req, res) => {
   const port = getPort(req.body.portId);
   if (!port) return res.status(404).json({ error: "ไม่พบพอร์ตนี้" });
@@ -1485,56 +1524,100 @@ app.post("/api/payment/verify-slip", limiterVerifySlip, upload.single("image"), 
   if (!["qr", "transfer", "truemoney"].includes(port.paymentSession.method)) {
     return res.status(400).json({ error: "วิธีชำระนี้ไม่ใช้สลิป" });
   }
-  if (!req.file) {
+  if (!req.file || !req.file.buffer) {
     return res.status(400).json({ error: "กรุณาอัปโหลดรูปสลิป" });
   }
 
-  const session = port.paymentSession;
-  const visitorId = sanitizeTaggedId(req.body.visitorId, "USR") || session.visitorId;
-  const result = await verifySlip(req.file.buffer, req.file.mimetype, session.amount);
+  const slipHash = crypto.createHash("sha256").update(req.file.buffer).digest("hex");
 
-  if (!result.valid) {
-    // TrueMoney direct transfers without BOT QR or EasySlip outage -> queue for Admin manual approval (NO unverified auto-activate!)
-    if (result.needsManualReview || (session.method === "truemoney" && result.reason === "SLIP_NOT_FOUND")) {
+  // In-flight and duplicate check to prevent race conditions
+  if (state.usedSlipHashes && state.usedSlipHashes.has(slipHash)) {
+    return res.status(422).json({ success: false, reason: "DUPLICATE_SLIP", message: "สลิปนี้ถูกใช้งานในระบบไปแล้ว" });
+  }
+  if (inFlightSlipHashes.has(slipHash) || inFlightPortVerifications.has(port.id)) {
+    return res.status(409).json({ success: false, reason: "IN_FLIGHT", message: "กำลังตรวจสอบสลิปนี้หรือพอร์ตนี้อยู่ กรุณารอสักครู่" });
+  }
+
+  inFlightSlipHashes.add(slipHash);
+  inFlightPortVerifications.add(port.id);
+
+  try {
+    const session = port.paymentSession;
+    const visitorId = sanitizeTaggedId(req.body.visitorId, "USR") || session.visitorId;
+    const result = await verifySlip(req.file.buffer, req.file.mimetype, session.amount);
+
+    if (!result.valid) {
+      // TrueMoney direct transfers without BOT QR or EasySlip outage -> queue for Admin manual approval (NO unverified auto-activate!)
+      if (result.needsManualReview || (session.method === "truemoney" && result.reason === "SLIP_NOT_FOUND")) {
+        const pending = queueManualApproval({
+          port,
+          session,
+          amount: session.amount,
+          method: session.method,
+          visitorId,
+          reason: result.reason,
+          senderLabel: session.method === "truemoney" ? "ผู้โอน TrueMoney (รออนุมัติสลิป)" : "ผู้โอนสลิป (รอตรวจมือ)",
+          imageBuffer: req.file.buffer,
+          mimetype: req.file.mimetype,
+          slipHash,
+        });
+
+        return res.status(202).json({
+          success: false,
+          pendingApproval: true,
+          pendingId: pending.id,
+          reason: result.reason,
+          message: `ส่งสลิปเข้าคิวรอผู้ดูแลอนุมัติแล้ว (รหัสอ้างอิง ${pending.id}) กรุณารอผู้ดูแลตรวจสอบสักครู่หรือแจ้งผ่านแชต`,
+        });
+      }
+
+      console.log(`[SLIP] Verification failed port=${port.id} reason=${result.reason}`);
+      return res.status(422).json({ success: false, reason: result.reason, message: result.message });
+    }
+
+    const tx = activatePort(port.id, session.amount, session.method, {
+      visitorId,
+      transRef: result.transRef,
+      slipHash,
+      sender: result.sender,
+      senderBank: result.senderBank,
+      receiver: result.receiver,
+      receiverAccount: result.receiverAccount,
+      receiverBank: result.receiverBank,
+      slipDate: result.slipDate,
+      isDev: !!result.isDev,
+    });
+
+    if (!tx) {
+      // Atomic guard: If port was unexpectedly occupied while awaiting slip, queue for admin so money is never lost!
       const pending = queueManualApproval({
         port,
         session,
         amount: session.amount,
         method: session.method,
         visitorId,
-        reason: result.reason,
-        senderLabel: session.method === "truemoney" ? "ผู้โอน TrueMoney (รออนุมัติสลิป)" : "ผู้โอนสลิป (รอตรวจมือ)",
+        reason: "PORT_OCCUPIED_CONCURRENTLY",
+        senderLabel: result.sender || "ผู้โอนผ่านสลิป",
         imageBuffer: req.file.buffer,
         mimetype: req.file.mimetype,
+        slipHash,
       });
 
       return res.status(202).json({
         success: false,
         pendingApproval: true,
         pendingId: pending.id,
-        reason: result.reason,
-        message: `ส่งสลิปเข้าคิวรอผู้ดูแลอนุมัติแล้ว (รหัสอ้างอิง ${pending.id}) กรุณารอผู้ดูแลตรวจสอบสักครู่หรือแจ้งผ่านแชต`,
+        reason: "PORT_CONFLICT",
+        message: `ยอดเงินถูกต้อง แต่พอร์ตถูกเปิดใช้งานซ้อน ระบบส่งเข้าคิวรอผู้ดูแลจัดสรรพอร์ตให้ทันที (รหัส ${pending.id})`,
       });
     }
 
-    console.log(`[SLIP] Verification failed port=${port.id} reason=${result.reason}`);
-    return res.status(422).json({ success: false, reason: result.reason, message: result.message });
+    addSystemLog("SLIP", "success", `ตรวจสลิปผ่าน [${tx.id}] ${tx.payerId} (${tx.payerName}) -> ${tx.receiverAccount} | ${port.label} (${session.amount} บาท)`);
+    res.json({ success: true, transaction: tx, sender: tx.payerName, isDev: !!result.isDev });
+  } finally {
+    inFlightSlipHashes.delete(slipHash);
+    inFlightPortVerifications.delete(port.id);
   }
-
-  const tx = activatePort(port.id, session.amount, session.method, {
-    visitorId,
-    transRef: result.transRef,
-    sender: result.sender,
-    senderBank: result.senderBank,
-    receiver: result.receiver,
-    receiverAccount: result.receiverAccount,
-    receiverBank: result.receiverBank,
-    slipDate: result.slipDate,
-    isDev: !!result.isDev,
-  });
-
-  addSystemLog("SLIP", "success", `ตรวจสลิปผ่าน [${tx.id}] ${tx.payerId} (${tx.payerName}) -> ${tx.receiverAccount} | ${port.label} (${session.amount} บาท)`);
-  res.json({ success: true, transaction: tx, sender: tx.payerName, isDev: !!result.isDev });
 });
 
 app.post("/api/payment/truemoney-voucher", limiterPaymentCreate, (req, res) => {
@@ -1745,6 +1828,9 @@ app.post("/api/admin/pending-payments/:id/approve", requireAdmin, (req, res) => 
   pending.status = "approved";
   pending.resolvedAt = now();
   pending.resolvedBy = req.adminUser.email;
+  if (pending.slipHash) {
+    state.usedSlipHashes.add(pending.slipHash);
+  }
   delete pending.imageDataUrl; // discard temporary slip image after review
 
   const tx = activatePort(port.id, pending.amount, pending.method, {
@@ -1758,6 +1844,7 @@ app.post("/api/admin/pending-payments/:id/approve", requireAdmin, (req, res) => 
     approvedBy: req.adminUser.email,
   });
 
+  pending.txId = tx?.id || null;
   syncPendingToFirestore(pending);
   addAuditLog(req.adminUser, "APPROVE_PAYMENT", port.id, { pendingId: pending.id, txId: tx.id, amount: pending.amount });
   res.json({ success: true, transaction: tx, pending });
@@ -1782,6 +1869,57 @@ app.post("/api/admin/pending-payments/:id/reject", requireAdmin, (req, res) => {
   syncPendingToFirestore(pending);
   addAuditLog(req.adminUser, "REJECT_PAYMENT", pending.portId, { pendingId: pending.id, reason: pending.rejectReason });
   res.json({ success: true, pending });
+});
+
+// ── Public Endpoint: Check Pending Slip Approval Status Real-time ──
+app.get("/api/payment/pending/:id", (req, res) => {
+  const pendingId = req.params.id;
+  const pending = (state.pendingApprovals || []).find((p) => p.id === pendingId);
+  if (!pending) {
+    return res.status(404).json({ success: false, error: "ไม่พบคำขอตรวจสอบสลิปนี้" });
+  }
+  res.json({
+    success: true,
+    pending: {
+      id: pending.id,
+      status: pending.status, // "pending" | "approved" | "rejected"
+      portId: pending.portId,
+      portLabel: pending.portLabel,
+      amount: pending.amount,
+      method: pending.method,
+      rejectReason: pending.rejectReason || null,
+      resolvedAt: pending.resolvedAt || null,
+      resolvedBy: pending.resolvedBy ? "ผู้ดูแลระบบ" : null,
+      txId: pending.txId || null,
+      createdAt: pending.createdAt,
+    },
+  });
+});
+
+// ── Customer / Kiosk Endpoint: Early Stop Charging ──
+app.post("/api/payment/early-stop", (req, res) => {
+  const { portId, visitorId, txId } = req.body || {};
+  const port = getPort(portId);
+  if (!port) return res.status(404).json({ success: false, error: "ไม่พบพอร์ตนี้" });
+  if (port.status !== "in-use") {
+    return res.status(409).json({ success: false, error: "พอร์ตนี้ไม่ได้กำลังชาร์จอยู่" });
+  }
+
+  // Security check: Match visitorId or transaction ID
+  const curTx = port.currentTx;
+  const isAuthorized = !curTx || !curTx.visitorId || curTx.visitorId === visitorId || curTx.id === txId;
+  if (!isAuthorized) {
+    return res.status(403).json({ success: false, error: "คุณไม่มีสิทธิ์หยุดการชาร์จของพอร์ตนี้" });
+  }
+
+  const stoppedSeconds = port.remainingSeconds;
+  const ok = stopPort(port.id, "early_stop");
+  addSystemLog("KIOSK", "info", `ผู้ใช้กดหยุดชาร์จพอร์ต ${port.label} ก่อนเวลา (เวลาที่เหลือ ${stoppedSeconds}s ถูกตัด)`);
+  res.json({
+    success: ok,
+    message: `หยุดชาร์จพอร์ต ${port.label} ก่อนเวลาเรียบร้อยแล้ว`,
+    port: getPort(port.id),
+  });
 });
 
 app.post("/api/admin/config", requireAdmin, (req, res) => {

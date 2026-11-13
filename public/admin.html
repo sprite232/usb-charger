@@ -499,6 +499,18 @@ h1, h2, h3, .topbar-title, .login-box h1, .stat-card .val, .port-head .name, .te
 .stat-card.yellow{border-left-color: var(--yellow);}
 .stat-card.purple{border-left-color: var(--purple);}
 .stat-card.cyan{border-left-color: var(--cyan);}
+.stat-card.amber{border-left-color: var(--yellow);box-shadow: 0 0 15px rgba(245,158,11,0.08);}
+.stat-card.orange{border-left-color: var(--red);box-shadow: 0 0 15px rgba(239,68,68,0.08);}
+
+/* Audit Log Action Badges */
+.badge-action-green { background: rgba(16, 185, 129, 0.16) !important; color: var(--green) !important; border: 1px solid rgba(16, 185, 129, 0.35) !important; }
+.badge-action-red { background: rgba(239, 68, 68, 0.16) !important; color: var(--red) !important; border: 1px solid rgba(239, 68, 68, 0.35) !important; }
+.badge-action-orange { background: rgba(249, 115, 22, 0.16) !important; color: #f97316 !important; border: 1px solid rgba(249, 115, 22, 0.35) !important; }
+.badge-action-yellow { background: rgba(245, 158, 11, 0.16) !important; color: var(--yellow) !important; border: 1px solid rgba(245, 158, 11, 0.35) !important; }
+.badge-action-blue { background: rgba(59, 130, 246, 0.16) !important; color: var(--blue) !important; border: 1px solid rgba(59, 130, 246, 0.35) !important; }
+.badge-action-purple { background: rgba(168, 85, 247, 0.16) !important; color: var(--purple) !important; border: 1px solid rgba(168, 85, 247, 0.35) !important; }
+.badge-action-cyan { background: rgba(6, 182, 212, 0.16) !important; color: var(--cyan) !important; border: 1px solid rgba(6, 182, 212, 0.35) !important; }
+.badge-action-gray { background: rgba(148, 163, 184, 0.16) !important; color: var(--muted) !important; border: 1px solid rgba(148, 163, 184, 0.35) !important; }
 
 .stat-card .lbl{
   font-size: 0.72rem;
@@ -1523,6 +1535,29 @@ tr:hover td{background: var(--card-hover);}
         <div class="val" id="stCount">0</div>
         <div class="comp-flex comp-muted"><span>สำเร็จทั้งหมด</span></div>
       </div>
+      <div class="stat-card amber" onclick="document.getElementById('pendingApprovalsSection')?.scrollIntoView({behavior:'smooth'})" style="cursor:pointer" title="คลิกเพื่อไปที่คิวตรวจสอบสลิป">
+        <div class="lbl">สลิปรอตรวจสอบ</div>
+        <div class="val" id="stPendingSlips" style="color:var(--yellow)">0 คิว</div>
+        <div class="comp-flex comp-muted"><span id="stPendingSlipsSub">รอผู้ดูแลอนุมัติ</span></div>
+      </div>
+      <div class="stat-card orange" onclick="switchTab('issues')" style="cursor:pointer" title="คลิกเพื่อไปที่หน้ารายการแจ้งปัญหา">
+        <div class="lbl">ปัญหาที่รอแก้ไข</div>
+        <div class="val" id="stPendingIssues" style="color:var(--red)">0 เรื่อง</div>
+        <div class="comp-flex comp-muted"><span id="stPendingIssuesSub">คำร้องใหม่</span></div>
+      </div>
+    </div>
+
+    <!-- Pending Manual Slip Approvals Queue (Top of Dashboard) -->
+    <div id="pendingApprovalsSection" class="test-panel" style="display:none;border-left:4px solid var(--yellow);margin:0 0 1.75rem;box-shadow:var(--shadow-card)">
+      <div class="test-panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--yellow);stroke-width:2.2;fill:none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style="font-size:1.02rem;font-weight:700">คำขออนุมัติสลิปด้วยมือ (Manual Slip Approvals)</span>
+        </div>
+        <span id="pendingApprovalsBadge" style="font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(245,158,11,0.18);color:var(--yellow);box-shadow:0 0 10px rgba(245,158,11,0.2)">0 รายการ</span>
+      </div>
+      <div class="test-panel-desc" style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem">สลิปที่รอการยืนยันจากแอดมิน (สามารถคลิกที่รูปเพื่อซูมดูรายละเอียดสลิปฉบับเต็มได้) ระบบจะจ่ายไฟและเริ่มนับเวลาให้ลูกค้าอัตโนมัติทันทีที่กดอนุมัติ</div>
+      <div id="pendingApprovalsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem"></div>
     </div>
 
     <!-- Quick Overview Charts -->
@@ -1722,19 +1757,6 @@ tr:hover td{background: var(--card-hover);}
           <div style="color:#64748b;font-style:italic">กำลังเชื่อมต่อข้อมูลบันทึกสด...</div>
         </div>
       </div>
-    </div>
-
-    <!-- Pending Manual Slip Approvals Queue -->
-    <div id="pendingApprovalsSection" class="test-panel" style="display:none;border-left:4px solid var(--yellow);margin:1.75rem 0 0">
-      <div class="test-panel-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px">
-          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--yellow);stroke-width:2;fill:none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span>คำขออนุมัติสลิปด้วยมือ (Manual Verification Queue)</span>
-        </div>
-        <span id="pendingApprovalsBadge" style="font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(245,158,11,0.16);color:var(--yellow)">0 รายการ</span>
-      </div>
-      <div class="test-panel-desc">รายการสลิปที่ไม่สามารถยืนยันอัตโนมัติได้ (เช่น สลิป TrueMoney หรือช่วงที่ระบบตรวจสลิปขัดข้อง) ระบบจะไม่จ่ายไฟอัตโนมัติจนกว่าผู้ดูแลจะตรวจสอบยอดเงินจริงและกดอนุมัติ</div>
-      <div id="pendingApprovalsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:0.85rem"></div>
     </div>
 
     <div class="section-hdr" style="display:flex;justify-content:space-between;align-items:center;margin:2rem 0 1rem">
@@ -1975,7 +1997,7 @@ tr:hover td{background: var(--card-hover);}
         <i class="pic-icon ic-phone" style="font-size:18px;color:var(--cyan)"></i>
         <span>ข้อมูลช่องทางติดต่อฉุกเฉิน (Emergency Support)</span>
       </div>
-      <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ศูนย์ช่วยเหลือมุมล่างของหน้าเว็บ (ช่องไหนไม่ใส่ค่า ระบบจะไม่แสดงที่หน้าเว็บ)</div>
+      <div class="test-panel-desc">ข้อมูลนี้จะแสดงที่ปุ่ม IG ด้านบน และศูนย์ช่วยเหลือมุมล่างของหน้าเว็บตู้ชาร์จ (ช่องไหนไม่ใส่ค่า ระบบจะไม่แสดง)</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
         <div class="field-row">
           <label>เบอร์โทรศัพท์ผู้ดูแล:</label>
@@ -2273,6 +2295,81 @@ tr:hover td{background: var(--card-hover);}
       <button class="btn-sm btn-primary" style="width:100%;margin-top:1.25rem;padding:.65rem" onclick="hideSlipModal()">
         ปิดหน้าต่าง
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ MODAL: SLIP LIGHTBOX ZOOM -->
+<div class="modal-overlay" id="slipLightboxOverlay" onclick="if(event.target.id==='slipLightboxOverlay')closeSlipLightbox()">
+  <div class="modal-card" style="max-width:560px;background:#0d1117;border:1px solid rgba(255,255,255,0.12);box-shadow:0 20px 40px rgba(0,0,0,0.7)">
+    <div class="modal-top" style="border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:0.75rem">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--yellow);stroke-width:2.2;fill:none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <span style="font-size:0.95rem;font-weight:700;color:#f8fafc">ตรวจสอบสลิปโอนเงิน (High-Res Zoom)</span>
+        <span id="lbPendingIdBadge" style="font-family:'JetBrains Mono',monospace;font-size:0.76rem;color:var(--yellow);background:rgba(245,158,11,0.15);padding:2px 8px;border-radius:6px">PEN-————</span>
+      </div>
+      <button class="btn-close-modal" onclick="closeSlipLightbox()" aria-label="Close">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none;display:block"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:1rem;text-align:center">
+      <div style="background:#000;border-radius:12px;overflow:auto;margin-bottom:12px;display:flex;align-items:center;justify-content:center;min-height:300px;max-height:60vh;border:1px solid rgba(255,255,255,0.08)">
+        <img id="lbSlipImg" src="" alt="Slip Zoom" style="width:100%;max-height:60vh;object-fit:contain;transition:transform 0.2s ease;cursor:zoom-in" onclick="toggleLightboxZoom(this)"/>
+      </div>
+      <div id="lbMetaInfo" style="font-size:0.8rem;color:#94a3b8;line-height:1.6;margin-bottom:12px;text-align:left;background:rgba(255,255,255,0.03);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button type="button" class="btn-sm btn-gray" onclick="closeSlipLightbox()">ปิดหน้าต่าง</button>
+        <button type="button" class="btn-sm btn-red" id="lbBtnReject" onclick="openRejectReasonModal(window._currentLightboxPendingId)">ปฏิเสธสลิป</button>
+        <button type="button" class="btn-sm btn-green" id="lbBtnApprove" onclick="approvePendingPayment(window._currentLightboxPendingId)">อนุมัติและจ่ายไฟ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ MODAL: REJECTION REASON SELECTION -->
+<div class="modal-overlay" id="rejectReasonModal" onclick="if(event.target.id==='rejectReasonModal')closeRejectReasonModal()">
+  <div class="modal-card" style="max-width:440px">
+    <div class="modal-top" style="border-bottom:1px solid var(--border)">
+      <h3 style="color:var(--red);display:flex;align-items:center;gap:8px;font-size:1.02rem;font-weight:700">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span>ปฏิเสธสลิปการชำระเงิน</span>
+      </h3>
+      <button class="btn-close-modal" onclick="closeRejectReasonModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2.5;fill:none;display:block"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="modal-body" style="padding:1.2rem 1.4rem">
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:12px">
+        คำขอรหัส: <strong id="rejectTargetPendingId" style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">PEN-————</strong>
+        <div style="font-size:0.78rem;margin-top:2px">ผู้ใช้ที่หน้าตู้จะได้รับข้อความเหตุผลนี้ทันที</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;cursor:pointer;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)">
+          <input type="radio" name="rejectReasonChoice" value="ไม่พบยอดเงินเข้าบัญชี" checked onchange="toggleCustomReasonField(false)"/>
+          <span>ไม่พบยอดเงินเข้าบัญชี</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;cursor:pointer;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)">
+          <input type="radio" name="rejectReasonChoice" value="ยอดเงินโอนไม่ตรงกับแพ็กเกจที่เลือก" onchange="toggleCustomReasonField(false)"/>
+          <span>ยอดเงินโอนไม่ตรงกับแพ็กเกจที่เลือก</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;cursor:pointer;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)">
+          <input type="radio" name="rejectReasonChoice" value="สลิปซ้ำ / สลิปนี้ถูกใช้งานไปแล้ว" onchange="toggleCustomReasonField(false)"/>
+          <span>สลิปซ้ำ / สลิปนี้ถูกใช้งานไปแล้ว</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;cursor:pointer;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)">
+          <input type="radio" name="rejectReasonChoice" value="รูปภาพไม่ใช่สลิป หรือสลิปไม่ชัดเจน" onchange="toggleCustomReasonField(false)"/>
+          <span>รูปภาพไม่ใช่สลิป หรือสลิปไม่ชัดเจน</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:0.84rem;cursor:pointer;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border)">
+          <input type="radio" name="rejectReasonChoice" value="custom" onchange="toggleCustomReasonField(true)"/>
+          <span>อื่นๆ (ระบุเหตุผลเอง)</span>
+        </label>
+      </div>
+      <input type="text" id="rejectCustomReasonInput" placeholder="พิมพ์เหตุผลที่ต้องการแจ้งผู้ใช้..." style="display:none;width:100%;margin-bottom:14px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.85rem"/>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn-sm btn-gray" style="flex:1;justify-content:center" onclick="closeRejectReasonModal()">ยกเลิก</button>
+        <button type="button" class="btn-sm btn-danger" style="flex:1.2;justify-content:center;background:var(--red);color:#fff" onclick="submitRejection()">ยืนยันปฏิเสธ</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2989,6 +3086,19 @@ function renderAll(d) {
   document.getElementById('stTotalVisits').textContent = `${totalVisitsCount} ครั้ง`;
   document.getElementById('stCount').textContent   = realTxs.length;
   document.getElementById('stActive').textContent  = `${activeCount} ช่อง`;
+
+  const pendingCount = (d.pendingApprovals || []).filter(p => p.status === 'pending').length;
+  const pSlipEl = document.getElementById('stPendingSlips');
+  if (pSlipEl) pSlipEl.textContent = `${pendingCount} คิว`;
+  const pSlipSub = document.getElementById('stPendingSlipsSub');
+  if (pSlipSub) pSlipSub.textContent = pendingCount > 0 ? '⚠️ รอผู้ดูแลอนุมัติ' : 'ไม่มีคิวค้าง';
+
+  const issueList = window._adminIssues || (dashData && dashData.issues) || [];
+  const openIssues = Array.isArray(issueList) ? issueList.filter(i => !i.status || i.status === 'open' || i.status === 'pending').length : 0;
+  const pIssueEl = document.getElementById('stPendingIssues');
+  if (pIssueEl) pIssueEl.textContent = `${openIssues} เรื่อง`;
+  const pIssueSub = document.getElementById('stPendingIssuesSub');
+  if (pIssueSub) pIssueSub.textContent = openIssues > 0 ? '⚠️ คำร้องรอแก้ไข' : 'เรียบร้อยทั้งหมด';
 
   if (document.getElementById('stTodayComp')) {
     document.getElementById('stTodayComp').innerHTML = getCompHtml(todayRev, yestRev);
@@ -4899,7 +5009,11 @@ async function deleteCurrentIssue() {
   adminToast(`ลบรายการ ${targetId} เรียบร้อยแล้ว`, 'info');
 }
 
-/* ── Pending Manual Slip Approvals & Visitor/Audit Logs ── */
+/* ── Pending Manual Slip Approvals & Lightbox/Rejection Engine ── */
+window._currentPendingApprovals = [];
+window._currentLightboxPendingId = null;
+window._targetRejectPendingId = null;
+
 function renderPendingApprovals(list) {
   const section = document.getElementById('pendingApprovalsSection');
   const container = document.getElementById('pendingApprovalsList');
@@ -4907,6 +5021,8 @@ function renderPendingApprovals(list) {
   if (!section || !container) return;
 
   const items = Array.isArray(list) ? list.filter(p => p.status === 'pending') : [];
+  window._currentPendingApprovals = items;
+
   if (items.length === 0) {
     section.style.display = 'none';
     container.innerHTML = '';
@@ -4918,36 +5034,165 @@ function renderPendingApprovals(list) {
   if (badge) badge.textContent = `${items.length} รายการรออนุมัติ`;
 
   container.innerHTML = items.map(p => {
-    const safeImg = (p.imageDataUrl && String(p.imageDataUrl).startsWith('data:image/'))
-      ? `<img src="${p.imageDataUrl}" alt="Slip preview" style="width:100%;max-height:160px;object-fit:contain;border-radius:8px;background:#090d16;margin:0.55rem 0;border:1px solid var(--border)"/>`
-      : '';
+    const hasImg = p.imageDataUrl && String(p.imageDataUrl).startsWith('data:image/');
+    const imgHtml = hasImg
+      ? `<div onclick="openSlipLightbox('${escapeHtml(p.id)}')" style="cursor:zoom-in;position:relative;margin:0.55rem 0">
+           <img src="${p.imageDataUrl}" alt="Slip preview" style="width:100%;max-height:160px;object-fit:contain;border-radius:8px;background:#090d16;border:1px solid var(--border);transition:transform .18s ease" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"/>
+           <span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.75);color:#fff;font-size:0.7rem;padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;pointer-events:none">
+             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+             แตะเพื่อซูม
+           </span>
+         </div>`
+      : `<div style="background:#090d16;padding:12px;border-radius:8px;text-align:center;color:var(--muted);font-size:0.75rem;margin:0.55rem 0;border:1px dashed var(--border)">ไม่มีรูปสลิปแนบ</div>`;
+
     return `
-      <div class="test-box" style="border:1px solid rgba(245,158,11,0.45);background:var(--card2)">
+      <div class="test-box" style="border:1px solid rgba(245,158,11,0.5);background:var(--card2);box-shadow:0 4px 15px rgba(245,158,11,0.08);position:relative">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:0.35rem">
-          <strong style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">${escapeHtml(p.id)}</strong>
+          <strong style="font-family:'JetBrains Mono',monospace;color:var(--yellow);font-size:0.88rem">${escapeHtml(p.id)}</strong>
           <span style="font-size:0.75rem;color:var(--muted)">${fmtDate(p.createdAt)}</span>
         </div>
-        <div style="font-size:0.84rem;font-weight:700;color:var(--text)">
+        <div style="font-size:0.86rem;font-weight:700;color:var(--text)">
           ${escapeHtml(p.portLabel || p.portId)} · <span style="color:var(--green)">฿${Number(p.amount || 0)}</span> (${escapeHtml(p.method || 'slip')})
         </div>
-        <div style="font-size:0.76rem;color:var(--muted);margin-top:0.2rem">
+        <div style="font-size:0.76rem;color:var(--muted);margin-top:0.25rem">
           ผู้โอน: <strong style="color:var(--cyan)">${escapeHtml(p.visitorId || '—')}</strong> (${escapeHtml(p.payerName || 'ผู้ใช้งาน')})
         </div>
         <div style="font-size:0.76rem;color:var(--muted)">
           โอนให้: ${escapeHtml(p.receiverName || 'บัญชีตู้ชาร์จ')} ${p.receiverAccount ? `(${escapeHtml(p.receiverAccount)})` : ''}
         </div>
-        <div style="font-size:0.72rem;color:var(--yellow);margin-top:0.2rem">เหตุผล: ${escapeHtml(p.reason || 'MANUAL_REVIEW')}</div>
-        ${safeImg}
+        <div style="font-size:0.74rem;color:var(--yellow);margin-top:0.25rem;display:flex;align-items:center;gap:4px">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>เหตุผลคิว: ${escapeHtml(p.reason || 'MANUAL_REVIEW')}</span>
+        </div>
+        ${imgHtml}
         <div class="btn-group" style="margin-top:0.65rem">
-          <button class="btn-sm btn-green" onclick="approvePendingPayment('${escapeHtml(p.id)}')">อนุมัติจ่ายไฟ</button>
-          <button class="btn-sm btn-red" onclick="rejectPendingPayment('${escapeHtml(p.id)}')">ปฏิเสธสลิป</button>
+          <button class="btn-sm btn-green" onclick="approvePendingPayment('${escapeHtml(p.id)}')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            อนุมัติจ่ายไฟ
+          </button>
+          <button class="btn-sm btn-red" onclick="openRejectReasonModal('${escapeHtml(p.id)}')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            ปฏิเสธสลิป
+          </button>
         </div>
       </div>
     `;
   }).join('');
 }
 
+/* ── Lightbox Zoom for Slip ── */
+function openSlipLightbox(pendingId) {
+  const item = (window._currentPendingApprovals || []).find(p => p.id === pendingId);
+  if (!item) return;
+  window._currentLightboxPendingId = pendingId;
+  const overlay = document.getElementById('slipLightboxOverlay');
+  const img = document.getElementById('lbSlipImg');
+  const badge = document.getElementById('lbPendingIdBadge');
+  const meta = document.getElementById('lbMetaInfo');
+  if (!overlay || !img) return;
+
+  if (badge) badge.textContent = item.id;
+  img.src = item.imageDataUrl || '';
+  img.style.transform = 'scale(1)';
+  img.style.cursor = 'zoom-in';
+
+  if (meta) {
+    meta.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div><strong>พอร์ต:</strong> ${escapeHtml(item.portLabel || item.portId)}</div>
+        <div><strong>ยอดเงิน:</strong> <span style="color:var(--green);font-weight:700">฿${Number(item.amount || 0)}</span></div>
+        <div><strong>ผู้โอน:</strong> ${escapeHtml(item.visitorId || '—')} (${escapeHtml(item.payerName || 'ลูกค้า')})</div>
+        <div><strong>ช่องทาง:</strong> ${escapeHtml(item.method || 'สลิป')}</div>
+        <div><strong>โอนให้:</strong> ${escapeHtml(item.receiverName || 'บัญชีตู้')} ${item.receiverAccount ? `(${escapeHtml(item.receiverAccount)})` : ''}</div>
+        <div><strong>เวลาที่ส่ง:</strong> ${fmtDate(item.createdAt)}</div>
+      </div>
+      <div style="margin-top:6px;color:var(--yellow)"><strong>เหตุผลที่รอตรวจสอบ:</strong> ${escapeHtml(item.reason || 'MANUAL_REVIEW')}</div>
+    `;
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeSlipLightbox() {
+  const overlay = document.getElementById('slipLightboxOverlay');
+  if (overlay) overlay.classList.remove('open');
+  window._currentLightboxPendingId = null;
+}
+
+function toggleLightboxZoom(imgEl) {
+  if (!imgEl) return;
+  const isZoomed = imgEl.dataset.zoomed === '1';
+  if (isZoomed) {
+    imgEl.style.transform = 'scale(1)';
+    imgEl.style.cursor = 'zoom-in';
+    imgEl.dataset.zoomed = '0';
+  } else {
+    imgEl.style.transform = 'scale(1.75)';
+    imgEl.style.cursor = 'zoom-out';
+    imgEl.dataset.zoomed = '1';
+  }
+}
+
+/* ── Quick Rejection Reason Modal ── */
+function openRejectReasonModal(pendingId) {
+  closeSlipLightbox();
+  window._targetRejectPendingId = pendingId;
+  const targetBadge = document.getElementById('rejectTargetPendingId');
+  if (targetBadge) targetBadge.textContent = pendingId;
+  
+  // Reset choices
+  const radios = document.getElementsByName('rejectReasonChoice');
+  if (radios && radios[0]) radios[0].checked = true;
+  toggleCustomReasonField(false);
+  
+  const modal = document.getElementById('rejectReasonModal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeRejectReasonModal() {
+  const modal = document.getElementById('rejectReasonModal');
+  if (modal) modal.classList.remove('open');
+  window._targetRejectPendingId = null;
+}
+
+function toggleCustomReasonField(isCustom) {
+  const input = document.getElementById('rejectCustomReasonInput');
+  if (input) {
+    input.style.display = isCustom ? 'block' : 'none';
+    if (isCustom) input.focus();
+  }
+}
+
+async function submitRejection() {
+  const pendingId = window._targetRejectPendingId;
+  if (!pendingId) return;
+
+  let selectedReason = 'ไม่พบยอดเงินเข้าบัญชี';
+  const radios = document.getElementsByName('rejectReasonChoice');
+  for (const r of radios) {
+    if (r.checked) {
+      if (r.value === 'custom') {
+        selectedReason = document.getElementById('rejectCustomReasonInput')?.value?.trim() || 'ผู้ดูแลตรวจสอบไม่ผ่าน';
+      } else {
+        selectedReason = r.value;
+      }
+      break;
+    }
+  }
+
+  closeRejectReasonModal();
+  const res = await adminApi('POST', `/api/admin/pending-payments/${encodeURIComponent(pendingId)}/reject`, { reason: selectedReason });
+  if (res && res.success) {
+    adminToast(`ปฏิเสธคำขอ ${pendingId} (${selectedReason}) เรียบร้อยแล้ว`, 'warn');
+    setActionNotice(`ปฏิเสธสลิป ${pendingId}`);
+    autoRefresh();
+  } else {
+    adminToast(res?.error || 'ไม่สามารถปฏิเสธคำขอนี้ได้', 'error');
+  }
+}
+
 async function approvePendingPayment(pendingId) {
+  closeSlipLightbox();
   const ok = await adminConfirm('อนุมัติสลิปและจ่ายไฟ', `ยืนยันว่าตรวจพบยอดเงินจริงเข้าบัญชีแล้วสำหรับคำขอ ${pendingId} และต้องการเปิดจ่ายไฟทันทีใช่หรือไม่?`, 'อนุมัติและจ่ายไฟ');
   if (!ok) return;
   const res = await adminApi('POST', `/api/admin/pending-payments/${encodeURIComponent(pendingId)}/approve`);
@@ -4961,16 +5206,7 @@ async function approvePendingPayment(pendingId) {
 }
 
 async function rejectPendingPayment(pendingId) {
-  const ok = await adminConfirm('ปฏิเสธสลิป', `ต้องการปฏิเสธคำขอ ${pendingId} และปลดล็อคพอร์ตให้ว่างใช่หรือไม่?`, 'ปฏิเสธคำขอ');
-  if (!ok) return;
-  const res = await adminApi('POST', `/api/admin/pending-payments/${encodeURIComponent(pendingId)}/reject`, { reason: 'ผู้ดูแลตรวจสอบไม่พบยอดโอน' });
-  if (res && res.success) {
-    adminToast(`ปฏิเสธคำขอ ${pendingId} และคืนสถานะพอร์ตว่างแล้ว`, 'warn');
-    setActionNotice(`ปฏิเสธสลิป ${pendingId}`);
-    autoRefresh();
-  } else {
-    adminToast(res?.error || 'ไม่สามารถปฏิเสธคำขอนี้ได้', 'error');
-  }
+  openRejectReasonModal(pendingId);
 }
 
 function renderVisitorLogs(visits, uniqueCount = 0, totalCount = 0) {
@@ -5011,17 +5247,49 @@ function renderAuditLogs(auditLogs) {
     return;
   }
 
-  tb.innerHTML = list.slice(0, 40).map(a => {
-    let detailStr = '—';
-    try {
-      if (a.details && Object.keys(a.details).length > 0) detailStr = JSON.stringify(a.details);
-    } catch (_) {}
+  const actionMap = {
+    APPROVE_PAYMENT: { label: 'อนุมัติสลิป', badgeClass: 'badge-action-green' },
+    REJECT_PAYMENT: { label: 'ปฏิเสธสลิป', badgeClass: 'badge-action-red' },
+    STOP_PORT: { label: 'ตัดไฟ/หยุดชาร์จ', badgeClass: 'badge-action-orange' },
+    CLEAR_SESSION: { label: 'ล้างเซสชัน', badgeClass: 'badge-action-yellow' },
+    START_PORT: { label: 'เริ่มจ่ายไฟ', badgeClass: 'badge-action-blue' },
+    RESET_PORTS: { label: 'รีเซ็ตพอร์ต', badgeClass: 'badge-action-purple' },
+    RESET_ALL: { label: 'รีเซ็ตระบบทั้งหมด', badgeClass: 'badge-action-purple' },
+    UPDATE_CONFIG: { label: 'แก้การตั้งค่า', badgeClass: 'badge-action-cyan' },
+    CONFIG: { label: 'แก้การตั้งค่า', badgeClass: 'badge-action-cyan' },
+    LOGIN: { label: 'เข้าสู่ระบบ', badgeClass: 'badge-action-gray' },
+    EARLY_STOP: { label: 'หยุดชาร์จก่อนเวลา', badgeClass: 'badge-action-orange' },
+  };
+
+  tb.innerHTML = list.slice(0, 50).map(a => {
+    const act = actionMap[a.action] || { label: a.action || '—', badgeClass: 'badge-action-gray' };
+    
+    // Human-friendly description in Thai
+    let friendlyDetail = '—';
+    if (a.action === 'APPROVE_PAYMENT') {
+      friendlyDetail = `อนุมัติคำขอ ${a.details?.pendingId || ''} (${a.target || ''}) ฿${a.details?.amount || '—'}`;
+    } else if (a.action === 'REJECT_PAYMENT') {
+      friendlyDetail = `ปฏิเสธ ${a.details?.pendingId || ''} (${a.details?.reason || 'ไม่พบยอด'})`;
+    } else if (a.action === 'STOP_PORT') {
+      friendlyDetail = `สั่งตัดไฟพอร์ต ${a.target || ''}`;
+    } else if (a.action === 'CLEAR_SESSION') {
+      friendlyDetail = `ล้างเซสชันรอชำระพอร์ต ${a.target || ''}`;
+    } else if (a.action === 'UPDATE_CONFIG' || a.action === 'CONFIG') {
+      friendlyDetail = `บันทึกการตั้งค่าระบบใหม่`;
+    } else if (a.action === 'EARLY_STOP') {
+      friendlyDetail = `ผู้ใช้ตัดไฟพอร์ต ${a.target || ''} ก่อนเวลา`;
+    } else if (a.details && typeof a.details === 'object') {
+      try {
+        friendlyDetail = JSON.stringify(a.details);
+      } catch (_) {}
+    }
+
     return `<tr>
-      <td><strong style="font-family:'JetBrains Mono',monospace;font-size:.78rem">${escapeHtml(a.id || '—')}</strong></td>
-      <td style="font-size:.78rem">${escapeHtml(a.adminEmail || 'system')}</td>
-      <td><span class="badge b-qr">${escapeHtml(a.action || '—')}</span></td>
-      <td style="font-family:monospace;font-size:.78rem">${escapeHtml(a.target || 'system')}</td>
-      <td style="font-size:.74rem;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(detailStr)}">${escapeHtml(detailStr)}</td>
+      <td><strong style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text)">${escapeHtml(a.id || '—')}</strong></td>
+      <td style="font-size:.78rem;color:var(--cyan)">${escapeHtml(a.adminEmail || 'system')}</td>
+      <td><span class="badge ${act.badgeClass}">${escapeHtml(act.label)}</span></td>
+      <td style="font-family:monospace;font-size:.78rem;font-weight:600">${escapeHtml(a.target || 'system')}</td>
+      <td style="font-size:.76rem;color:var(--text);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(JSON.stringify(a.details || {}))}">${escapeHtml(friendlyDetail)}</td>
       <td style="font-size:.74rem;color:var(--muted)">${fmtDate(a.timestamp)}</td>
     </tr>`;
   }).join('');
@@ -5030,11 +5298,18 @@ function renderAuditLogs(auditLogs) {
 /* ── Support Contact & TrueMoney Settings in Admin ── */
 function loadSupportSettings() {
   const cfg = getLocalSavedConfig();
-  if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = cfg.supportPhone || '';
-  if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = cfg.supportLine || '';
-  if (document.getElementById('cfgSupportIg')) document.getElementById('cfgSupportIg').value = cfg.supportIg || cfg.supportInstagram || '';
-  if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = cfg.supportLocation || '';
-  if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = cfg.truemoneyPhone || '';
+  const remoteCfg = (dashData && dashData.config) ? dashData.config : (window._fsDoc?.config || {});
+  const phone = remoteCfg.supportPhone !== undefined ? remoteCfg.supportPhone : (cfg.supportPhone || '');
+  const line = remoteCfg.supportLine !== undefined ? remoteCfg.supportLine : (cfg.supportLine || '');
+  const ig = remoteCfg.supportIg !== undefined ? remoteCfg.supportIg : (cfg.supportIg || cfg.supportInstagram || '');
+  const loc = remoteCfg.supportLocation !== undefined ? remoteCfg.supportLocation : (cfg.supportLocation || '');
+  const truemoneyPhone = remoteCfg.truemoneyPhone !== undefined ? remoteCfg.truemoneyPhone : (cfg.truemoneyPhone || '');
+
+  if (document.getElementById('cfgSupportPhone')) document.getElementById('cfgSupportPhone').value = phone;
+  if (document.getElementById('cfgSupportLine')) document.getElementById('cfgSupportLine').value = line;
+  if (document.getElementById('cfgSupportIg')) document.getElementById('cfgSupportIg').value = ig;
+  if (document.getElementById('cfgSupportLocation')) document.getElementById('cfgSupportLocation').value = loc;
+  if (document.getElementById('cfgTruemoneyPhone')) document.getElementById('cfgTruemoneyPhone').value = truemoneyPhone;
 }
 
 async function saveSupportSettings() {
@@ -5095,6 +5370,13 @@ window.dismissNativeBanner = dismissNativeBanner;
 window.closeAdminConfirm = closeAdminConfirm;
 window.approvePendingPayment = approvePendingPayment;
 window.rejectPendingPayment = rejectPendingPayment;
+window.openSlipLightbox = openSlipLightbox;
+window.closeSlipLightbox = closeSlipLightbox;
+window.toggleLightboxZoom = toggleLightboxZoom;
+window.openRejectReasonModal = openRejectReasonModal;
+window.closeRejectReasonModal = closeRejectReasonModal;
+window.toggleCustomReasonField = toggleCustomReasonField;
+window.submitRejection = submitRejection;
 
 
 // ─── Session Timer ─────────────────────────────
@@ -5124,7 +5406,7 @@ function animateCounter(id, start, end, duration) {
   
   const text = obj.textContent;
   const prefix = text.includes('฿') ? '฿' : '';
-  const suffix = text.includes(' ครั้ง') ? ' ครั้ง' : text.includes(' ชม.') ? ' ชม.' : text.includes('%') ? '%' : text.includes(' ช่อง') ? ' ช่อง' : '';
+  const suffix = text.includes(' ครั้ง') ? ' ครั้ง' : text.includes(' ชม.') ? ' ชม.' : text.includes('%') ? '%' : text.includes(' ช่อง') ? ' ช่อง' : text.includes(' คิว') ? ' คิว' : text.includes(' เรื่อง') ? ' เรื่อง' : '';
   
   let startTimestamp = null;
   const step = (timestamp) => {
@@ -5149,7 +5431,7 @@ renderAll = function(d) {
   originalRenderAll(d);
   
   setTimeout(() => {
-    const els = ['stRevenue', 'stToday', 'stTodayVisits', 'stTotalVisits', 'stCount', 'stActive'];
+    const els = ['stRevenue', 'stToday', 'stTodayVisits', 'stTotalVisits', 'stCount', 'stActive', 'stPendingSlips', 'stPendingIssues'];
     els.forEach(id => {
       const el = document.getElementById(id);
       if (el) {

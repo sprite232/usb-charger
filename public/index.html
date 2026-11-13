@@ -32,6 +32,11 @@
     appId:"1:336947265559:web:3cfb492f857f1ef1021c52"
   });
   const fdb=getFirestore(window._fbApp);
+  window._fdb = fdb;
+  window._fsDoc = doc;
+  window._fsCollection = collection;
+  window._fsSetDoc = setDoc;
+  window._fsOnSnapshot = onSnapshot;
   // real-time listener — update port state & config ทันทีเมื่อ cloud มีการเปลี่ยนแปลง
   onSnapshot(doc(fdb,'charger','charger01'),snap=>{
     if(!snap.exists())return;
@@ -1336,18 +1341,58 @@ footer{
 .share-nav-btn:hover{border-color:var(--blue);transform:scale(1.04)}
 .share-nav-btn svg{width:15px;height:15px}
 .share-btn-txt{line-height:1;white-space:nowrap}
+
+/* ── SURVEY & IG TOPBAR BUTTONS ───────── */
+.survey-nav-btn{
+  width:auto;
+  min-width:36px;
+  padding:0 10px;
+  gap:6px;
+  color:var(--yellow);
+  background:rgba(245,158,11,0.12);
+  border-color:rgba(245,158,11,0.32);
+  font-family:var(--sans);
+  font-size:.76rem;
+  font-weight:700;
+  text-decoration:none;
+}
+.survey-nav-btn:hover{border-color:var(--yellow);transform:scale(1.04);color:var(--yellow)}
+.survey-nav-btn svg{width:15px;height:15px}
+.survey-btn-txt{line-height:1;white-space:nowrap}
+
+.ig-nav-btn{
+  width:auto;
+  min-width:36px;
+  padding:0 10px;
+  gap:6px;
+  color:#e1306c;
+  background:rgba(225,48,108,0.12);
+  border-color:rgba(225,48,108,0.32);
+  font-family:var(--sans);
+  font-size:.76rem;
+  font-weight:700;
+  text-decoration:none;
+}
+.ig-nav-btn:hover{border-color:#e1306c;transform:scale(1.04);color:#e1306c}
+.ig-nav-btn svg{width:15px;height:15px}
+.ig-btn-txt{line-height:1;white-space:nowrap}
+
+@media(max-width:640px){
+  .survey-btn-txt, .ig-btn-txt, .share-btn-txt{display:none}
+  .survey-nav-btn, .ig-nav-btn, .share-nav-btn{width:34px;min-width:34px;padding:0;justify-content:center}
+}
 @media(max-width:460px){
-  nav{padding:10px 12px;gap:6px}
-  .nav-brand{gap:7px;font-size:.92rem}
-  .nav-brand img{width:28px;height:28px;border-radius:8px}
-  .nav-right{gap:5px}
-  .rate-pill{padding:5px 8px;font-size:.72rem;gap:5px}
-  .icon-nav-btn{width:32px;height:32px;border-radius:9px}
-  .share-nav-btn{width:32px;min-width:32px;padding:0}
-  .share-btn-txt{display:none}
-  .theme-switch-pill{width:54px;height:30px}
-  .pill-thumb{width:22px;height:22px}
-  [data-theme="dark"] .pill-thumb{transform:translateX(24px)}
+  nav{padding:10px 10px;gap:5px}
+  .nav-brand{gap:6px;font-size:.88rem}
+  .nav-brand img{width:26px;height:26px;border-radius:7px}
+  .nav-right{gap:4px}
+  .rate-pill{padding:4px 7px;font-size:.7rem;gap:4px}
+  .icon-nav-btn{width:30px;height:30px;border-radius:8px}
+  .share-nav-btn, .survey-nav-btn, .ig-nav-btn{width:30px;min-width:30px;padding:0}
+  .share-btn-txt, .survey-btn-txt, .ig-btn-txt{display:none}
+  .theme-switch-pill{width:50px;height:28px}
+  .pill-thumb{width:20px;height:20px}
+  [data-theme="dark"] .pill-thumb{transform:translateX(22px)}
 }
 
 .share-tabs{
@@ -1432,6 +1477,208 @@ footer{
 .share-btn-primary{background:var(--btn-primary-bg);color:var(--btn-primary-text)}
 .share-btn-secondary{background:var(--off);color:var(--dark);border:1px solid var(--g2)}
 
+/* ── SAFETY GUIDELINE BANNER ────────────────────── */
+.safety-guide-card {
+  margin: 1.5rem 0 2rem;
+  background: var(--off);
+  border: 1px solid var(--g2);
+  border-left: 4px solid var(--yellow);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  transition: transform .2s ease, border-color .2s ease;
+}
+.safety-guide-card:hover {
+  border-color: var(--yellow);
+  transform: translateY(-1px);
+}
+.safety-guide-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--yellow);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.safety-guide-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+.safety-guide-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.safety-item-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── BAR ACTIONS ROW & EARLY STOP BUTTON ────────── */
+.bar-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--g1);
+  gap: 8px;
+}
+.bar-action-hint {
+  font-size: 0.7rem;
+  color: var(--g3);
+}
+.btn-early-stop-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .12s ease;
+}
+.btn-early-stop-mini:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  transform: scale(1.03);
+}
+.btn-early-stop-mini:active {
+  transform: scale(0.96);
+}
+.btn-early-stop-mini svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* ── PENDING APPROVAL TRACKER UI ────────────────── */
+.pending-tracker-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px 14px;
+  text-align: center;
+}
+.pending-spinner-ring {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+}
+.pending-pulse-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.pending-pulse-svg .ring-bg {
+  stroke: var(--g2);
+}
+.pending-pulse-svg .ring-active {
+  stroke: var(--yellow);
+  stroke-dasharray: 125.6;
+  stroke-dashoffset: 40;
+  stroke-linecap: round;
+  animation: pendingSpin 2s linear infinite;
+  transform-origin: center;
+}
+@keyframes pendingSpin {
+  0% { transform: rotate(0deg); stroke-dashoffset: 100; }
+  50% { transform: rotate(180deg); stroke-dashoffset: 25; }
+  100% { transform: rotate(360deg); stroke-dashoffset: 100; }
+}
+.pending-icon-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.45rem;
+  animation: pendingBounce 2s ease-in-out infinite;
+}
+@keyframes pendingBounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+.pending-ref-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--yellow);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  margin: 8px 0;
+}
+.pending-live-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--text);
+  font-weight: 600;
+  margin: 8px 0 10px;
+}
+.pulse-amber {
+  background: var(--yellow) !important;
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  animation: pulseAmber 1.8s infinite !important;
+}
+@keyframes pulseAmber {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70% { box-shadow: 0 0 0 9px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.pending-auto-note {
+  background: var(--card-bg);
+  border: 1px solid var(--g2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.76rem;
+  color: var(--g3);
+  line-height: 1.5;
+  margin-top: 6px;
+  text-align: left;
+}
+
+/* ── FLUID ANIMATIONS (Modern Web standards) ─────── */
+.port-card {
+  will-change: transform, box-shadow;
+}
+.port-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+.port-card.in-use {
+  cursor: pointer;
+}
+.port-card.in-use:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+.bar-timer {
+  font-variant-numeric: tabular-nums;
+}
+.btn, .icon-nav-btn {
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1455,6 +1702,16 @@ footer{
       <div class="rate-dot"></div>
       <span id="rateLabel">1฿ = 3 นาที</span>
     </div>
+    <!-- แบบประเมินความพึงพอใจ -->
+    <a href="https://forms.gle/UN6njcw3osmT6JYh9" target="_blank" rel="noopener" class="icon-nav-btn survey-nav-btn" id="surveyNavBtn" title="ทำแบบประเมินความพึงพอใจการใช้งานตู้ชาร์จ" aria-label="แบบประเมิน">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="survey-btn-txt">แบบประเมิน</span>
+    </a>
+    <!-- ติดต่อ Instagram (IG) -->
+    <a href="https://instagram.com" target="_blank" rel="noopener" class="icon-nav-btn ig-nav-btn" id="igNavBtn" title="ติดต่อเราผ่าน Instagram" aria-label="Instagram">
+      <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      <span class="ig-btn-txt" id="igNavTxt">IG</span>
+    </a>
     <!-- Share QR Code Button -->
     <button class="icon-nav-btn share-nav-btn" id="shareQrBtn" onclick="openShareModal()" title="แชร์เป็น QR Code ให้สแกน" aria-label="แชร์เป็น QR Code">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M17 17h4v4"/><path d="M14 21h3"/></svg>
@@ -1500,6 +1757,24 @@ footer{
   <p class="sec-lbl reveal">พอร์ตที่ใช้งานได้</p>
   <div id="queueNotice" style="display:none;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;padding:10px 16px;border-radius:12px;margin-bottom:14px;font-size:0.85rem;font-weight:600;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(245,158,11,0.1)"></div>
   <div class="port-grid" id="portGrid"></div>
+
+  <!-- Safety & Usage Guideline Banner -->
+  <div class="safety-guide-card reveal">
+    <div class="safety-guide-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+      <span>คำแนะนำ &amp; ปลอดภัย</span>
+    </div>
+    <div class="safety-guide-items">
+      <div class="safety-guide-item">
+        <span class="safety-item-icon">⚡</span>
+        <div><strong>1 พอร์ต ต่อ 1 เครื่องเท่านั้น:</strong> ห้ามใช้สายแยกหลายหัว (Splitter) เพื่อความปลอดภัยสูงสุดและถนอมสุขภาพแบตเตอรี่</div>
+      </div>
+      <div class="safety-guide-item">
+        <span class="safety-item-icon">⏹️</span>
+        <div><strong>หยุดชาร์จก่อนเวลา:</strong> หากต้องการถอดสายก่อนครบเวลา สามารถแตะที่ช่องชาร์จแล้วเลือก <em>"หยุดชาร์จก่อนเวลา"</em> เพื่อตัดกระแสไฟได้ทันที</div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <!-- FAQ -->
@@ -2114,6 +2389,35 @@ footer{
       </div>
     </div>
 
+    <!-- Pending Approval Live Tracker (Real-time Kiosk Sync) -->
+    <div class="page" id="pg-pending-approval">
+      <div class="result-box">
+        <div class="pending-tracker-hero">
+          <div class="pending-spinner-ring">
+            <svg class="pending-pulse-svg" viewBox="0 0 50 50">
+              <circle class="ring-bg" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+              <circle class="ring-active" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+            </svg>
+            <div class="pending-icon-center">⏳</div>
+          </div>
+          <h2 id="pendingTitle" style="color:var(--yellow);margin-top:12px;font-size:1.25rem;font-weight:700">ส่งสลิปให้ผู้ดูแลแล้ว</h2>
+          <div class="pending-ref-badge" id="pendingRefBadge">
+            <span>รหัสคำขอ:</span>
+            <strong id="pendingRefCode" style="font-family:'JetBrains Mono',monospace;letter-spacing:1px">PEN-————</strong>
+          </div>
+          <p id="pendingPortInfo" style="font-size:0.95rem;font-weight:600;color:var(--text);margin:6px 0">—</p>
+          <div class="pending-live-status">
+            <span class="live-dot pulse-amber"></span>
+            <span id="pendingStatusMsg">กำลังรอผู้ดูแลระบบตรวจสอบยอดเงินและอนุมัติ...</span>
+          </div>
+          <div class="pending-auto-note">
+            💡 <strong>ไม่ต้องรีเฟรชหน้าจอ:</strong> เมื่อผู้ดูแลกดอนุมัติ หน้าจอนี้จะเริ่มจ่ายไฟและเริ่มนับเวลาถอยหลังให้อัตโนมัติทันที
+          </div>
+          <button class="btn btn-ghost" style="margin-top:14px" onclick="cancelPendingApprovalWait()">ยกเลิกการรอ / กลับหน้าหลัก</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Success -->
     <div class="page" id="pg-ok">
       <div class="result-box">
@@ -2157,18 +2461,10 @@ footer{
       <button class="sheet-close" onclick="closeShareModal()" aria-label="ปิดหน้าต่างแชร์">&#x2715;</button>
     </div>
     <div class="sheet-body">
-      <div class="share-tabs" id="shareTargetTabs">
-        <button type="button" class="share-tab active" data-port="" onclick="setShareTarget('')">หน้าหลัก (ทุกช่อง)</button>
-        <button type="button" class="share-tab" data-port="usb-a-1" onclick="setShareTarget('usb-a-1')">USB-A 1</button>
-        <button type="button" class="share-tab" data-port="usb-a-2" onclick="setShareTarget('usb-a-2')">USB-A 2</button>
-        <button type="button" class="share-tab" data-port="usb-c-1" onclick="setShareTarget('usb-c-1')">USB-C 1</button>
-        <button type="button" class="share-tab" data-port="usb-c-2" onclick="setShareTarget('usb-c-2')">USB-C 2</button>
-      </div>
-
       <div class="share-qr-stage">
         <div class="share-qr-card">
           <div class="share-qr-head">SMART CHARGING STATION</div>
-          <div class="share-qr-title" id="shareQrTitle">ตู้ชาร์จ USB · หน้าหลัก</div>
+          <div class="share-qr-title" id="shareQrTitle">ตู้ชาร์จ USB อัจฉริยะ</div>
           <div class="share-qr-canvas-box">
             <canvas id="shareQrCanvas" width="440" height="440"></canvas>
             <img id="shareQrFallbackImg" alt="QR Code สำหรับสแกนเปิดเว็บ"/>
@@ -2195,6 +2491,33 @@ footer{
       </div>
 
       <button type="button" class="btn btn-ghost" onclick="closeShareModal()">ปิดหน้าต่าง</button>
+    </div>
+  </div>
+</div>
+
+<!-- EARLY STOP CHARGING MODAL -->
+<div class="overlay" id="earlyStopOverlay" onclick="if(event.target===this)closeEarlyStopModal()">
+  <div class="sheet" id="earlyStopSheet" style="max-width:440px">
+    <div class="sheet-drag"></div>
+    <div class="sheet-top">
+      <h2 style="display:flex;align-items:center;gap:8px;color:var(--amber)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>เสร็จสิ้น / หยุดชาร์จก่อนเวลา</span>
+      </h2>
+      <button class="sheet-close" onclick="closeEarlyStopModal()" aria-label="ปิด">&#x2715;</button>
+    </div>
+    <div class="sheet-body" style="text-align:center;padding:1rem 1.25rem 1.5rem">
+      <div style="font-size:1.05rem;font-weight:700;margin-bottom:0.4rem" id="earlyStopPortLabel">ช่องชาร์จ —</div>
+      <div style="font-size:0.88rem;color:var(--text);line-height:1.6;margin-bottom:1rem">
+        คุณต้องการหยุดการจ่ายไฟของช่องนี้ก่อนครบเวลาใช่หรือไม่?
+      </div>
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:12px;font-size:0.8rem;color:#f87171;line-height:1.55;text-align:left;margin-bottom:1.25rem">
+        ⚠️ <strong>คำเตือน:</strong> หากกดยืนยัน ระบบจะตัดกระแสไฟทันที และเวลาที่เหลือจะไม่สามารถนำกลับมาใช้ใหม่ได้ กรุณาถอดสายชาร์จออกจากอุปกรณ์ของท่าน
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeEarlyStopModal()">ชาร์จต่อ</button>
+        <button class="btn btn-danger" style="flex:1.3;background:#ef4444;color:#fff" id="btnConfirmEarlyStop" onclick="executeEarlyStop()">ยืนยันหยุดชาร์จ</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2802,15 +3125,33 @@ function updateSupportContactInfo() {
   // 3. Instagram (IG)
   const igBtn = $('contactIgBtn');
   const igTxt = $('contactIgText');
-  if (igBtn) {
-    if (ig) {
-      const cleanIg = ig.trim();
-      const handle = cleanIg.replace(/^@/, '').trim();
-      igBtn.href = cleanIg.startsWith('http') ? cleanIg : `https://instagram.com/${handle}`;
-      if (igTxt) igTxt.textContent = cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`;
+  const topIgBtn = $('igNavBtn');
+  const topIgTxt = $('igNavTxt');
+
+  if (ig) {
+    const cleanIg = ig.trim();
+    const handle = cleanIg.replace(/^@/, '').trim();
+    const igUrl = cleanIg.startsWith('http') ? cleanIg : `https://instagram.com/${handle}`;
+    const igDisplay = cleanIg.startsWith('@') ? cleanIg : `@${cleanIg}`;
+
+    if (igBtn) {
+      igBtn.href = igUrl;
+      if (igTxt) igTxt.textContent = igDisplay;
       igBtn.style.display = 'flex';
-    } else {
-      igBtn.style.display = 'none';
+    }
+    if (topIgBtn) {
+      topIgBtn.href = igUrl;
+      topIgBtn.title = `ติดต่อเราทาง Instagram (${igDisplay})`;
+      if (topIgTxt) topIgTxt.textContent = igDisplay;
+      topIgBtn.style.display = 'inline-flex';
+    }
+  } else {
+    if (igBtn) igBtn.style.display = 'none';
+    if (topIgBtn) {
+      topIgBtn.href = 'https://instagram.com';
+      topIgBtn.title = 'ติดต่อเราทาง Instagram';
+      if (topIgTxt) topIgTxt.textContent = 'IG';
+      topIgBtn.style.display = 'inline-flex';
     }
   }
 
@@ -2859,7 +3200,8 @@ function renderSinglePortCard(el, p, myClientId){
     el.className = `port-card in-use ${isLow ? 'low-time' : ''}`;
     el.style.borderColor = '';
     el.style.boxShadow = '';
-    el.onclick = null;
+    el.onclick = () => openEarlyStopModal(p.id, p.label, rem);
+    el.title = 'แตะเพื่อดูรายละเอียดหรือหยุดชาร์จก่อนเวลา';
     el.innerHTML = `
       <div class="bar-hd">
         <div class="bar-port">
@@ -2882,6 +3224,13 @@ function renderSinglePortCard(el, p, myClientId){
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
           <div><div class="warn-1m-t">เหลือเวลาชาร์จ 1 นาทีสุดท้าย</div><div class="warn-1m-s">ระบบจะตัดไฟอัตโนมัติเมื่อครบเวลา</div></div>
         </div>
+      </div>
+      <div class="bar-actions-row">
+        <span class="bar-action-hint">แตะเพื่อหยุดชาร์จก่อนเวลา</span>
+        <button type="button" class="btn-early-stop-mini" onclick="event.stopPropagation();openEarlyStopModal('${p.id}','${p.label}',${rem})">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          <span>หยุดชาร์จ</span>
+        </button>
       </div>`;
     el.dataset.rem = rem;
     el.dataset.total = total;
@@ -3656,18 +4005,170 @@ async function submitSlip(method){
   // 2. ส่งเข้าคิวรอผู้ดูแลอนุมัติ (เช่น สลิป TrueMoney ไม่มี QR หรือ EasySlip ขัดข้อง)
   if(httpStatus===202 || res?.pendingApproval){
     Sound.click();
-    $('okTitle').textContent='ส่งข้อมูลรอผู้ดูแลตรวจสอบแล้ว';
-    $('okPort').textContent=`${S.portLabel} · รหัสคำขอ ${res?.pendingId || '—'}`;
-    $('okTime').textContent='รออนุมัติ';
-    $('okSender').textContent=res?.message || 'ระบบได้รับสลิปแล้ว กรุณารอผู้ดูแลอนุมัติเปิดไฟสักครู่';
-    $('sheetTitle').textContent='รออนุมัติ';
-    goPage('pg-ok');
-    Voice.speak('ระบบได้รับสลิปแล้ว กรุณารอผู้ดูแลตรวจสอบและเปิดไฟสักครู่ค่ะ', true);
+    $('sheetTitle').textContent = 'รออนุมัติสลิป';
+    startPendingApprovalTracker(res?.pendingId, S.portId, S.amount, S.portLabel);
     return;
   }
 
   // 3. ตรวจไม่ผ่าน หรือมีข้อผิดพลาด
   showErr(res?.message || res?.error || res?.reason || 'ตรวจสอบสลิปไม่ผ่าน กรุณาตรวจสอบรูปสลิปและยอดเงิน แล้วลองใหม่อีกครั้งค่ะ', true);
+}
+
+/* ── Real-time Slip Approval Tracker (Kiosk & User UX) ── */
+let _pendingTrackerUnsub = null;
+let _pendingTrackerTimer = null;
+let _currentPendingId = null;
+
+function startPendingApprovalTracker(pendingId, portId, amount, portLabel) {
+  stopPendingApprovalTracker();
+  _currentPendingId = pendingId;
+
+  const pCode = pendingId || 'PEN-PENDING';
+  const refCodeEl = $('pendingRefCode');
+  const portInfoEl = $('pendingPortInfo');
+  const statusMsgEl = $('pendingStatusMsg');
+  if (refCodeEl) refCodeEl.textContent = pCode;
+  if (portInfoEl) portInfoEl.textContent = `${portLabel || S.portLabel || 'ช่องชาร์จ'} · ฿${amount || S.amount || '—'} (${fmtTime((amount || S.amount || 1) * SPB)})`;
+  if (statusMsgEl) statusMsgEl.textContent = 'ส่งสลิปให้ผู้ดูแลแล้ว กำลังรอการอนุมัติแบบเรียลไทม์...';
+
+  goPage('pg-pending-approval');
+  Voice.speak('ระบบส่งสลิปให้ผู้ดูแลตรวจสอบแล้วค่ะ หน้านี้จะเริ่มจ่ายไฟอัตโนมัติเมื่ออนุมัติ ไม่ต้องกดรีเฟรชค่ะ', true);
+
+  const onApproved = (data) => {
+    stopPendingApprovalTracker();
+    Sound.success();
+    Voice.speak(`สลิปได้รับการอนุมัติแล้วค่ะ เริ่มจ่ายไฟที่ช่อง ${portLabel || S.portLabel} ขอบคุณค่ะ`, true);
+    const cs = (amount || S.amount || 1) * SPB;
+    showOK(cs, 'อนุมัติโดยผู้ดูแล', false, data?.txId || pendingId);
+  };
+
+  const onRejected = (reason) => {
+    stopPendingApprovalTracker();
+    Sound.error();
+    Voice.speak('ขออภัยค่ะ ผู้ดูแลปฏิเสธสลิปนี้ กรุณาตรวจสอบหรือส่งใหม่อีกครั้งค่ะ', true);
+    showErr(reason || 'ผู้ดูแลปฏิเสธสลิปนี้ (ยอดเงินไม่ถูกต้อง หรือไม่พบยอดโอนเข้าบัญชี)', true);
+  };
+
+  // 1. Real-time Firestore Listener
+  if (window._fsOnSnapshot && window._fdb && window._fsDoc && pendingId) {
+    try {
+      _pendingTrackerUnsub = window._fsOnSnapshot(
+        window._fsDoc(window._fdb, 'pending_approvals', pendingId),
+        (snap) => {
+          if (!snap.exists()) return;
+          const data = snap.data();
+          if (data?.status === 'approved') {
+            onApproved(data);
+          } else if (data?.status === 'rejected') {
+            onRejected(data?.rejectReason);
+          }
+        },
+        (err) => console.warn('[PendingTracker Firestore notice]', err.message)
+      );
+    } catch(e) {
+      console.warn('[PendingTracker Setup notice]', e);
+    }
+  }
+
+  // 2. Resilient Polling Fallback to Render Server every 2.5 seconds
+  if (pendingId) {
+    _pendingTrackerTimer = setInterval(async () => {
+      try {
+        const r = await fetch(`${BASE}/api/payment/pending/${encodeURIComponent(pendingId)}`);
+        if (!r.ok) return;
+        const res = await r.json();
+        if (res && res.success && res.pending) {
+          if (res.pending.status === 'approved') {
+            onApproved(res.pending);
+          } else if (res.pending.status === 'rejected') {
+            onRejected(res.pending.rejectReason);
+          }
+        }
+      } catch(e) {}
+    }, 2500);
+  }
+}
+
+function stopPendingApprovalTracker() {
+  if (typeof _pendingTrackerUnsub === 'function') {
+    try { _pendingTrackerUnsub(); } catch(e){}
+    _pendingTrackerUnsub = null;
+  }
+  if (_pendingTrackerTimer) {
+    clearInterval(_pendingTrackerTimer);
+    _pendingTrackerTimer = null;
+  }
+  _currentPendingId = null;
+}
+
+function cancelPendingApprovalWait() {
+  stopPendingApprovalTracker();
+  closeSheet();
+  kioskToast('ยกเลิกการรออนุมัติแล้ว หากโอนเงินแล้วสามารถแจ้งแอดมินพร้อมรหัสคำขอได้ค่ะ', 'info');
+}
+
+/* ── Early Stop Charging Modal & Actions ── */
+let _targetStopPortId = null;
+let _targetStopPortLabel = '';
+
+function openEarlyStopModal(portId, portLabel, remSecs) {
+  _targetStopPortId = portId;
+  _targetStopPortLabel = portLabel || portId;
+  const labelEl = $('earlyStopPortLabel');
+  if (labelEl) {
+    labelEl.textContent = `ช่องชาร์จ ${portLabel} (เหลือเวลาอีก ${fmtSecs(remSecs || 0)})`;
+  }
+  const overlay = $('earlyStopOverlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    Sound.click();
+  }
+}
+
+function closeEarlyStopModal() {
+  const overlay = $('earlyStopOverlay');
+  if (overlay) overlay.classList.remove('open');
+  _targetStopPortId = null;
+}
+
+async function executeEarlyStop() {
+  if (!_targetStopPortId) return;
+  const portId = _targetStopPortId;
+  const portLabel = _targetStopPortLabel;
+  const btn = $('btnConfirmEarlyStop');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'กำลังตัดไฟ...';
+  }
+
+  try {
+    const res = await apiFetch('POST', '/api/payment/early-stop', {
+      portId: portId,
+      visitorId: getVisitorId()
+    });
+
+    closeEarlyStopModal();
+    if (res && res.success) {
+      Sound.success();
+      Voice.speak('ขอบคุณที่ใช้บริการค่ะ ตู้ชาร์จหยุดการทำงานเรียบร้อยแล้ว อย่าลืมนำสิ่งของของท่านไปด้วยนะคะ', true);
+      kioskToast(`ตัดไฟช่อง ${portLabel} เรียบร้อยแล้ว ขอบคุณที่ใช้บริการค่ะ`, 'success');
+      if (typeof fetchPorts === 'function') fetchPorts();
+    } else {
+      Sound.error();
+      kioskToast(res?.error || 'ไม่สามารถหยุดชาร์จได้ กรุณาลองใหม่อีกครั้งค่ะ', 'warn');
+    }
+  } catch (err) {
+    console.warn('[Early stop err]', err);
+    closeEarlyStopModal();
+    Sound.error();
+    kioskToast('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้งค่ะ', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'ยืนยันหยุดชาร์จ';
+    }
+  }
+}
 }
 
 function retrySlip(){
@@ -3751,7 +4252,11 @@ function startExpire(spanId,isoStr){
   fn();
   _expTimer=setInterval(fn,1000);
 }
-function stopTimers(){if(_expTimer){clearInterval(_expTimer);_expTimer=null;}if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}}
+function stopTimers(){
+  if(_expTimer){clearInterval(_expTimer);_expTimer=null;}
+  if(_cashPoll){clearInterval(_cashPoll);_cashPoll=null;}
+  if(typeof stopPendingApprovalTracker==='function') stopPendingApprovalTracker();
+}
 async function cancelSession(){
   Sound.click();
   closeSheet();
@@ -4123,26 +4628,15 @@ function toggleTheme(e){
 })();
 
 /* ───────────────────────────────────────────────
-   SHARE AS SCANNABLE QR CODE
+   SHARE AS SCANNABLE QR CODE (WEBSITE URL ONLY)
 ─────────────────────────────────────────────── */
-let currentSharePort = '';
-
-function buildShareUrl(portId) {
+function buildShareUrl() {
   let baseUrl = 'https://usb-charger-project.web.app/';
   if (typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol)) {
     const cleanPath = window.location.pathname === '/index.html' ? '/' : (window.location.pathname || '/');
     baseUrl = window.location.origin + cleanPath;
   }
-  if (!portId) return baseUrl;
-  const sep = baseUrl.includes('?') ? '&' : '?';
-  return baseUrl + sep + 'port=' + encodeURIComponent(portId);
-}
-
-function getSharePortLabel(portId) {
-  if (!portId) return 'หน้าหลัก (ทุกช่อง)';
-  const found = Array.isArray(currentPorts) ? currentPorts.find(p => p.id === portId) : null;
-  if (found && found.label) return found.label;
-  return ({ 'usb-a-1': 'USB-A 1', 'usb-a-2': 'USB-A 2', 'usb-c-1': 'USB-C 1', 'usb-c-2': 'USB-C 2' }[portId] || portId);
+  return baseUrl;
 }
 
 function createQrMatrix(text) {
@@ -4183,22 +4677,17 @@ function drawQrOnCanvas(canvas, text, sizePx) {
 }
 
 function renderShareQr() {
-  const url = buildShareUrl(currentSharePort);
-  const portLabel = getSharePortLabel(currentSharePort);
+  const url = buildShareUrl();
   const rateText = document.getElementById('rateLabel')?.textContent?.trim() || '1฿ = 3 นาที';
 
   const titleEl = document.getElementById('shareQrTitle');
   const subEl = document.getElementById('shareQrSub');
   const rateEl = document.getElementById('shareQrRate');
   const urlEl = document.getElementById('shareUrlPreview');
-  if (titleEl) titleEl.textContent = currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ';
-  if (subEl) subEl.textContent = currentSharePort ? `สแกนเพื่อเลือกชาร์จช่อง ${portLabel} ทันที` : 'สแกน QR ด้วยกล้องมือถือเพื่อเริ่มชาร์จทันที';
+  if (titleEl) titleEl.textContent = 'ตู้ชาร์จ USB อัจฉริยะ';
+  if (subEl) subEl.textContent = 'สแกน QR ด้วยกล้องมือถือเพื่อเริ่มชาร์จทันที';
   if (rateEl) rateEl.textContent = `อัตราค่าบริการ ${rateText}`;
   if (urlEl) urlEl.textContent = url;
-
-  document.querySelectorAll('#shareTargetTabs .share-tab').forEach(btn => {
-    btn.classList.toggle('active', (btn.getAttribute('data-port') || '') === currentSharePort);
-  });
 
   const canvas = document.getElementById('shareQrCanvas');
   const fallbackImg = document.getElementById('shareQrFallbackImg');
@@ -4212,15 +4701,8 @@ function renderShareQr() {
   }
 }
 
-function setShareTarget(portId) {
+function openShareModal() {
   Sound.click();
-  currentSharePort = portId || '';
-  renderShareQr();
-}
-
-function openShareModal(portId = '') {
-  Sound.click();
-  currentSharePort = portId || '';
   renderShareQr();
   const ov = document.getElementById('shareOverlay');
   if (ov) ov.classList.add('open');
@@ -4232,7 +4714,7 @@ function closeShareModal() {
 }
 
 function buildSharePosterCanvas() {
-  const url = buildShareUrl(currentSharePort);
+  const url = buildShareUrl();
   const qr = createQrMatrix(url);
   if (!qr) return null;
 
@@ -4255,8 +4737,7 @@ function buildSharePosterCanvas() {
 
   ctx.fillStyle = '#0f172a';
   ctx.font = 'bold 42px sans-serif';
-  const portLabel = getSharePortLabel(currentSharePort);
-  ctx.fillText(currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ', W / 2, 130);
+  ctx.fillText('ตู้ชาร์จ USB อัจฉริยะ', W / 2, 130);
 
   const qrCanvas = document.createElement('canvas');
   drawQrOnCanvas(qrCanvas, url, 520);
@@ -4264,7 +4745,7 @@ function buildSharePosterCanvas() {
 
   ctx.fillStyle = '#334155';
   ctx.font = 'bold 26px sans-serif';
-  ctx.fillText(currentSharePort ? `สแกนเพื่อชาร์จช่อง ${portLabel}` : 'สแกน QR Code เพื่อเปิดใช้งานตู้ชาร์จ', W / 2, 735);
+  ctx.fillText('สแกน QR Code เพื่อเปิดใช้งานตู้ชาร์จ', W / 2, 735);
 
   const rateText = document.getElementById('rateLabel')?.textContent?.trim() || '1฿ = 3 นาที';
   ctx.fillStyle = '#059669';
@@ -4280,7 +4761,7 @@ function buildSharePosterCanvas() {
 
 async function copyShareUrl() {
   Sound.click();
-  const url = buildShareUrl(currentSharePort);
+  const url = buildShareUrl();
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(url);
@@ -4294,7 +4775,7 @@ async function copyShareUrl() {
       document.execCommand('copy');
       ta.remove();
     }
-    kioskToast('คัดลอกลิงก์สำหรับแชร์แล้ว', 'success');
+    kioskToast('คัดลอกลิงก์เว็บไซต์สำหรับแชร์แล้ว', 'success');
   } catch (e) {
     kioskToast('ไม่สามารถคัดลอกอัตโนมัติ กรุณาคัดลอกจากช่องลิงก์', 'warn');
   }
@@ -4310,8 +4791,7 @@ function downloadShareQr() {
     return;
   }
   const link = document.createElement('a');
-  const suffix = currentSharePort ? `-${currentSharePort}` : '';
-  link.download = `usb-charger-qr${suffix}.png`;
+  link.download = 'smart-usb-charger-qr.png';
   link.href = poster.toDataURL('image/png');
   document.body.appendChild(link);
   link.click();
@@ -4321,10 +4801,9 @@ function downloadShareQr() {
 
 async function shareQrNative() {
   Sound.click();
-  const url = buildShareUrl(currentSharePort);
-  const portLabel = getSharePortLabel(currentSharePort);
-  const title = currentSharePort ? `ตู้ชาร์จ USB · ${portLabel}` : 'ตู้ชาร์จ USB อัจฉริยะ';
-  const text = currentSharePort ? `สแกนหรือเปิดลิงก์เพื่อชาร์จช่อง ${portLabel}` : 'สแกน QR Code หรือเปิดลิงก์เพื่อใช้งานตู้ชาร์จ USB';
+  const url = buildShareUrl();
+  const title = 'ตู้ชาร์จ USB อัจฉริยะ';
+  const text = 'สแกน QR Code หรือเปิดลิงก์เพื่อใช้งานตู้ชาร์จ USB';
 
   if (navigator.share) {
     try {
@@ -4332,8 +4811,7 @@ async function shareQrNative() {
       if (poster && navigator.canShare) {
         const blob = await new Promise(resolve => poster.toBlob(resolve, 'image/png'));
         if (blob) {
-          const suffix = currentSharePort ? `-${currentSharePort}` : '';
-          const file = new File([blob], `usb-charger-qr${suffix}.png`, { type: 'image/png' });
+          const file = new File([blob], 'smart-usb-charger-qr.png', { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({ title, text: `${text}\n${url}`, files: [file] });
             return;
