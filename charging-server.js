@@ -98,11 +98,14 @@ try {
 }
 
 // ─── Runtime Config (from process.env; zero hardcoded secrets/PII) ─────────────
-const DEFAULT_ADMIN_EMAILS = [];
+const DEFAULT_ADMIN_EMAILS = [
+  "palmtawanlaothaisong00@gmail.com",
+  "sukitlowkey@gmail.com",
+];
 
 function getEnvAdminEmails() {
   const raw = String(process.env.ADMIN_EMAILS || "").trim();
-  const list = raw ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : [];
+  const list = raw ? raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : DEFAULT_ADMIN_EMAILS;
   return new Set(list);
 }
 
