@@ -2808,10 +2808,11 @@ function showServerBaseMsg(text, color) {
 }
 
 const authHdr = () => ({ 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` });
-async function adminApi(method, path, body) {
+async function adminApi(method, path, body, isRetry = false) {
   try {
-    if (currentUser && typeof currentUser.getIdToken === 'function') {
-      try { token = await currentUser.getIdToken(false); } catch(_) {}
+    const user = currentUser || fbAuth.currentUser;
+    if (user && typeof user.getIdToken === 'function') {
+      try { token = await user.getIdToken(isRetry); } catch(_) {}
     }
     const opt = { method, headers: authHdr(), cache: 'no-store' };
     if (body) opt.body = JSON.stringify(body);
@@ -2829,6 +2830,16 @@ async function adminApi(method, path, body) {
       }
     }
     if (!res) return null;
+    if ((res.status === 401 || res.status === 403) && !isRetry) {
+      if (user && typeof user.getIdToken === 'function') {
+        try {
+          token = await user.getIdToken(true);
+          sessionStorage.setItem('adminToken', token);
+          localStorage.setItem('adminToken', token);
+          return await adminApi(method, path, body, true);
+        } catch(_) {}
+      }
+    }
     if (res.status === 401) { logout(); return {}; }
     return await res.json();
   } catch(e) {
@@ -3698,6 +3709,22 @@ async function saveSettings() {
 
   localStorage.setItem('usb_charger_config', JSON.stringify(updatedConfig));
   if (dashData) dashData.config = { ...(dashData.config || {}), ...updatedConfig };
+
+  // Sync to Firestore directly
+  if (fbDb && (currentUser || fbAuth.currentUser)) {
+    try {
+      await fbDb.collection('charger').doc('charger01').set({
+        promptpayPhone,
+        bankName,
+        bankAccount,
+        bankAccountName,
+        secondsPerBaht: Math.round(secondsPerBaht),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(fsErr) {
+      console.warn('[Firestore saveSettings notice]', fsErr);
+    }
+  }
 
   const statusEl = document.getElementById('saveSettingsStatus');
   if (statusEl) statusEl.textContent = 'กำลังบันทึก...';
@@ -5326,6 +5353,22 @@ async function saveSupportSettings() {
   cfg.supportLocation = loc;
   cfg.truemoneyPhone = truemoneyPhone;
   localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  // Sync to Firestore directly so Kiosk gets update immediately
+  if (fbDb && (currentUser || fbAuth.currentUser)) {
+    try {
+      await fbDb.collection('charger').doc('charger01').set({
+        supportPhone: phone,
+        supportLine: line,
+        supportIg: ig,
+        supportLocation: loc,
+        truemoneyPhone: truemoneyPhone,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(fsErr) {
+      console.warn('[Firestore saveSupportSettings notice]', fsErr);
+    }
+  }
 
   const res = await adminApi('POST', '/api/admin/config', {
     supportPhone: phone,

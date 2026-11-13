@@ -12,10 +12,10 @@ service cloud.firestore {
         );
     }
 
-    // Charger & Port state - anyone can read kiosk status; Server Admin SDK writes only
+    // Charger & Port state - anyone can read kiosk status; verified admins can update config; Server Admin SDK has full access
     match /charger/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
 
     // Internal private charger state & used slip refs - Server Admin SDK only
