@@ -127,6 +127,14 @@ const CFG = {
   slipMaxAgeMins:     Math.max(5, Number(process.env.SLIP_MAX_AGE_MINS || 30)),
   allowUnverifiedDev: process.env.ALLOW_UNVERIFIED_DEV_MODE === "true",
   allowLocalDevAdmin: process.env.ALLOW_LOCAL_DEV_ADMIN === "true",
+  googleFormsUrl:       process.env.GOOGLE_FORMS_URL || "https://docs.google.com/forms/d/1NANtLWjY3PGUMp4V_ouCdZ4jtTMFgDIw2sD0S8DgzcA/edit",
+  googleSheetsUrl:      process.env.GOOGLE_SHEETS_URL || "https://docs.google.com/spreadsheets/d/1Ltc6iWb2v9JgDDNErTHTxu-MxXt5hQTzBl0jUxHk6IE/edit",
+  surveyEnabled:        process.env.SURVEY_ENABLED === "true" || true,
+  discordWebhookUrl:    process.env.DISCORD_WEBHOOK_URL || "",
+  discordNotifyPayment: process.env.DISCORD_NOTIFY_PAYMENT !== "false",
+  discordNotifyIssue:   process.env.DISCORD_NOTIFY_ISSUE !== "false",
+  discordNotifyEsp32:   process.env.DISCORD_NOTIFY_ESP32 !== "false",
+
 };
 
 // ─── Multer (Slip Image Upload) ───────────────────────────────────────────────
@@ -540,6 +548,13 @@ function saveState() {
         supportLine: CFG.supportLine,
         supportIg: CFG.supportIg,
         supportLocation: CFG.supportLocation,
+        googleFormsUrl: CFG.googleFormsUrl,
+        googleSheetsUrl: CFG.googleSheetsUrl,
+        surveyEnabled: CFG.surveyEnabled,
+        discordWebhookUrl: CFG.discordWebhookUrl,
+        discordNotifyPayment: CFG.discordNotifyPayment,
+        discordNotifyIssue: CFG.discordNotifyIssue,
+        discordNotifyEsp32: CFG.discordNotifyEsp32,
       },
       esp32Control: {
         remoteConfig: state.esp32Control.remoteConfig,
@@ -2026,6 +2041,13 @@ app.post("/api/admin/config", requireAdmin, (req, res) => {
     supportLine,
     supportIg,
     supportLocation,
+    googleFormsUrl,
+    googleSheetsUrl,
+    surveyEnabled,
+    discordWebhookUrl,
+    discordNotifyPayment,
+    discordNotifyIssue,
+    discordNotifyEsp32,
   } = req.body;
 
   if (promptpayPhone !== undefined) CFG.promptpayPhone = String(promptpayPhone).trim().slice(0, 30);

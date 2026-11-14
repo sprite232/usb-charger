@@ -1753,6 +1753,20 @@ footer{
 </div>
 
 <!-- MAIN -->
+<!-- Survey Banner Pill -->
+<div id="surveyBannerPill" style="display:none;margin:0 auto 16px;max-width:600px;padding:0 20px">
+  <a id="surveyBannerLink" href="https://docs.google.com/forms/d/1NANtLWjY3PGUMp4V_ouCdZ4jtTMFgDIw2sD0S8DgzcA/edit" target="_blank" style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,rgba(168,85,247,0.18),rgba(124,58,237,0.12));border:1.5px solid rgba(168,85,247,0.4);border-radius:14px;padding:12px 18px;text-decoration:none;color:#fff;box-shadow:0 4px 20px rgba(168,85,247,0.15);transition:transform 0.2s">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:1.4rem">⭐</span>
+      <div>
+        <div style="font-weight:700;font-size:0.92rem;color:#c084fc">แบบประเมินความพึงพอใจตู้ชาร์จ</div>
+        <div style="font-size:0.75rem;color:var(--g3)">ร่วมตอบแบบประเมินโครงงาน ม.3/13 ร.ร.ศรีสงครามวิทยา (1 นาที)</div>
+      </div>
+    </div>
+    <span style="font-size:0.8rem;background:rgba(168,85,247,0.25);color:#e9d5ff;padding:4px 10px;border-radius:8px;font-weight:600">ทำแบบประเมิน ↗</span>
+  </a>
+</div>
+
 <main class="main">
   <p class="sec-lbl reveal">พอร์ตที่ใช้งานได้</p>
   <div id="queueNotice" style="display:none;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;padding:10px 16px;border-radius:12px;margin-bottom:14px;font-size:0.85rem;font-weight:600;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(245,158,11,0.1)"></div>
@@ -2427,7 +2441,15 @@ footer{
         <div class="result-time" id="okTime">—</div>
         <div class="result-sender" id="okSender"></div>
         <p style="font-size:.78rem;color:var(--g3)">เสียบสายชาร์จได้ทันที ระบบจะตัดไฟอัตโนมัติเมื่อครบเวลา</p>
-        <button class="btn btn-primary" onclick="closeSheet()" style="margin-top:14px">ปิดหน้าต่าง</button>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-direction:column;width:100%">
+          <button class="btn btn-primary" onclick="closeSheet()">ปิดหน้าต่าง</button>
+          <button class="btn btn-ghost" id="btnDownloadReceipt" onclick="downloadReceipt()" style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.85rem">
+            <span>📄</span> <span>บันทึกใบเสร็จดิจิทัล (Download E-Receipt)</span>
+          </button>
+          <a id="btnSurveyFromOk" href="https://docs.google.com/forms/d/1NANtLWjY3PGUMp4V_ouCdZ4jtTMFgDIw2sD0S8DgzcA/edit" target="_blank" class="btn" style="display:flex;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;align-items:center;justify-content:center;gap:6px;font-size:0.85rem">
+            <span>⭐</span> <span>ทำแบบประเมินความพึงพอใจ (1 นาที) ↗</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -3447,6 +3469,10 @@ async function refreshPorts(){
   currentPorts = d.ports;
   savePersistentPorts(currentPorts);
   renderPorts(currentPorts);
+  if (d.googleFormsUrl !== undefined) {
+    updateSurveyUI(d.googleFormsUrl, d.surveyEnabled);
+  }
+
   updateSupportContactInfo();
   if(S.session&&_cashPoll)checkCash(d.ports);
 }
@@ -3611,6 +3637,134 @@ async function openSheet(portId,label){
       refreshPorts();
     }
   } catch(e) {}
+}
+
+
+// ── E-Receipt Generation & Survey Links ──
+function downloadReceipt() {
+  Sound.click();
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 760;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, 760);
+  grad.addColorStop(0, '#0f172a');
+  grad.addColorStop(1, '#090d16');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 600, 760);
+
+  // Outer border & card
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(20, 20, 560, 720);
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.06)';
+  ctx.fillRect(25, 25, 550, 710);
+
+  // Header Title
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 26px "Kanit", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚡ SMART CHARGER RECEIPT', 300, 75);
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '14px "Kanit", sans-serif';
+  ctx.fillText('ตู้ชาร์จโทรศัพท์มือถืออัจฉริยะ • โรงเรียนศรีสงครามวิทยา', 300, 105);
+
+  // Divider dashed line
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(40, 130);
+  ctx.lineTo(560, 130);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Details
+  ctx.textAlign = 'left';
+  const leftX = 50, rightX = 550;
+  let y = 175;
+  const lineGap = 42;
+
+  const items = [
+    { label: 'วันที่ & เวลา:', val: new Date().toLocaleString('th-TH') },
+    { label: 'รหัสทำรายการ (TxID):', val: (S.session?.id || 'TX-' + Date.now()).slice(0, 22) },
+    { label: 'ช่องชาร์จที่เลือก:', val: `${S.portLabel || 'USB'} (${S.portId?.toUpperCase() || ''})` },
+    { label: 'ยอดเงินที่ชำระ:', val: `฿${S.amount || 0} บาท` },
+    { label: 'ระยะเวลาที่ได้รับ:', val: `${Math.round((S.amount * SPB) / 60)} นาที (${S.amount * SPB} วินาที)` },
+    { label: 'ช่องทางชำระเงิน:', val: S.method === 'truemoney' ? 'TrueMoney Wallet' : S.method === 'qr' ? 'พร้อมเพย์ QR Code' : S.method === 'coin' ? 'หยอดเหรียญ' : 'โอนเงินธนาคาร' },
+    { label: 'สถานะการจ่ายไฟ:', val: '🟢 จ่ายไฟเรียบร้อย (Active)' },
+  ];
+
+  items.forEach(item => {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '16px "Kanit", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(item.label, leftX, y);
+
+    ctx.fillStyle = item.label.includes('ยอดเงิน') ? '#10b981' : '#f8fafc';
+    ctx.font = item.label.includes('ยอดเงิน') ? 'bold 20px "Kanit", sans-serif' : '500 16px "Kanit", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(item.val, rightX, y);
+
+    y += lineGap;
+  });
+
+  // Divider dashed line
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = '#334155';
+  ctx.beginPath();
+  ctx.moveTo(40, y + 10);
+  ctx.lineTo(560, y + 10);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Thank you message
+  y += 50;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 18px "Kanit", sans-serif';
+  ctx.fillText('ขอขอบคุณที่ใช้บริการตู้ชาร์จ Smart Charger 🙏', 300, y);
+
+  ctx.fillStyle = '#64748b';
+  ctx.font = '13px "Kanit", sans-serif';
+  ctx.fillText('โครงงานคอมพิวเตอร์ ม.3/13 • สอบถาม/แจ้งปัญหา: 096-967-9951', 300, y + 25);
+  ctx.fillText('ระบบตัดไฟอัตโนมัติเมื่อครบกำหนดเวลาเพื่อความปลอดภัยสูงสุด', 300, y + 46);
+
+  // Trigger download
+  const link = document.createElement('a');
+  link.download = `SmartCharger_Receipt_${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  kioskToast('บันทึกรูปใบเสร็จดิจิทัลเรียบร้อยแล้วค่ะ', 'success');
+}
+window.downloadReceipt = downloadReceipt;
+
+function updateSurveyUI(surveyUrl, isEnabled) {
+  const p = document.getElementById('surveyBannerPill');
+  const l = document.getElementById('surveyBannerLink');
+  const o = document.getElementById('btnSurveyFromOk');
+  const show = !!surveyUrl && isEnabled !== false;
+
+  if (p && l) {
+    if (show) {
+      l.href = surveyUrl;
+      p.style.display = 'block';
+    } else {
+      p.style.display = 'none';
+    }
+  }
+  if (o) {
+    if (show) {
+      o.href = surveyUrl;
+      o.style.display = 'flex';
+    } else {
+      o.style.display = 'none';
+    }
+  }
 }
 
 function closeSheet(){
