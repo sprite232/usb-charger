@@ -5676,6 +5676,245 @@ renderAll = function(d) {
   }, 100);
 }
 
+
+// ── Survey Links Management ──
+function toggleSurveyEditor() {
+  const p = document.getElementById('surveyEditorPanel');
+  if (!p) return;
+  const isHidden = (p.style.display === 'none' || !p.style.display);
+  p.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+window.toggleSurveyEditor = toggleSurveyEditor;
+
+async function saveSurveyLinks() {
+  const formsUrl = (document.getElementById('cfgGoogleFormsUrl')?.value || '').trim();
+  const sheetsUrl = (document.getElementById('cfgGoogleSheetsUrl')?.value || '').trim();
+  const surveyEnabled = !!document.getElementById('cfgSurveyEnabled')?.checked;
+  const statusEl = document.getElementById('surveyLinkStatus');
+
+  if (statusEl) {
+    statusEl.textContent = 'กำลังบันทึกลิงก์...';
+    statusEl.style.color = 'var(--muted)';
+  }
+
+  // 1. Update DOM buttons immediately
+  updateSurveyDomLinks(formsUrl, sheetsUrl);
+
+  // 2. Save to localStorage
+  const cfg = getLocalSavedConfig();
+  cfg.googleFormsUrl = formsUrl;
+  cfg.googleSheetsUrl = sheetsUrl;
+  cfg.surveyEnabled = surveyEnabled;
+  localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  // 3. Sync to Firestore (for real-time multi-device sync)
+  if (typeof syncAdminToFirestore === 'function') {
+    syncAdminToFirestore({
+      config: cfg,
+      googleFormsUrl: formsUrl,
+      googleSheetsUrl: sheetsUrl,
+      surveyEnabled: surveyEnabled
+    });
+  }
+
+  // 4. Save to backend API
+  try {
+    await adminApi('POST', '/api/admin/config', {
+      googleFormsUrl: formsUrl,
+      googleSheetsUrl: sheetsUrl,
+      surveyEnabled: surveyEnabled
+    });
+  } catch(_) {}
+
+  if (statusEl) {
+    statusEl.textContent = '✅ บันทึกสำเร็จแล้ว!';
+    statusEl.style.color = 'var(--green)';
+  }
+  adminToast('บันทึกลิงก์ Google Forms & Sheets เรียบร้อยแล้ว', 'success');
+}
+window.saveSurveyLinks = saveSurveyLinks;
+
+function updateSurveyDomLinks(formsUrl, sheetsUrl) {
+  if (formsUrl) {
+    const b = document.getElementById('btnAdminForms');
+    if (b) b.href = formsUrl;
+    const t = document.querySelector('.topbar-link-pill.pill-forms');
+    if (t) t.href = formsUrl;
+  }
+  if (sheetsUrl) {
+    const b = document.getElementById('btnAdminSheets');
+    if (b) b.href = sheetsUrl;
+    const t = document.querySelector('.topbar-link-pill.pill-sheets');
+    if (t) t.href = sheetsUrl;
+  }
+}
+window.updateSurveyDomLinks = updateSurveyDomLinks;
+
+// ── Discord Notification Functions ──
+async function saveDiscordSettings(showAlert = true) {
+  const webhookUrl = (document.getElementById('cfgDiscordWebhookUrl')?.value || '').trim();
+  const notifyPayment = !!document.getElementById('cfgDiscordNotifyPayment')?.checked;
+  const notifyIssue = !!document.getElementById('cfgDiscordNotifyIssue')?.checked;
+  const notifyEsp32 = !!document.getElementById('cfgDiscordNotifyEsp32')?.checked;
+  const statusEl = document.getElementById('discordStatusMsg');
+
+  if (statusEl) {
+    statusEl.textContent = 'กำลังบันทึก...';
+    statusEl.style.color = 'var(--muted)';
+  }
+
+  const cfg = getLocalSavedConfig();
+  cfg.discordWebhookUrl = webhookUrl;
+  cfg.discordNotifyPayment = notifyPayment;
+  cfg.discordNotifyIssue = notifyIssue;
+  cfg.discordNotifyEsp32 = notifyEsp32;
+  localStorage.setItem('usb_charger_config', JSON.stringify(cfg));
+
+  if (typeof syncAdminToFirestore === 'function') {
+    syncAdminToFirestore({
+      config: cfg,
+      discordWebhookUrl: webhookUrl,
+      discordNotifyPayment: notifyPayment,
+      discordNotifyIssue: notifyIssue,
+      discordNotifyEsp32: notifyEsp32
+    });
+  }
+
+  try {
+    await adminApi('POST', '/api/admin/config', {
+      discordWebhookUrl: webhookUrl,
+      discordNotifyPayment: notifyPayment,
+      discordNotifyIssue: notifyIssue,
+      discordNotifyEsp32: notifyEsp32
+    });
+  } catch(_) {}
+
+  if (statusEl) {
+    statusEl.textContent = '✅ บันทึก Discord Webhook เรียบร้อย!';
+    statusEl.style.color = 'var(--green)';
+  }
+  if (showAlert) {
+    adminToast('บันทึกการตั้งค่า Discord Webhook เรียบร้อยแล้ว', 'success');
+  }
+}
+window.saveDiscordSettings = saveDiscordSettings;
+
+async function testDiscordWebhook() {
+  const webhookUrl = (document.getElementById('cfgDiscordWebhookUrl')?.value || '').trim();
+  const statusEl = document.getElementById('discordStatusMsg');
+
+  if (!webhookUrl) {
+    alert('กรุณากรอก Discord Webhook URL ก่อนกดทดสอบครับ\nตัวอย่าง: https://discord.com/api/webhooks/123.../abc...');
+    return;
+  }
+  if (!webhookUrl.startsWith('https://discord.com/api/webhooks/')) {
+    alert('ลิงก์ Discord Webhook ไม่ถูกต้อง!\nต้องขึ้นต้นด้วย https://discord.com/api/webhooks/... เสมอครับ');
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = '⏳ กำลังส่งข้อความทดสอบเข้า Discord...';
+    statusEl.style.color = 'var(--muted)';
+  }
+
+  const payload = {
+    username: "Smart Charger Bot ⚡",
+    avatar_url: "https://usb-charger-project.web.app/assets/icon-192.png",
+    embeds: [
+      {
+        title: "🔔 ทดสอบระบบแจ้งเตือน Discord Webhook สำเร็จ!",
+        description: "ระบบ **Smart USB Charger (ตู้ชาร์จโทรศัพท์มือถืออัจฉริยะ 4 ช่อง)** เชื่อมต่อกับห้อง Discord ของคุณเรียบร้อยแล้ว!\n\nทุกครั้งที่มีการชำระเงิน หรือมีผู้ใช้งานแจ้งปัญหา ระบบจะส่งการ์ดแจ้งเตือนเข้าห้องนี้ทันที ⚡",
+        color: 5793266, // 0x5865F2 Discord Blurple
+        fields: [
+          { name: "⚡ สถานะตู้ชาร์จ", value: "🟢 Online ปกติ", inline: true },
+          { name: "🕒 เวลาทดสอบ", value: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }), inline: true },
+          { name: "👤 ผู้ทดสอบ", value: (currentUser?.email || 'Admin'), inline: true },
+          { name: "📍 จุดบริการ", value: (document.getElementById('cfgSupportLocation')?.value || "ห้องคอมพิวเตอร์ อาคาร 1"), inline: true },
+          { name: "🏫 โรงเรียน", value: "โรงเรียนศรีสงครามวิทยา (ม.3/13)", inline: true }
+        ],
+        footer: {
+          text: "Smart USB Charger • โรงเรียนศรีสงครามวิทยา",
+          icon_url: "https://usb-charger-project.web.app/assets/icon-192.png"
+        },
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  let sentDirectly = false;
+  try {
+    // Discord Webhooks natively support CORS for POST
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.status === 204 || res.ok) {
+      sentDirectly = true;
+    } else {
+      const errData = await res.json().catch(() => null);
+      console.warn('[Discord Webhook Error Response]', res.status, errData);
+      if (errData && errData.message) {
+        throw new Error(errData.message);
+      }
+    }
+  } catch(err) {
+    console.warn('[Direct Discord Webhook Error]', err);
+  }
+
+  // Also notify backend to test server-side delivery & save URL
+  let serverSent = false;
+  try {
+    const sRes = await adminApi('POST', '/api/admin/discord/test', { webhookUrl, save: true });
+    if (sRes && sRes.success) serverSent = true;
+  } catch(_) {}
+
+  if (sentDirectly || serverSent) {
+    if (statusEl) {
+      statusEl.textContent = '✅ ส่งข้อความทดสอบเข้า Discord สำเร็จแล้ว!';
+      statusEl.style.color = 'var(--green)';
+    }
+    adminToast('ส่งข้อความทดสอบเข้า Discord สำเร็จ! กรุณาเปิดดูในห้อง Discord ครับ', 'success');
+    alert('🎉 ส่งข้อความทดสอบเข้า Discord สำเร็จเรียบร้อยแล้ว!\nเปิดห้อง Discord ของคุณเพื่อดูข้อความแจ้งเตือนได้เลยครับ');
+    saveDiscordSettings(false);
+  } else {
+    if (statusEl) {
+      statusEl.textContent = '❌ ส่งไม่สำเร็จ กรุณาตรวจสอบ Webhook URL';
+      statusEl.style.color = 'var(--red)';
+    }
+    alert('❌ ไม่สามารถส่งข้อความเข้า Discord ได้\nกรุณาตรวจสอบว่า:\n1. คัดลอก Discord Webhook URL มาครบถ้วนหรือไม่\n2. ห้องแชตหรือ Webhook ใน Discord ไม่ได้ถูกลบ');
+  }
+}
+window.testDiscordWebhook = testDiscordWebhook;
+
+// Auto-fill Survey & Discord fields on load
+setTimeout(() => {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('usb_charger_config') || '{}');
+    const gf = document.getElementById('cfgGoogleFormsUrl');
+    const gs = document.getElementById('cfgGoogleSheetsUrl');
+    const se = document.getElementById('cfgSurveyEnabled');
+    const dw = document.getElementById('cfgDiscordWebhookUrl');
+    const dnp = document.getElementById('cfgDiscordNotifyPayment');
+    const dni = document.getElementById('cfgDiscordNotifyIssue');
+    const dne = document.getElementById('cfgDiscordNotifyEsp32');
+
+    if (gf && cfg.googleFormsUrl) gf.value = cfg.googleFormsUrl;
+    if (gs && cfg.googleSheetsUrl) gs.value = cfg.googleSheetsUrl;
+    if (se && cfg.surveyEnabled !== undefined) se.checked = !!cfg.surveyEnabled;
+    if (dw && cfg.discordWebhookUrl) dw.value = cfg.discordWebhookUrl;
+    if (dnp && cfg.discordNotifyPayment !== undefined) dnp.checked = !!cfg.discordNotifyPayment;
+    if (dni && cfg.discordNotifyIssue !== undefined) dni.checked = !!cfg.discordNotifyIssue;
+    if (dne && cfg.discordNotifyEsp32 !== undefined) dne.checked = !!cfg.discordNotifyEsp32;
+
+    updateSurveyDomLinks(cfg.googleFormsUrl, cfg.googleSheetsUrl);
+  } catch(_) {}
+}, 400);
+
 </script>
 </body>
 </html>

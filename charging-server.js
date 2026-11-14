@@ -2028,6 +2028,44 @@ app.post("/api/payment/early-stop", (req, res) => {
   });
 });
 
+
+// POST /api/admin/discord/test — ส่งข้อความทดสอบเข้า Discord Webhook
+app.post("/api/admin/discord/test", requireAdmin, async (req, res) => {
+  const customUrl = (req.body.webhookUrl || CFG.discordWebhookUrl || "").trim();
+  if (!customUrl || !customUrl.startsWith("https://discord.com/api/webhooks/")) {
+    return res.status(400).json({ error: "URL ของ Discord Webhook ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://discord.com/api/webhooks/" });
+  }
+
+  const oldUrl = CFG.discordWebhookUrl;
+  CFG.discordWebhookUrl = customUrl;
+
+  const ok = await sendDiscordWebhook({
+    title: "🔔 ทดสอบระบบแจ้งเตือน Discord Webhook สำเร็จ!",
+    description: "ระบบ Smart USB Charger เชื่อมต่อกับห้อง Discord ของคุณเรียบร้อยแล้ว ทุกครั้งที่มีการชำระเงิน หรือแจ้งปัญหา ระบบจะส่งข้อความแจ้งเตือนเข้าห้องนี้ทันที ⚡",
+    color: 0x5865F2, // Discord Blurple
+    fields: [
+      { name: "สถานะระบบ", value: "🟢 Online ปกติ (เชื่อมต่อเซิร์ฟเวอร์สำเร็จ)", inline: true },
+      { name: "เวลาทดสอบ", value: new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }), inline: true },
+      { name: "ผู้ทดสอบ", value: `👤 ${req.adminUser?.user || 'Admin'}`, inline: true },
+      { name: "อุปกรณ์", value: "DOIT ESP32 DEVKIT V1 (4 พอร์ต)", inline: true },
+      { name: "สถานที่ตั้ง", value: `📍 ${CFG.supportLocation || "ห้องคอมพิวเตอร์ อาคาร 1"}`, inline: true }
+    ]
+  });
+
+  if (!req.body.save) {
+    CFG.discordWebhookUrl = oldUrl;
+  } else if (ok) {
+    CFG.discordWebhookUrl = customUrl;
+    saveState();
+  }
+
+  if (ok) {
+    res.json({ success: true, message: "ส่งข้อความทดสอบเข้า Discord เรียบร้อยแล้ว! กรุณาเปิดดูในห้อง Discord ของคุณ" });
+  } else {
+    res.status(500).json({ error: "ไม่สามารถส่งข้อความเข้า Discord ได้ กรุณาตรวจสอบ Webhook URL ว่าถูกต้องหรือไม่" });
+  }
+});
+
 app.post("/api/admin/config", requireAdmin, (req, res) => {
   const {
     promptpayPhone,
@@ -2437,6 +2475,20 @@ app.get("/api/esp32/command", requireEsp32Auth, (req, res) => {
   state.lastEsp32.otaPendingVerify = otaPendingVerify;
 
   if (wasOffline) {
+    if (CFG.discordNotifyEsp32 !== false) {
+      sendDiscordWebhook({
+        title: "📶 บอร์ด ESP32 เชื่อมต่อระบบสำเร็จ (Online)",
+        description: "บอร์ด ESP32 ประจำตู้ชาร์จได้เชื่อมต่อ Wi-Fi และส่งสัญญาณ Heartbeat มายังเซิร์ฟเวอร์แล้ว พร้อมรับคำสั่งจ่ายไฟ",
+        color: 0x3B82F6,
+        fields: [
+          { name: "สถานะ", value: "🟢 ONLINE", inline: true },
+          { name: "IP Address", value: state.lastEsp32.ip || "ไม่ทราบ", inline: true },
+          { name: "Wi-Fi SSID", value: wifiSsid || "เชื่อมต่อแล้ว", inline: true },
+          { name: "สัญญาณ Wi-Fi (RSSI)", value: (rssi != null ? (rssi + " dBm") : "-"), inline: true },
+          { name: "เวอร์ชันเฟิร์มแวร์", value: fwVersion || "1.0.0", inline: true }
+        ]
+      }).catch(() => {});
+    }
     addSystemLog("ESP32", "success", `บอร์ด ESP32 เชื่อมต่อสำเร็จ (${state.lastEsp32.ip || "online"}${fwVersion ? ` | FW ${fwVersion}` : ""}) พร้อมรับคำสั่ง`, {
       ip: state.lastEsp32.ip,
       rssi,

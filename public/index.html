@@ -3765,6 +3765,15 @@ function updateSurveyUI(surveyUrl, isEnabled) {
       o.style.display = 'none';
     }
   }
+  const navBtn = document.getElementById('surveyNavBtn');
+  if (navBtn) {
+    if (show) {
+      navBtn.href = surveyUrl;
+      navBtn.style.display = 'inline-flex';
+    } else {
+      navBtn.style.display = 'none';
+    }
+  }
 }
 
 function closeSheet(){
